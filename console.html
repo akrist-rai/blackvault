@@ -313,6 +313,59 @@ footer{max-width:1180px; margin:0 auto; padding:26px 20px 40px; border-top:1px s
 .nodelab:hover{background:var(--bone)}
 .opt[data-state="correct"]{border-color:var(--amber); color:var(--bone)} .opt[data-state="correct"] b{color:var(--amber)}
 .opt[data-state="wrong"]{border-color:var(--blood)} .opt[data-state="wrong"] b{color:var(--blood)}
+
+/* ===== ATT&CK grid ===== */
+.attack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:8px;margin-top:24px}
+.attack-col{background:var(--panel2);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.attack-tactic{background:#081610;padding:8px 10px;font-family:var(--grot);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--volt);border-bottom:1.5px solid var(--volt);line-height:1.35}
+.attack-tactic small{display:block;font-size:9px;color:var(--ash);letter-spacing:.05em;margin-top:2px}
+.attack-tech{padding:7px 9px;border-bottom:1px solid rgba(255,255,255,.04);cursor:default;transition:.1s;position:relative}
+.attack-tech:hover{background:rgba(255,255,255,.04)}
+.attack-tech.covered{border-left:2.5px solid var(--amber)}
+.attack-tech.covered:hover{background:rgba(244,183,64,.06)}
+.attack-id{display:block;font-family:var(--mono);font-size:9px;color:var(--ash);letter-spacing:.04em}
+.attack-name{display:block;font-size:11px;color:#cfe9df;line-height:1.3;margin-top:1px}
+.attack-phase{display:inline-block;background:var(--amber);color:var(--void);font-family:var(--mono);font-size:8.5px;padding:1px 5px;margin-top:3px;font-weight:700;letter-spacing:.05em}
+.attack-legend{display:flex;gap:20px;margin-top:18px;font-size:12px;color:var(--ash)}
+.attack-legend span{display:inline-flex;align-items:center;gap:7px}
+.attack-legend i{display:inline-block;width:10px;height:10px}
+.al-cov{border-left:3px solid var(--amber);background:rgba(244,183,64,.08);padding:2px 6px}
+.al-gap{border:1px solid var(--line);padding:2px 6px}
+
+/* ===== badge gallery ===== */
+.badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-top:16px}
+.badge{border:1.5px solid var(--line);background:var(--panel2);padding:18px 14px;text-align:center;transition:.15s}
+.badge--earned{border-color:var(--amber);background:rgba(244,183,64,.06)}
+.badge--locked{opacity:.45}
+.badge__icon{font-size:26px;margin-bottom:7px;line-height:1}
+.badge__name{font-family:var(--grot);font-size:12.5px;letter-spacing:.07em;color:var(--bone);margin-bottom:5px;text-transform:uppercase}
+.badge__desc{font-size:11px;color:var(--ash);line-height:1.45}
+.badge__date{font-family:var(--mono);font-size:9.5px;color:var(--volt);margin-top:6px}
+.badge-summary{display:flex;gap:24px;margin-bottom:28px;flex-wrap:wrap}
+.badge-stat{text-align:center}
+.badge-stat__n{font-family:var(--grot);font-size:36px;font-weight:700;color:var(--amber);line-height:1}
+.badge-stat__l{font-family:var(--mono);font-size:11px;color:var(--ash);letter-spacing:.1em;margin-top:3px}
+
+/* ===== notes ===== */
+.notes-area{width:100%;background:#04100c;border:1.5px solid var(--line);color:var(--bone);font-family:var(--mono);font-size:13px;padding:13px 15px;resize:vertical;min-height:130px;outline:0;box-sizing:border-box;line-height:1.6}
+.notes-area:focus{border-color:var(--volt)}
+.notes-hint{font-family:var(--mono);font-size:11px;color:var(--ash);margin-top:6px}
+
+/* ===== keyboard shortcuts overlay ===== */
+.shortcuts-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;display:flex;align-items:center;justify-content:center}
+.shortcuts-box{background:var(--panel);border:2px solid var(--volt);padding:28px 32px;max-width:500px;width:92%;max-height:82vh;overflow-y:auto}
+.shortcuts-box h2{font-family:var(--grot);color:var(--volt);letter-spacing:.2em;font-size:13px;text-transform:uppercase;margin:0 0 18px}
+.shortcuts-box table{width:100%;border-collapse:collapse;font-size:13px}
+.shortcuts-box td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.shortcuts-box td:first-child{font-family:var(--mono);color:var(--amber);white-space:nowrap;padding-right:22px;font-size:12px}
+.shortcuts-close{margin-top:20px;font-family:var(--mono);font-size:11px;color:var(--ash);cursor:pointer;letter-spacing:.1em;background:none;border:1px solid var(--ash);padding:7px 16px;transition:.12s;display:block}
+.shortcuts-close:hover{color:var(--bone);border-color:var(--bone)}
+
+/* ===== map action buttons ===== */
+.mapactions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;align-items:center}
+.mapactions .btn{font-size:11.5px;padding:8px 16px;letter-spacing:.08em}
+.challenge-chip{display:inline-block;background:rgba(251,54,64,.1);border:1.5px solid var(--blood);color:var(--blood);font-family:var(--mono);font-size:11px;letter-spacing:.1em;padding:7px 14px;text-decoration:none;transition:.12s;cursor:pointer}
+.challenge-chip:hover{background:var(--blood);color:var(--void)}
 </style>
 </head>
 <body>
@@ -332,6 +385,8 @@ footer{max-width:1180px; margin:0 auto; padding:26px 20px 40px; border-top:1px s
       <button data-go="threads">Threads</button>
       <button data-go="arsenal">Arsenal</button>
       <button data-go="case">Case</button>
+      <button data-go="attack">ATT&CK</button>
+      <button data-go="badges">Badges</button>
       <button data-go="range" style="color:var(--volt)">⚡ Range</button>
     </nav>
   </div>
@@ -340,8 +395,8 @@ footer{max-width:1180px; margin:0 auto; padding:26px 20px 40px; border-top:1px s
 <main id="app"></main>
 
 <footer>
-  <span><a href="index.html" style="color:var(--volt);text-decoration:none">⌂ Home</a> · BLACKVAULT // self-directed RE · MA · DFIR track · real artifacts in <a href="range/README.md" style="color:var(--volt);text-decoration:none">range/</a></span>
-  <span id="footstat">progress saved locally</span>
+  <span><a href="index.html" style="color:var(--volt);text-decoration:none">⌂ Home</a> · <a href="challenge.html" style="color:var(--blood);text-decoration:none">⚡ CTF Challenges</a> · <a href="tools.html" style="color:var(--amber);text-decoration:none">Tools</a> · <a href="intel.html" style="color:var(--ash);text-decoration:none">Intel</a> · artifacts in <a href="range/README.md" style="color:var(--volt);text-decoration:none">range/</a></span>
+  <span id="footstat">progress saved locally · <span id="footbadges" style="color:var(--amber)"></span></span>
 </footer>
 <div class="toast" id="toast"></div>
 
@@ -1016,6 +1071,74 @@ const CASES={
    text:`Chain: malicious macro (initial access) → encoded PowerShell via LOLBin (execution, defense evasion: fileless) → in-memory framework payload → WMI subscription (persistence) → HTTPS C2 by JA3 (command & control) → two more victims (lateral scope). Detections: a Sigma rule for Office→PowerShell + 4104 cradle patterns, a Suricata rule on the JA3/beacon, YARA on the dumped payload — plus honest limits on what memory alone can prove.`,
    choices:[]},
  }},
+
+ supply_chain:{label:'SOLAR-TRACE // Supply Chain',start:'start',nodes:{
+  start:{clock:'Day 0 — ANOMALY',
+   text:`Threat intel flags build <b>OrbisView IT Suite v8.4.2</b> as tampered. Your EDR shows <code>OrbisView.UpdateSvc.exe</code> making outbound connections to periodic DGA-pattern subdomains on 3,000 managed endpoints. What's your first move?`,
+   choices:[
+    {label:`Immediately uninstall OrbisView fleet-wide`,to:'start',good:false,fb:`Aggressive without confirming scope — you'd alert the adversary, destroy volatile evidence, and haven't traced whether lateral movement already occurred. Triage first.`},
+    {label:`Hash the installed DLL and compare to the vendor's signed SHA-256`,to:'hash',good:true,fb:`Correct first pivot. If your installed copy mismatches the vendor's published checksum, you've confirmed supply chain compromise with a single operation.`},
+    {label:`Assume EDR false positive — OrbisView does cloud telemetry`,to:'hash',good:false,fb:`Never assume. Consistent-length subdomains with no resolvable meaning = DGA beacon hallmark, not cloud telemetry. Verify the binary. (Checking hashes.)`},
+   ]},
+  hash:{clock:'Day 0+2h — BINARY',
+   text:`Your installed <code>OrbisView.Core.dll</code> SHA-256 mismatches the vendor's published hash. Ghidra shows 3 KB of inserted code before the DLL entry point. What's in the inserted bytes?`,
+   choices:[
+    {label:`Analyze statically in Ghidra — look for sleep and DGA logic`,to:'backdoor',good:true,fb:`Ghidra reveals: sleep(14 days since install) → generate subdomain via DGA → if resolved IP matches XOR-fingerprinted block → load shellcode from registry. Textbook supply chain backdoor with dormancy.`},
+    {label:`Run the tampered DLL in a sandbox immediately`,to:'backdoor',good:false,fb:`Don't run unknown code outside an isolated range — and a 14-day dormancy means the sandbox sees nothing. Static analysis first. (Analyzing in Ghidra.)`},
+   ]},
+  backdoor:{clock:'Day 0+6h — BACKDOOR LOGIC',
+   text:`The backdoor sleeps 14 days post-install before activating. Registry keys on active hosts hold encrypted shellcode blobs. How do you separate active (activated) from dormant (still sleeping) hosts?`,
+   choices:[
+    {label:`Fleet query: OrbisView v8.4.2 installed AND install date > 14 days ago`,to:'scope',good:true,fb:`Fleet query returns 847 of 3,000 hosts. These have active backdoors. The remaining 2,153 are dormant — critical to keep separate for containment sequencing.`},
+    {label:`Assume all 3,000 are equally compromised and take all offline`,to:'scope',good:false,fb:`Business impact without proportionate evidence. 2,153 hosts have inactive backdoors that haven't called home. Scope first, then contain by tier. (Querying fleet.)`},
+   ]},
+  scope:{clock:'Day 1 — SCOPE',
+   text:`847 hosts confirmed active — netscan shows live DGA beacon connections. How do you enumerate which hosts are actively communicating without alerting the adversary?`,
+   choices:[
+    {label:`Sinkhole the DGA domains — redirect all beacon traffic to your controlled server`,to:'hunt',good:true,fb:`Sinkholing logs all 847 IPs phoning home without alerting the adversary. You now have ground-truth scope and a passive log of beacon timing.`},
+    {label:`Block all outbound from the 847 hosts at the perimeter firewall`,to:'hunt',good:false,fb:`Hard blocking immediately tips off the adversary and ends your visibility window. Sinkhole first to enumerate; contain in sequenced waves after. (Sinkholing.)`},
+   ]},
+  hunt:{clock:'Day 1+8h — THREAT HUNT',
+   text:`847 confirmed beacons sinkholed. Now determine: did any hosts execute a second stage or move laterally before containment?`,
+   choices:[
+    {label:`Hunt: OrbisView child processes · unusual LSASS access · new scheduled tasks · SMB/WMI lateral signs`,to:'report',good:true,fb:`You find 12 hosts with second-stage execution; 3 with LSASS dumps attempted (credential access T1003.001); 2 with confirmed lateral movement via SMB pass-the-hash. Priority tier identified.`},
+    {label:`Reimage all 847 simultaneously — clean sweep`,to:'report',good:false,fb:`You'd destroy forensic evidence and miss the 12 hosts where credentials may already be stolen and in use. Triage tiers matter — remediate last, investigate first. (Hunting post-exploitation.)`},
+   ]},
+  report:{clock:'Day 2 — RECONSTRUCTION',end:true,
+   text:`Full chain: tampered vendor DLL signed with real cert (T1195.002 Software Supply Chain) → 14-day dormancy (T1497 Sandbox Evasion) → DGA beacon (T1568.002) → shellcode loaded from registry — fileless (T1055) → LSASS dump on 12 hosts (T1003.001) → lateral movement on 2 via pass-the-hash (T1550.002). Detections: YARA on the 3 KB inserted blob, Sigma on OrbisView child processes + LSASS access, Suricata on DGA cadence. Honest gaps: exfiltration volume before sinkholing is unquantified; attribution beyond TTPs is circumstantial.`,
+   choices:[]},
+ }},
+
+ insider:{label:'EXODUS-9 // Insider Threat',start:'start',nodes:{
+  start:{clock:'14:30 — HR REFERRAL',
+   text:`HR flags <b>Marcus Webb</b>, a departing senior engineer, for a policy violation: 48 GB of data was copied to an external USB the week before he gave notice. DLP caught it late. You have his workstation, a SIEM, and an AD event log. What do you triage first?`,
+   choices:[
+    {label:`Pull USB artifact timeline from the registry and Windows events`,to:'usb',good:true,fb:`Correct — registry (USBSTOR hive), Event ID 6416 (new device), and ShellBags give you device PnP timestamps, volume labels, and folder access patterns within seconds of log review.`},
+    {label:`Immediately interview Marcus to get his explanation`,to:'usb',good:false,fb:`Interviewing before you have evidence is tactically weak — he can deny everything and you can't contradict him. Build the artifact timeline first. (Pulling artifacts.)`},
+    {label:`Image the USB drive he used`,to:'usb',good:false,fb:`The USB is with Marcus — you don't have it yet. Start with what you have: the workstation artifacts. (Analyzing workstation first.)`},
+   ]},
+  usb:{clock:'14:50 — USB ARTIFACTS',
+   text:`Registry and EVTX confirm: device "SANDISK 64GB" first plugged in 9 days ago, last seen 3 days ago — 5 sessions total, averaging 90 minutes. Folder access (ShellBags) shows <code>D:\Projects\Athena\</code> and <code>D:\exports\</code>. What's the Athena project?`,
+   choices:[
+    {label:`Query SharePoint/Active Directory for the Athena project's sensitivity classification`,to:'athena',good:true,fb:`AD group membership shows Athena is a classified R&D project — source code for your next-gen product. Marcus's role gave him legitimate read access, but copying 48 GB to removable media violated DLP policy.`},
+    {label:`Immediately revoke his network credentials`,to:'athena',good:false,fb:`Revoking credentials alerts him and may trigger evidence destruction if he has remote copies. Scope and assess first. (Checking classification.)`},
+   ]},
+  athena:{clock:'15:15 — SCOPE',
+   text:`Athena is IP-sensitive source code. The 48 GB is a near-complete repository copy. Did Marcus exfiltrate beyond the USB — cloud sync, personal email, SFTP?`,
+   choices:[
+    {label:`Pull proxy logs + DLP events for cloud upload patterns over the last 30 days`,to:'cloud',good:true,fb:`Proxy logs show: 14 GB uploaded to a personal Google Drive account over 4 days, 2 weeks before notice was given. DLP flagged it but the alert was miscategorised. Two exfil vectors confirmed.`},
+    {label:`Assume the USB is the only vector and scope the damage from there`,to:'cloud',good:false,fb:`Single-vector assumption misses the cloud upload. Always hunt all outbound channels: cloud sync, email attachments, webmail, SFTP, DNS tunneling. (Checking proxy logs.)`},
+   ]},
+  cloud:{clock:'15:55 — CONTAINMENT',
+   text:`Two confirmed vectors: USB (48 GB) + Google Drive (14 GB). Marcus is still employed for 2 more days. How do you contain without destroying evidence or causing legal complications?`,
+   choices:[
+    {label:`Coordinate with Legal/HR: silent monitoring + preserve forensic copies + revoke access on final day`,to:'report',good:true,fb:`Coordinating with Legal ensures evidence is preserved correctly for potential litigation. Silent monitoring during his last 2 days confirms no further exfil. Revocation on exit is clean and defensible.`},
+    {label:`Lock his account immediately and confiscate his laptop`,to:'report',good:false,fb:`Without Legal sign-off, immediate confiscation may be legally improper and taint evidence chain of custody. Always loop Legal into insider threat cases before action. (Coordinating with Legal.)`},
+   ]},
+  report:{clock:'16:45 — RECONSTRUCTION',end:true,
+   text:`Full timeline: 30 days before notice → Google Drive exfil (14 GB, T1567.002 Exfil to Cloud Storage) → 9 days before notice → USB exfil sessions (48 GB, T1052.001 Exfiltration over USB) → DLP alert miscategorised → HR flag → investigation. Evidence: USBSTOR registry, EVTX 6416, ShellBags, proxy logs, DLP events. Legal actions: preservation hold on his corporate accounts, Google served with legal process for Drive activity. Lesson: DLP alerts require a review SLA — miscategorised alerts are as dangerous as missed alerts.`,
+   choices:[]},
+ }},
 };
 
 /* ============================================================ STATE / STORAGE ============================================================ */
@@ -1026,13 +1149,137 @@ const store=(()=>{ let mem={}; let ok=false;
 })();
 let P=load();
 function load(){try{return JSON.parse(store.get('blackvault')||'{}');}catch(e){return{};}}
-function save(){store.set('blackvault',JSON.stringify(P));renderMeter();}
+function save(){store.set('blackvault',JSON.stringify(P));renderMeter();checkBadges();updateFootBadges();}
 P.learned=P.learned||{}; P.quiz=P.quiz||{}; P.cards=P.cards||{}; P.quizPick=P.quizPick||{}; P.labs=P.labs||{};
+P.badges=P.badges||{}; P.notes=P.notes||{}; P.casesWon=P.casesWon||[];
 
 const state={mode:'map',phase:0,deck:'all',cardIdx:0,flip:false,quizPhase:null,search:'',
   caseId:'ransomware',caseNode:'start',caseGood:0,caseBad:0,caseFb:null,
   examSet:null,examPicks:{},examSubmitted:false,
-  lab:null, reLvl:0};
+  lab:null, reLvl:0, shortcutsOpen:false};
+
+/* ============================================================ ATT&CK DATA ============================================================ */
+const ATTACK_TACTICS=[
+ {id:'TA0001',name:'Initial Access',techniques:[
+  {id:'T1566',name:'Phishing',phases:[12]},{id:'T1190',name:'Exploit Public-Facing App',phases:[]},
+  {id:'T1195',name:'Supply Chain Compromise',phases:[]},{id:'T1091',name:'Removable Media',phases:[1]},
+  {id:'T1078',name:'Valid Accounts',phases:[]},{id:'T1133',name:'External Remote Services',phases:[]},
+ ]},
+ {id:'TA0002',name:'Execution',techniques:[
+  {id:'T1059',name:'Command & Scripting Interpreter',phases:[6]},{id:'T1047',name:'WMI',phases:[6]},
+  {id:'T1053',name:'Scheduled Task/Job',phases:[3,8]},{id:'T1204',name:'User Execution',phases:[4]},
+  {id:'T1106',name:'Native API',phases:[6,11]},{id:'T1569',name:'System Services',phases:[3,11]},
+ ]},
+ {id:'TA0003',name:'Persistence',techniques:[
+  {id:'T1547',name:'Boot/Logon Autostart',phases:[3,8]},{id:'T1543',name:'Create/Modify System Process',phases:[3,11]},
+  {id:'T1546',name:'Event Triggered Execution',phases:[6]},{id:'T1136',name:'Create Account',phases:[]},
+  {id:'T1505',name:'Server Software Component',phases:[]},{id:'T1037',name:'Boot/Logon Init Scripts',phases:[1,3]},
+ ]},
+ {id:'TA0004',name:'Privilege Escalation',techniques:[
+  {id:'T1055',name:'Process Injection',phases:[6,8,11]},{id:'T1068',name:'Exploitation for PrivEsc',phases:[]},
+  {id:'T1134',name:'Access Token Manipulation',phases:[8,11]},{id:'T1548',name:'Abuse Elevation Control',phases:[]},
+  {id:'T1611',name:'Escape to Host',phases:[]},
+ ]},
+ {id:'TA0005',name:'Defense Evasion',techniques:[
+  {id:'T1027',name:'Obfuscated Files',phases:[4,5,7]},{id:'T1055',name:'Process Injection',phases:[6,8,11]},
+  {id:'T1070',name:'Indicator Removal',phases:[1,8,9]},{id:'T1036',name:'Masquerading',phases:[3,4]},
+  {id:'T1140',name:'Deobfuscate/Decode',phases:[5,6,7]},{id:'T1564',name:'Hide Artifacts',phases:[8,11]},
+  {id:'T1014',name:'Rootkit',phases:[11]},{id:'T1562',name:'Impair Defenses',phases:[8]},
+ ]},
+ {id:'TA0006',name:'Credential Access',techniques:[
+  {id:'T1003',name:'OS Credential Dumping',phases:[8]},{id:'T1552',name:'Unsecured Credentials',phases:[1]},
+  {id:'T1110',name:'Brute Force',phases:[9]},{id:'T1056',name:'Input Capture',phases:[]},
+  {id:'T1558',name:'Steal Kerberos Tickets',phases:[8]},
+ ]},
+ {id:'TA0007',name:'Discovery',techniques:[
+  {id:'T1082',name:'System Info Discovery',phases:[6]},{id:'T1083',name:'File & Dir Discovery',phases:[1,6]},
+  {id:'T1049',name:'System Network Connections',phases:[9]},{id:'T1046',name:'Network Service Discovery',phases:[9]},
+  {id:'T1012',name:'Query Registry',phases:[3,8]},{id:'T1057',name:'Process Discovery',phases:[6,8]},
+ ]},
+ {id:'TA0008',name:'Lateral Movement',techniques:[
+  {id:'T1021',name:'Remote Services',phases:[9]},{id:'T1550',name:'Use Alternate Auth',phases:[]},
+  {id:'T1080',name:'Taint Shared Content',phases:[]},{id:'T1210',name:'Exploit Remote Services',phases:[]},
+ ]},
+ {id:'TA0009',name:'Collection',techniques:[
+  {id:'T1005',name:'Data from Local System',phases:[1]},{id:'T1025',name:'Data from Removable Media',phases:[1]},
+  {id:'T1114',name:'Email Collection',phases:[]},{id:'T1113',name:'Screen Capture',phases:[]},
+  {id:'T1074',name:'Data Staged',phases:[1]},
+ ]},
+ {id:'TA0010',name:'Exfiltration',techniques:[
+  {id:'T1041',name:'Exfil Over C2 Channel',phases:[10]},{id:'T1048',name:'Exfil Over Alt Protocol',phases:[9,10]},
+  {id:'T1567',name:'Exfil Over Web Service',phases:[10]},{id:'T1029',name:'Scheduled Transfer',phases:[10]},
+  {id:'T1052',name:'Exfil Over Physical Medium',phases:[1]},
+ ]},
+ {id:'TA0011',name:'Command & Control',techniques:[
+  {id:'T1071',name:'Application Layer Protocol',phases:[10]},{id:'T1095',name:'Non-App Layer Protocol',phases:[10]},
+  {id:'T1573',name:'Encrypted Channel',phases:[10]},{id:'T1008',name:'Fallback Channels',phases:[10]},
+  {id:'T1568',name:'Dynamic Resolution (DGA)',phases:[9,10]},{id:'T1132',name:'Data Encoding',phases:[6,10]},
+  {id:'T1001',name:'Data Obfuscation',phases:[10]},
+ ]},
+ {id:'TA0040',name:'Impact',techniques:[
+  {id:'T1486',name:'Data Encrypted for Impact',phases:[12]},{id:'T1485',name:'Data Destruction',phases:[]},
+  {id:'T1490',name:'Inhibit System Recovery',phases:[1,12]},{id:'T1499',name:'Endpoint DoS',phases:[]},
+  {id:'T1498',name:'Network DoS',phases:[]},{id:'T1491',name:'Defacement',phases:[]},
+ ]},
+];
+
+/* ============================================================ BADGES ============================================================ */
+const BADGES=[
+ {id:'first_step',icon:'⚡',name:'First Contact',desc:'Mark your first concept as learned'},
+ {id:'five_concepts',icon:'★',name:'Getting Traction',desc:'Mark 5 concepts as learned'},
+ {id:'all_p1',icon:'★★',name:'Phase 1 Mastered',desc:'100% mastery on Phase 1 — Disk & Filesystems'},
+ {id:'five_phases',icon:'★★★★★',name:'Deep Diver',desc:'Reach full mastery on 5 phases'},
+ {id:'full_mastery',icon:'♛',name:'The Reconstructor',desc:'All 12 phases at 100% mastery'},
+ {id:'quiz_ten',icon:'✓',name:'Quiz Ace',desc:'Get 10 quiz questions correct'},
+ {id:'quiz_twentyfive',icon:'✓✓',name:'Quiz Master',desc:'Get 25 quiz questions correct'},
+ {id:'cards_fifteen',icon:'▣',name:'Active Recall',desc:'Mark 15 flashcards as known'},
+ {id:'cards_fifty',icon:'▣▣',name:'Card Shark',desc:'Mark 50 flashcards as known'},
+ {id:'lab_opened',icon:'⌨',name:'Hands On',desc:'Open any lab in the range'},
+ {id:'case_started',icon:'⊕',name:'On the Case',desc:'Start an investigation scenario'},
+ {id:'case_won',icon:'⊕⊕',name:'Case Closed',desc:'Reach the reconstruction at end of a case'},
+ {id:'two_cases',icon:'⊕⊕⊕',name:'Seasoned Investigator',desc:'Complete 2 different investigation cases'},
+ {id:'attack_viewed',icon:'◈',name:'ATT&CK Mapped',desc:'Browse the MITRE ATT&CK technique grid'},
+ {id:'note_written',icon:'✎',name:'Note Taker',desc:'Write notes for any phase'},
+ {id:'half_mastery',icon:'◐',name:'Halfway There',desc:'Reach 50% overall mastery'},
+ {id:'df_started',icon:'▲',name:'Forensicator',desc:'Start a DF-track phase'},
+ {id:'re_started',icon:'▶',name:'Reverser',desc:'Start an RE-track phase'},
+ {id:'ma_started',icon:'●',name:'Malware Analyst',desc:'Start an MA-track phase'},
+ {id:'export_done',icon:'↓',name:'Report Ready',desc:'Export your progress report'},
+ {id:'exam_taken',icon:'✕',name:'Under Pressure',desc:'Complete an exam session'},
+ {id:'arsenal_searched',icon:'⌖',name:'Arsenal Ready',desc:'Search the command arsenal'},
+];
+
+function checkBadges(){
+ if(!P.badges)P.badges={};
+ const learnedCount=Object.keys(P.learned||{}).filter(k=>P.learned[k]).length;
+ const quizRight=Object.values(P.quiz||{}).filter(v=>v===1).length;
+ const cardsKnown=Object.values(P.cards||{}).filter(Boolean).length;
+ const masteredPhases=PHASES.filter(p=>phaseMastery(p)===100).length;
+ const ov=overall();
+ const checks={
+  first_step:learnedCount>0, five_concepts:learnedCount>=5,
+  all_p1:phaseMastery(PHASES[0])===100, five_phases:masteredPhases>=5, full_mastery:masteredPhases===12,
+  quiz_ten:quizRight>=10, quiz_twentyfive:quizRight>=25,
+  cards_fifteen:cardsKnown>=15, cards_fifty:cardsKnown>=50,
+  lab_opened:!!(P.labOpened), case_started:!!(P.caseStarted),
+  case_won:!!(P.casesWon&&P.casesWon.length), two_cases:!!(P.casesWon&&P.casesWon.length>=2),
+  attack_viewed:!!(P.attackViewed), note_written:Object.values(P.notes||{}).some(n=>n&&n.trim().length>0),
+  half_mastery:ov>=50,
+  df_started:PHASES.some(p=>p.tracks.includes('DF')&&Object.keys(P.learned||{}).some(k=>k.startsWith(p.id)&&P.learned[k])),
+  re_started:PHASES.some(p=>p.tracks.includes('RE')&&Object.keys(P.learned||{}).some(k=>k.startsWith(p.id)&&P.learned[k])),
+  ma_started:PHASES.some(p=>p.tracks.includes('MA')&&Object.keys(P.learned||{}).some(k=>k.startsWith(p.id)&&P.learned[k])),
+  export_done:!!(P.exportDone), exam_taken:!!(P.examTaken), arsenal_searched:!!(P.arsenalSearched),
+ };
+ let won=false;
+ BADGES.forEach(b=>{
+  if(!P.badges[b.id]&&checks[b.id]){P.badges[b.id]=Date.now();toast('Achievement: '+b.name+' ★');won=true;}
+ });
+ if(won){store.set('blackvault',JSON.stringify(P));updateFootBadges();}
+}
+function updateFootBadges(){
+ const el=document.getElementById('footbadges');
+ if(el){const n=Object.keys(P.badges||{}).length;el.textContent=n?n+'/'+BADGES.length+' badges':'';}
+}
 
 /* ============================================================ HELPERS ============================================================ */
 const $=s=>document.querySelector(s);
@@ -1060,6 +1307,11 @@ function viewMap(){
     </div>
     <div class="legend">
       <i><span class="dot d-DF"></span>Forensics</i><i><span class="dot d-RE"></span>Reverse Eng.</i><i><span class="dot d-MA"></span>Malware</i>
+    </div>
+    <div class="mapactions">
+      <button class="btn btn--ghost" data-mapaction="export">↓ Export Progress</button>
+      <button class="btn btn--ghost" data-mapaction="shortcuts">? Shortcuts</button>
+      <a href="challenge.html" class="challenge-chip">⚡ CTF Challenges</a>
     </div>
   </div>
   <div class="spine">
@@ -1113,6 +1365,12 @@ function viewStudy(){
   </div>
 
   <div class="sec"><div class="feeds"><b>↳ Connects forward:</b> ${esc(p.feeds)}</div></div>
+
+  <div class="sec">
+    <div class="sec__h">Your notes <span style="color:var(--ash);font-family:var(--grot);letter-spacing:0;text-transform:none;font-size:13px">— saved automatically</span></div>
+    <textarea class="notes-area" id="phaseNotes" data-phaseid="${p.id}" placeholder="Analysis notes, questions, key observations — anything that helps it stick...">${esc(P.notes[p.id]||'')}</textarea>
+    <p class="notes-hint">Ctrl+A to select all · notes are private and stored locally</p>
+  </div>
 
   <div class="studynav">
     <button class="btn--ghost btn" data-quizphase="${state.phase}">Quiz this phase →</button>
@@ -1339,6 +1597,76 @@ function viewCase(){
         node.choices.map((c,i)=>`<button class="choice" data-choice="${i}">${esc(c.label)}</button>`).join('')}
     </div>
   </div>`;
+}
+
+function viewAttack(){
+ if(!P.attackViewed){P.attackViewed=true;save();}
+ const totalTech=ATTACK_TACTICS.reduce((a,t)=>a+t.techniques.length,0);
+ const coveredTech=ATTACK_TACTICS.reduce((a,t)=>a+t.techniques.filter(x=>x.phases&&x.phases.length).length,0);
+ return `
+ <div class="modehead">
+   <div class="eyebrow">MITRE ATT&CK Enterprise · v15</div>
+   <h1 class="h1" style="font-size:clamp(22px,3.5vw,34px)">Tactic &amp; Technique Map</h1>
+   <p class="lede">Every column is a tactic; every card is a technique. <span style="color:var(--amber);font-family:var(--mono)">Amber border</span> = covered by a BLACKVAULT phase. ${coveredTech} of ${totalTech} techniques have direct curriculum coverage.</p>
+ </div>
+ <div class="attack-legend">
+   <span><i class="al-cov"></i> Covered in curriculum</span>
+   <span><i class="al-gap"></i> Gap / beyond scope</span>
+ </div>
+ <div class="attack-grid">
+   ${ATTACK_TACTICS.map(t=>`
+   <div class="attack-col">
+     <div class="attack-tactic">${esc(t.name)}<small>${t.id}</small></div>
+     ${t.techniques.map(tech=>{const has=tech.phases&&tech.phases.length>0;
+       return `<div class="attack-tech${has?' covered':''}" title="${tech.id}: ${esc(tech.name)}${has?' — covered in '+tech.phases.map(n=>'Phase '+n).join(', '):''}">
+         <span class="attack-id">${tech.id}</span>
+         <span class="attack-name">${esc(tech.name)}</span>
+         ${has?`<span class="attack-phase">${tech.phases.map(n=>'P'+n).join('+')}</span>`:''}
+       </div>`;}).join('')}
+   </div>`).join('')}
+ </div>
+ <div style="margin-top:28px;font-family:var(--mono);font-size:12px;color:var(--ash)">
+   ATT&CK® is a registered trademark of The MITRE Corporation. Phase numbers map to BLACKVAULT's 12-phase curriculum.
+ </div>`;
+}
+
+function viewBadges(){
+ if(!P.badges)P.badges={};
+ const earned=BADGES.filter(b=>P.badges[b.id]);
+ const locked=BADGES.filter(b=>!P.badges[b.id]);
+ return `
+ <div class="modehead">
+   <div class="eyebrow">Achievements</div>
+   <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">Badge Collection</h1>
+   <p class="lede">Badges unlock as you study, drill, quiz, investigate, and use the platform. No time limits — keep going at your own pace.</p>
+ </div>
+ <div class="badge-summary">
+   <div class="badge-stat"><div class="badge-stat__n">${earned.length}</div><div class="badge-stat__l">Earned</div></div>
+   <div class="badge-stat"><div class="badge-stat__n" style="color:var(--ash)">${locked.length}</div><div class="badge-stat__l">Locked</div></div>
+   <div class="badge-stat"><div class="badge-stat__n" style="color:var(--volt)">${overall()}%</div><div class="badge-stat__l">Mastery</div></div>
+ </div>
+ ${earned.length?`
+ <div class="sec">
+   <div class="sec__h" style="color:var(--amber)">Earned <span style="color:var(--ash)">${earned.length}/${BADGES.length}</span></div>
+   <div class="badge-grid">
+     ${earned.map(b=>`<div class="badge badge--earned">
+       <div class="badge__icon">${b.icon}</div>
+       <div class="badge__name">${esc(b.name)}</div>
+       <div class="badge__desc">${esc(b.desc)}</div>
+       <div class="badge__date">Earned ${new Date(P.badges[b.id]).toLocaleDateString()}</div>
+     </div>`).join('')}
+   </div>
+ </div>`:''}
+ <div class="sec">
+   <div class="sec__h" style="color:var(--ash)">Locked <span style="color:var(--ash);opacity:.6">${locked.length} remaining</span></div>
+   <div class="badge-grid">
+     ${locked.map(b=>`<div class="badge badge--locked">
+       <div class="badge__icon" style="filter:grayscale(1)">${b.icon}</div>
+       <div class="badge__name">${esc(b.name)}</div>
+       <div class="badge__desc">${esc(b.desc)}</div>
+     </div>`).join('')}
+   </div>
+ </div>`;
 }
 
 /* ============================================================ RANGE / HANDS-ON LABS ============================================================ */
@@ -2586,12 +2914,15 @@ function render(){
   else if(m==='arsenal')html=viewArsenal();
   else if(m==='threads')html=viewThreads();
   else if(m==='case')html=viewCase();
+  else if(m==='attack')html=viewAttack();
+  else if(m==='badges')html=viewBadges();
   else if(m==='range')html=viewRange();
   app().innerHTML=html;
   document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current', b.dataset.go===m?'true':'false'));
   if(m==='arsenal'){const s=$('#searchBox');if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
   if(m==='range'&&state.lab&&typeof LABINIT==='object'&&LABINIT[state.lab])LABINIT[state.lab]();
   window.scrollTo(0,0);
+  updateFootBadges();
 }
 function go(mode){state.mode=mode;state.lab=null;render();}
 
@@ -2627,34 +2958,58 @@ document.addEventListener('click',e=>{
 
   const retry=t.closest('[data-retry]');
   if(retry){const k=retry.dataset.retry;delete P.quizPick[k];delete P.quiz[k];save();render();return;}
-  const rd=t.closest('[data-reviewdrill]'); if(rd){state.deck='weak';state.cardIdx=0;state.flip=false;go('drill');return;}
+  const rd=t.closest('[data-reviewdrill]'); if(rd){state.deck='weak';state.cardIdx=0;state.flip=false;if(!P.reviewDone){P.reviewDone=true;save();}go('drill');return;}
 
   const exo=t.closest('[data-exopt]');
   if(exo&&!state.examSubmitted){state.examPicks[+exo.dataset.exopt]=+exo.dataset.o;render();return;}
   const ex=t.closest('[data-exam]');
-  if(ex){if(ex.dataset.exam==='new'){startExam();render();}else if(ex.dataset.exam==='submit'){state.examSubmitted=true;render();}return;}
+  if(ex){if(ex.dataset.exam==='new'){startExam();render();}else if(ex.dataset.exam==='submit'){state.examSubmitted=true;if(!P.examTaken){P.examTaken=true;save();}render();}return;}
 
   const pt=t.closest('[data-ptier]'); if(pt){pt.dataset.open=pt.dataset.open==='1'?'0':'1';return;}
   const kc=t.closest('[data-kc]'); if(kc){kc.dataset.open=kc.dataset.open==='1'?'0':'1';return;}
 
   const cid=t.closest('[data-caseid]');
-  if(cid){state.caseId=cid.dataset.caseid;state.caseNode=CASES[state.caseId].start;state.caseGood=0;state.caseBad=0;state.caseFb=null;render();return;}
+  if(cid){state.caseId=cid.dataset.caseid;state.caseNode=CASES[state.caseId].start;state.caseGood=0;state.caseBad=0;state.caseFb=null;
+    if(!P.caseStarted){P.caseStarted=true;save();}render();return;}
   const ch=t.closest('[data-choice]');
   if(ch){const C=CASES[state.caseId];const node=C.nodes[state.caseNode];const choice=node.choices[+ch.dataset.choice];
-    if(choice.good)state.caseGood++;else state.caseBad++;state.caseFb={good:choice.good,msg:choice.fb};state.caseNode=choice.to;render();return;}
+    if(choice.good)state.caseGood++;else state.caseBad++;state.caseFb={good:choice.good,msg:choice.fb};state.caseNode=choice.to;
+    const newNode=C.nodes[choice.to];
+    if(newNode&&newNode.end){if(!P.casesWon.includes(state.caseId))P.casesWon.push(state.caseId);save();}
+    render();return;}
   const cs=t.closest('[data-case]');
   if(cs&&cs.dataset.case==='restart'){state.caseNode=CASES[state.caseId].start;state.caseGood=0;state.caseBad=0;state.caseFb=null;render();return;}
+
+  const ma=t.closest('[data-mapaction]');
+  if(ma){
+    if(ma.dataset.mapaction==='export'){
+      const data={exported:new Date().toISOString(),overall:overall()+'%',phases:PHASES.map(p=>({n:p.n,title:p.title,mastery:phaseMastery(p)+'%'})),badges:Object.keys(P.badges||{}).map(id=>{const b=BADGES.find(x=>x.id===id);return b?b.name:'?';}),casesWon:P.casesWon||[],notes:P.notes||{}};
+      const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='blackvault-progress.json';a.click();
+      P.exportDone=true;save();toast('Progress exported as JSON');return;
+    }
+    if(ma.dataset.mapaction==='shortcuts'){state.shortcutsOpen=true;showShortcuts();return;}
+  }
 });
 
-document.addEventListener('input',e=>{ if(e.target.id==='searchBox'){state.search=e.target.value;
+document.addEventListener('input',e=>{
+ if(e.target.id==='searchBox'){state.search=e.target.value;
+  if(!P.arsenalSearched&&state.search.length>1){P.arsenalSearched=true;save();}
   const q=(state.search||'').toLowerCase();
   const all=PHASES.flatMap(p=>p.commands.map(c=>({...c,n:p.n,title:p.title})));
   const rows=all.filter(c=>!q||c.c.toLowerCase().includes(q)||c.d.toLowerCase().includes(q)||c.title.toLowerCase().includes(q));
   const wrap=document.querySelector('.arsenal');
   if(wrap)wrap.innerHTML=rows.map(c=>`<div class="tool"><small>PHASE ${c.n} · ${esc(c.title)}</small><br><code data-copy>${esc(c.c)}</code><p>${esc(c.d)}</p></div>`).join('')||'<p style="color:var(--ash);font-family:var(--mono)">No commands match that search.</p>';
-}});
+ }
+ if(e.target.id==='phaseNotes'){
+  const pid=e.target.dataset.phaseid;
+  if(pid){P.notes[pid]=e.target.value;save();}
+ }
+});
 
 document.addEventListener('keydown',e=>{
+  if(e.key==='?'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){state.shortcutsOpen=!state.shortcutsOpen;showShortcuts();return;}
+  if(e.key==='Escape'&&state.shortcutsOpen){state.shortcutsOpen=false;showShortcuts();return;}
   if(state.mode!=='drill')return;const cards=deckCards();if(!cards.length)return;
   if(e.code==='Space'){e.preventDefault();state.flip=!state.flip;render();}
   else if(e.code==='ArrowRight'){state.cardIdx=(state.cardIdx+1)%cards.length;state.flip=false;render();}
@@ -2662,10 +3017,34 @@ document.addEventListener('keydown',e=>{
   else if(e.key.toLowerCase()==='k'){const cur=cards[state.cardIdx];P.cards[cur.id+':'+cur.f]=!P.cards[cur.id+':'+cur.f];save();render();}
 });
 
+function showShortcuts(){
+ let el=document.getElementById('shortcutsOverlay');
+ if(state.shortcutsOpen){
+  if(!el){
+   el=document.createElement('div');el.id='shortcutsOverlay';el.className='shortcuts-overlay';
+   el.innerHTML=`<div class="shortcuts-box">
+    <h2>Keyboard Shortcuts</h2>
+    <table>
+     <tr><td>? </td><td>Toggle this panel</td></tr>
+     <tr><td>Esc</td><td>Close this panel</td></tr>
+     <tr><td>Space</td><td>Flip flashcard (Drill mode)</td></tr>
+     <tr><td>←  →</td><td>Previous / Next flashcard</td></tr>
+     <tr><td>K</td><td>Mark flashcard as Known / Unknown</td></tr>
+    </table>
+    <p style="margin-top:16px;font-size:12px;color:var(--ash)">Navigate with the top bar. Click any Phase node on the Map to jump straight to Study. Use <b style="color:var(--bone)">Export Progress</b> on the Map page to save a JSON report.</p>
+    <button class="shortcuts-close" id="shortcutsCloseBtn">Close  [Esc]</button>
+   </div>`;
+   document.body.appendChild(el);
+   document.getElementById('shortcutsCloseBtn').onclick=()=>{state.shortcutsOpen=false;showShortcuts();};
+   el.addEventListener('click',ev=>{if(ev.target===el){state.shortcutsOpen=false;showShortcuts();}});
+  } else {el.style.display='flex';}
+ } else {if(el)el.style.display='none';}
+}
+
 /* ===== RANGE events ===== */
 document.addEventListener('click',e=>{
  const t=e.target;
- const open=t.closest('[data-lab]'); if(open){state.lab=open.dataset.lab; render(); return;}
+ const open=t.closest('[data-lab]'); if(open){state.lab=open.dataset.lab; if(!P.labOpened){P.labOpened=true;save();} render(); return;}
  const back=t.closest('[data-labback]'); if(back){state.lab=null; render(); return;}
  const mq=t.closest('[data-memq]'); if(mq){memRun(mq.dataset.memq); const i=document.getElementById('memcmd'); if(i){i.value='';i.focus();} return;}
  const ms=t.closest('[data-memsubmit]'); if(ms){memCheck(); return;}

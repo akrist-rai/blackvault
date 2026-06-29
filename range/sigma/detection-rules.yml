@@ -1,0 +1,598 @@
+# BLACKVAULT — Sigma Detection Rules
+# Educational rule set for the 12-phase curriculum.
+# Each rule maps to a specific phase and MITRE ATT&CK technique.
+#
+# Usage (with sigma-cli):
+#   sigma convert -t splunk sigma/detection-rules.yml
+#   sigma convert -t elastic-query sigma/detection-rules.yml
+#
+# Reference: https://github.com/SigmaHQ/sigma
+
+---
+# ================================================================
+# SECTION 1 — Execution Indicators
+# ================================================================
+
+title: BLACKVAULT — PowerShell Encoded Command Execution
+id: bv-001
+status: test
+description: |
+  Detects PowerShell execution with the -EncodedCommand or -enc flag,
+  commonly used by fileless malware and LOLBin download cradles.
+  Correlates with Phase 6 (Dynamic Analysis) and the NItro case.
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+tags:
+  - attack.execution
+  - attack.t1059.001
+  - attack.defense_evasion
+  - attack.t1027
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains:
+      - '-EncodedCommand'
+      - ' -enc '
+      - ' -ec '
+  condition: selection
+falsepositives:
+  - Legitimate software deployment scripts
+  - SCCM/Intune management agents
+  - Some security tools
+level: high
+fields:
+  - CommandLine
+  - ParentImage
+  - User
+
+---
+title: BLACKVAULT — Office Application Spawning PowerShell
+id: bv-002
+status: test
+description: |
+  Detects Office applications (Word, Excel, Outlook) spawning PowerShell,
+  a hallmark of malicious macro execution (fileless initial access).
+  Maps to the NItro fileless case in BLACKVAULT.
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1566/001/
+tags:
+  - attack.initial_access
+  - attack.t1566.001
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_parent:
+    ParentImage|endswith:
+      - '\winword.exe'
+      - '\excel.exe'
+      - '\outlook.exe'
+      - '\powerpnt.exe'
+      - '\mspub.exe'
+  selection_child:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\mshta.exe'
+  condition: selection_parent and selection_child
+falsepositives:
+  - Very rare legitimate use — treat as high-fidelity
+level: critical
+fields:
+  - ParentImage
+  - Image
+  - CommandLine
+  - User
+
+---
+title: BLACKVAULT — Suspicious Scheduled Task Creation
+id: bv-003
+status: test
+description: |
+  Detects scheduled task creation via schtasks.exe with suspicious
+  parameters: PowerShell, encoded commands, or temp folder paths.
+  Maps to Phase 3 (PE/ELF) and Phase 6 (Dynamic Analysis).
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1053/005/
+tags:
+  - attack.persistence
+  - attack.t1053.005
+  - attack.execution
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\schtasks.exe'
+    CommandLine|contains: '/create'
+  filter_suspicious:
+    CommandLine|contains:
+      - 'powershell'
+      - '-enc'
+      - '\Temp\\'
+      - '\AppData\Local\Temp'
+      - 'http://'
+      - 'https://'
+  condition: selection and filter_suspicious
+falsepositives:
+  - Legitimate software installers
+  - Backup agents
+level: high
+fields:
+  - CommandLine
+  - User
+  - ParentImage
+
+---
+title: BLACKVAULT — WMI Subscription Creation (Fileless Persistence)
+id: bv-004
+status: test
+description: |
+  Detects WMI event subscription creation used for fileless persistence.
+  EventFilter + EventConsumer + FilterToConsumerBinding = full persistence chain.
+  Maps to Phase 6 (Dynamic Analysis) and the NItro fileless case.
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1546/003/
+tags:
+  - attack.persistence
+  - attack.t1546.003
+  - attack.defense_evasion
+logsource:
+  product: windows
+  category: wmi_event
+detection:
+  selection_filter:
+    EventID: 5861
+    OperationName: '__EventFilter'
+  selection_consumer:
+    EventID: 5861
+    OperationName:
+      - 'CommandLineEventConsumer'
+      - 'ActiveScriptEventConsumer'
+  condition: selection_filter or selection_consumer
+falsepositives:
+  - Legitimate monitoring software (Solarwinds, etc.)
+  - Some AV products
+level: high
+
+---
+# ================================================================
+# SECTION 2 — Defense Evasion / Anti-Forensics
+# ================================================================
+
+title: BLACKVAULT — Security Event Log Cleared (1102)
+id: bv-005
+status: test
+description: |
+  Detects clearing of the Security event log (Event ID 1102).
+  Attackers clear logs to remove evidence of their activity.
+  Maps to Phase 9 (Network Forensics) and Phase 12 (Full Investigation).
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1070/001/
+tags:
+  - attack.defense_evasion
+  - attack.t1070.001
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 1102
+  condition: selection
+falsepositives:
+  - Legitimate log maintenance (document + alert)
+level: high
+fields:
+  - SubjectUserName
+  - SubjectDomainName
+
+---
+title: BLACKVAULT — Shadow Copy Deletion (Ransomware Pre-Stage)
+id: bv-006
+status: test
+description: |
+  Detects shadow copy deletion via vssadmin or wmic, a near-universal
+  ransomware pre-encryption step to prevent recovery.
+  Maps to Phase 12 (Full Investigation) and the HERMES-07 ransomware case.
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1490/
+tags:
+  - attack.impact
+  - attack.t1490
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_vssadmin:
+    Image|endswith: '\vssadmin.exe'
+    CommandLine|contains:
+      - 'delete shadows'
+      - 'Delete Shadows'
+  selection_wmic:
+    Image|endswith: '\wmic.exe'
+    CommandLine|contains:
+      - 'shadowcopy delete'
+      - 'ShadowCopy Delete'
+  selection_powershell:
+    CommandLine|contains:
+      - 'Get-WmiObject Win32_ShadowCopy'
+      - 'Win32_ShadowCopy).Delete()'
+  condition: selection_vssadmin or selection_wmic or selection_powershell
+falsepositives:
+  - Very rare — treat as critical
+level: critical
+fields:
+  - CommandLine
+  - ParentImage
+  - User
+
+---
+title: BLACKVAULT — LSASS Memory Dump Attempt
+id: bv-007
+status: test
+description: |
+  Detects attempts to dump LSASS process memory for credential extraction.
+  Covers both direct handle access and known dump utilities.
+  Maps to Phase 8 (Memory Forensics).
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1003/001/
+tags:
+  - attack.credential_access
+  - attack.t1003.001
+logsource:
+  category: process_access
+  product: windows
+detection:
+  selection:
+    TargetImage|endswith: '\lsass.exe'
+    GrantedAccess|contains:
+      - '0x1010'
+      - '0x1410'
+      - '0x147a'
+      - '0x143a'
+      - '0x1438'
+  filter_legit:
+    SourceImage|endswith:
+      - '\MsMpEng.exe'
+      - '\csrss.exe'
+      - '\wininit.exe'
+      - '\lsm.exe'
+  condition: selection and not filter_legit
+falsepositives:
+  - AV/EDR products doing legitimate memory scanning
+level: critical
+fields:
+  - SourceImage
+  - TargetImage
+  - GrantedAccess
+
+---
+title: BLACKVAULT — PsExec / Lateral Movement Indicator
+id: bv-008
+status: test
+description: |
+  Detects PsExec and similar tools used for lateral movement.
+  The service install followed by PSEXESVC is a strong indicator.
+  Maps to Phase 9 (Network Forensics).
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1021/002/
+tags:
+  - attack.lateral_movement
+  - attack.t1021.002
+logsource:
+  product: windows
+  service: system
+detection:
+  selection:
+    EventID: 7045              # New service installed
+    ServiceName:
+      - 'PSEXESVC'
+      - 'psexesvc'
+  condition: selection
+falsepositives:
+  - Legitimate use of PsExec by admins (document approved systems)
+level: high
+fields:
+  - ServiceName
+  - ServiceFileName
+  - AccountName
+
+---
+# ================================================================
+# SECTION 3 — Network / Exfiltration Indicators
+# ================================================================
+
+title: BLACKVAULT — DNS Query to Known DGA Pattern (Long Subdomain)
+id: bv-009
+status: test
+description: |
+  Detects DNS queries with very long random-looking subdomains,
+  a common indicator of DGA beaconing or DNS tunneling/exfiltration.
+  Maps to Phase 9 (Network Forensics) and Phase 10 (Protocol RE).
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1568/002/
+tags:
+  - attack.command_and_control
+  - attack.t1568.002
+  - attack.exfiltration
+  - attack.t1048
+logsource:
+  category: dns
+detection:
+  selection:
+    QueryName|re: '^[a-z0-9]{30,}\.'   # subdomain >30 chars, all lowercase alphanumeric
+  filter_legit:
+    QueryName|endswith:
+      - '.microsoft.com'
+      - '.windowsupdate.com'
+      - '.google.com'
+      - '.akamai.net'
+      - '.cloudfront.net'
+  condition: selection and not filter_legit
+falsepositives:
+  - CDN tracking tokens in some URLs
+  - GUID-based cloud service subdomains
+level: medium
+fields:
+  - QueryName
+  - src_ip
+
+---
+title: BLACKVAULT — Unusual Outbound Port (Non-Standard C2)
+id: bv-010
+status: test
+description: |
+  Detects outbound connections on non-standard high ports commonly
+  used by C2 frameworks (e.g., 4444, 4445, 8080, 8443, 1234).
+  Maps to Phase 10 (Protocol RE).
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1071/
+tags:
+  - attack.command_and_control
+  - attack.t1071
+logsource:
+  category: network_connection
+  product: windows
+detection:
+  selection:
+    Initiated: 'true'
+    DestinationPort:
+      - 4444
+      - 4445
+      - 1234
+      - 31337
+      - 8888
+      - 9999
+  filter_internal:
+    DestinationIp|startswith:
+      - '10.'
+      - '192.168.'
+      - '172.16.'
+  condition: selection and not filter_internal
+falsepositives:
+  - Development/test environments using these ports
+  - Some VPN clients
+level: medium
+fields:
+  - Image
+  - DestinationIp
+  - DestinationPort
+
+---
+# ================================================================
+# SECTION 4 — Discovery / Reconnaissance Indicators
+# ================================================================
+
+title: BLACKVAULT — Suspicious Network Discovery Commands
+id: bv-011
+status: test
+description: |
+  Detects rapid use of network discovery commands (net view, arp, nslookup, etc.)
+  often run in sequence by malware or operators during the discovery phase.
+  Maps to Phase 6 (Dynamic Analysis) and Phase 9 (Network Forensics).
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1046/
+tags:
+  - attack.discovery
+  - attack.t1046
+  - attack.t1049
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith:
+      - '\net.exe'
+      - '\net1.exe'
+    CommandLine|contains:
+      - ' view'
+      - ' user'
+      - ' localgroup'
+      - ' group'
+  condition: selection
+falsepositives:
+  - IT administrators running diagnostics
+level: low
+fields:
+  - CommandLine
+  - ParentImage
+
+---
+title: BLACKVAULT — Amcache / AppCompatCache Tampering
+id: bv-012
+status: test
+description: |
+  Detects attempts to delete or modify the Amcache hive or ShimCache,
+  which record program execution history — an anti-forensics technique.
+  Maps to Phase 1 (Disk Forensics) and Phase 4 (Static Analysis).
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1070/
+tags:
+  - attack.defense_evasion
+  - attack.t1070
+logsource:
+  category: file_event
+  product: windows
+detection:
+  selection:
+    TargetFilename|contains:
+      - '\AppCompat\Programs\Amcache.hve'
+      - '\Windows\AppCompat'
+    EventType: 'Delete'
+  condition: selection
+falsepositives:
+  - System maintenance
+level: high
+
+---
+# ================================================================
+# SECTION 5 — Linux / ELF Rules
+# ================================================================
+
+title: BLACKVAULT — Linux LD_PRELOAD Injection
+id: bv-013
+status: test
+description: |
+  Detects setting of LD_PRELOAD environment variable, used by Linux
+  rootkits to hook libc functions and hide artifacts.
+  Maps to Phase 11 (Rootkits).
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1574/006/
+tags:
+  - attack.defense_evasion
+  - attack.t1574.006
+  - attack.persistence
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection_env:
+    CommandLine|contains: 'LD_PRELOAD='
+  selection_preload_file:
+    TargetFilename: '/etc/ld.so.preload'
+  condition: selection_env or selection_preload_file
+falsepositives:
+  - Legitimate security tools (some memory sanitizers use LD_PRELOAD)
+  - Developer debugging
+level: high
+fields:
+  - CommandLine
+  - User
+
+---
+title: BLACKVAULT — Crontab Modification (Linux Persistence)
+id: bv-014
+status: test
+description: |
+  Detects modifications to crontab files for persistence establishment.
+  Both user crontabs and system-level /etc/cron.* directories.
+  Maps to Phase 3 (PE/ELF Format) and Phase 6 (Dynamic Analysis).
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1053/003/
+tags:
+  - attack.persistence
+  - attack.t1053.003
+logsource:
+  category: file_event
+  product: linux
+detection:
+  selection:
+    TargetFilename|contains:
+      - '/etc/cron.'
+      - '/var/spool/cron/'
+      - '/etc/crontab'
+  filter_legit_procs:
+    Image:
+      - '/usr/bin/crontab'
+      - '/bin/crontab'
+  condition: selection and not filter_legit_procs
+falsepositives:
+  - Package managers updating cron jobs
+  - System backup agents
+level: medium
+fields:
+  - TargetFilename
+  - Image
+  - User
+
+---
+title: BLACKVAULT — Reverse Shell via Bash/Netcat
+id: bv-015
+status: test
+description: |
+  Detects common reverse shell one-liners using bash, nc, or python.
+  Maps to Phase 6 (Dynamic Analysis) and the crackme RE labs.
+author: BLACKVAULT curriculum
+date: 2024/01/01
+references:
+  - https://attack.mitre.org/techniques/T1059/004/
+tags:
+  - attack.execution
+  - attack.t1059.004
+  - attack.command_and_control
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection_bash:
+    CommandLine|contains:
+      - 'bash -i >& /dev/tcp/'
+      - 'bash -c "bash -i'
+      - '0>&1'
+  selection_nc:
+    Image|endswith:
+      - '/nc'
+      - '/ncat'
+      - '/netcat'
+    CommandLine|contains:
+      - ' -e /bin/sh'
+      - ' -e /bin/bash'
+  selection_python:
+    CommandLine|contains:
+      - 'socket.connect'
+      - 'os.dup2'
+      - 'subprocess.call'
+  condition: selection_bash or selection_nc or selection_python
+falsepositives:
+  - Penetration testers (authorized)
+  - CTF environments
+level: critical
+fields:
+  - CommandLine
+  - ParentImage
+  - User
