@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="BLACKVAULT IR Playbooks — Incident Response runbooks for ransomware, data breach, supply chain, and business email compromise.">
+<title>BLACKVAULT // IR Playbooks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#060908;--panel:#0C1410;--panel2:#111C16;--panel3:#172218;
+  --line:#1C2C22;--line2:#243828;
+  --bone:#D0E4D8;--ash:#6A8C72;--dim:#374D3C;
+  --blood:#E53540;--volt:#00C8A0;--amber:#D99820;--blue:#3CB8E0;
+  --grot:'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:'Space Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{
+  background:var(--void);color:var(--bone);font-family:var(--grot);
+  font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  background-image:
+    linear-gradient(rgba(0,200,160,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,200,160,.018) 1px,transparent 1px);
+  background-size:44px 44px;min-height:100vh;
+}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);
+  opacity:.35;mix-blend-mode:multiply;}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--blood);color:var(--void)}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:20;background:rgba(6,9,8,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);}
+.topbar__in{max-width:1200px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;cursor:pointer}
+.brand b{font-weight:700;letter-spacing:-.02em;font-size:18px}
+.brand b em{color:var(--blood);font-style:normal}
+.brand span{font-family:var(--mono);font-size:9px;letter-spacing:.3em;color:var(--ash);text-transform:uppercase}
+.topnav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ash);
+  padding:6px 10px;border:1.5px solid transparent;transition:.12s}
+.topnav a:hover{color:var(--bone);border-color:var(--line)}
+.topnav a.active{color:var(--volt);border-color:var(--volt)}
+
+/* LAYOUT */
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px 90px}
+.hero{padding:48px 0 36px}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--volt);margin-bottom:8px}
+.h1{font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:-.03em;line-height:1.05;margin:0 0 12px}
+.h1 em{color:var(--blood);font-style:normal}
+.lede{color:var(--ash);max-width:72ch;font-size:15.5px;line-height:1.6;margin:0}
+
+/* PLAYBOOK GRID */
+.pb-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:28px 0 36px}
+.pb-tab{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+  background:transparent;color:var(--ash);border:1.5px solid var(--line);padding:7px 13px;transition:.12s}
+.pb-tab:hover{color:var(--bone);border-color:var(--line2)}
+.pb-tab.active{color:var(--void);background:var(--bone);border-color:var(--bone)}
+.pb-tab[data-sev="critical"].active{background:var(--blood);border-color:var(--blood);color:#fff}
+.pb-tab[data-sev="high"].active{background:var(--amber);border-color:var(--amber);color:var(--void)}
+
+/* PLAYBOOK BODY */
+.playbook{display:none}
+.playbook.active{display:block}
+.pb-header{border:2px solid var(--bone);background:var(--panel);padding:22px 24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.pb-header h2{margin:0 0 5px;font-size:22px;letter-spacing:-.01em}
+.pb-header p{margin:0;color:var(--ash);font-size:14px;max-width:70ch}
+.pb-meta{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0}
+.sev-tag{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border:1.5px solid}
+.sev-critical{color:var(--blood);border-color:var(--blood)}
+.sev-high{color:var(--amber);border-color:var(--amber)}
+.sev-medium{color:var(--volt);border-color:var(--volt)}
+.pb-meta__timer{font-family:var(--mono);font-size:11px;color:var(--ash);letter-spacing:.06em}
+
+/* PHASE TRACK */
+.pb-track{display:flex;gap:0;margin-bottom:28px;overflow-x:auto}
+.pb-step{flex:1;min-width:100px;text-align:center;padding:10px 6px;border:1px solid var(--line);background:var(--panel);position:relative;cursor:default}
+.pb-step+.pb-step{border-left:0}
+.pb-step__n{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--ash);text-transform:uppercase;margin-bottom:4px}
+.pb-step__l{font-size:11px;color:var(--bone);font-weight:500}
+.pb-step__t{font-family:var(--mono);font-size:9px;color:var(--ash);margin-top:2px}
+.pb-step.active{background:var(--panel3);border-color:var(--volt);border-width:2px}
+.pb-step.active .pb-step__l{color:var(--volt)}
+
+/* RUNBOOK SECTIONS */
+.pb-section{margin-bottom:28px}
+.pb-section-h{font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ash);
+  display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.pb-section-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.pb-section-h b{color:var(--volt)}
+
+/* CHECKLIST */
+.checklist{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.checklist li{display:flex;gap:12px;align-items:flex-start;padding:10px 14px;
+  background:var(--panel);border:1px solid var(--line);cursor:pointer;transition:.1s;position:relative}
+.checklist li:hover{border-color:var(--line2)}
+.checklist li.done{border-color:var(--volt);background:rgba(0,200,160,.04)}
+.checklist li.done::after{content:"✓";position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  font-family:var(--mono);font-size:12px;color:var(--volt)}
+.cl-n{font-family:var(--mono);font-size:10px;color:var(--ash);min-width:24px;margin-top:2px;letter-spacing:.05em}
+.cl-body{flex:1}
+.cl-title{font-size:14.5px;color:var(--bone);font-weight:500;line-height:1.3}
+.cl-sub{font-size:13px;color:var(--ash);margin-top:3px;line-height:1.45}
+.cl-sub code{font-family:var(--mono);font-size:12px;color:var(--volt);background:var(--panel2);
+  border:1px solid var(--line);padding:1px 5px}
+.cl-time{font-family:var(--mono);font-size:9.5px;color:var(--dim);min-width:36px;text-align:right;margin-top:3px}
+.done .cl-title{color:var(--ash);text-decoration:line-through;text-decoration-color:var(--line2)}
+
+/* DECISION BOXES */
+.decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.decision{border:1.5px solid var(--line);background:var(--panel2);padding:14px 16px}
+.decision.good{border-color:var(--volt);background:rgba(0,200,160,.04)}
+.decision.bad{border-color:var(--blood);background:rgba(229,53,64,.04)}
+.decision h4{margin:0 0 6px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+.decision.good h4{color:var(--volt)}
+.decision.bad h4{color:var(--blood)}
+.decision p{margin:0;font-size:13.5px;color:var(--ash);line-height:1.5}
+
+/* COMMAND BLOCKS */
+.cmd-block{background:#04100c;border:1.5px solid var(--line);font-family:var(--mono);font-size:12.5px;
+  line-height:1.6;padding:14px 16px;margin-bottom:12px;white-space:pre;overflow-x:auto;color:#bfe9d8}
+.cmd-block .pmt{color:var(--volt)}
+.cmd-block .cmt{color:var(--ash)}
+.cmd-block .hl{color:var(--amber)}
+.cmd-block .err{color:var(--blood)}
+
+/* IOCS TABLE */
+.ioc-table{width:100%;border-collapse:collapse;font-size:13px}
+.ioc-table th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--ash);
+  text-transform:uppercase;border-bottom:1.5px solid var(--line);padding:8px 10px}
+.ioc-table td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top}
+.ioc-table td:first-child{font-family:var(--mono);font-size:12px;color:var(--volt)}
+.ioc-table tr:hover td{background:rgba(0,200,160,.03)}
+
+/* CALLOUTS */
+.warn{border-left:4px solid var(--blood);background:rgba(229,53,64,.06);padding:12px 16px;margin-bottom:16px;font-size:14px;color:var(--ash)}
+.warn b{color:var(--blood)}
+.note{border-left:4px solid var(--amber);background:rgba(217,152,32,.06);padding:12px 16px;margin-bottom:16px;font-size:14px;color:var(--ash)}
+.note b{color:var(--amber)}
+.tip{border-left:4px solid var(--volt);background:rgba(0,200,160,.05);padding:12px 16px;margin-bottom:16px;font-size:14px;color:var(--ash)}
+.tip b{color:var(--volt)}
+
+/* PROGRESS BAR */
+.pb-progress{display:flex;align-items:center;gap:12px;margin-bottom:24px;font-family:var(--mono);font-size:11px;color:var(--ash);letter-spacing:.1em}
+.pb-bar{flex:1;height:4px;background:var(--line2);position:relative}
+.pb-bar-fill{position:absolute;inset:0;width:0%;background:var(--volt);transition:width .3s}
+.pb-pct{min-width:36px;text-align:right;color:var(--volt)}
+
+/* MITRE REFS */
+.mitre-refs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.mitre-tag{font-family:var(--mono);font-size:10px;letter-spacing:.06em;padding:3px 8px;
+  border:1px solid var(--line);color:var(--ash);background:var(--panel2)}
+.mitre-tag b{color:var(--bone)}
+
+footer{max-width:1200px;margin:0 auto;padding:22px 24px 36px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:11px;color:var(--ash);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer a{color:var(--volt)}
+
+@media(max-width:780px){
+  .pb-track{flex-wrap:wrap}
+  .pb-step{flex:none;width:calc(50% - 0px)}
+  .decision-grid{grid-template-columns:1fr}
+}
+@media(max-width:520px){.pb-step{width:100%}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar__in">
+    <a class="brand" href="index.html"><b>BLACK<em>VAULT</em></b><span>IR Playbooks</span></a>
+    <nav class="topnav">
+      <a href="console.html">Console</a>
+      <a href="challenge.html">CTF</a>
+      <a href="tools.html">Tools</a>
+      <a href="intel.html">Intel</a>
+      <a href="playbook.html" class="active">Playbooks</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="eyebrow">Incident Response Runbooks</div>
+    <h1 class="h1">Playbooks.<br>When minutes matter.</h1>
+    <p class="lede">Real-world IR playbooks for the four incident types you'll most likely face. Not theory — sequenced, timestamped actions. Each step is based on actual post-incident review findings from public DFIR reports.</p>
+  </div>
+
+  <div class="pb-tabs">
+    <button class="pb-tab active" data-pb="ransomware" data-sev="critical">⛔ Ransomware</button>
+    <button class="pb-tab" data-pb="breach" data-sev="critical">☠ Data Breach</button>
+    <button class="pb-tab" data-pb="supply" data-sev="high">⚠ Supply Chain</button>
+    <button class="pb-tab" data-pb="bec" data-sev="high">✉ BEC / Fraud</button>
+  </div>
+
+  <!-- ================================================================ RANSOMWARE ================================================================ -->
+  <div class="playbook active" id="pb-ransomware">
+    <div class="pb-header">
+      <div>
+        <h2>Ransomware Incident Playbook</h2>
+        <p>Covers pre-encryption detection, containment, negotiation decision gates, recovery sequencing, and post-incident hardening. Reference cases: <b>LockBit 3.0, BlackCat/ALPHV, Cl0p</b>.</p>
+      </div>
+      <div class="pb-meta">
+        <span class="sev-tag sev-critical">CRITICAL</span>
+        <span class="pb-meta__timer">Target TTD: &lt;4h · TTR: 72–240h</span>
+      </div>
+    </div>
+
+    <div class="pb-progress">
+      <span>RUNBOOK PROGRESS</span>
+      <div class="pb-bar"><div class="pb-bar-fill" id="rw-fill"></div></div>
+      <span class="pb-pct" id="rw-pct">0%</span>
+    </div>
+
+    <div class="pb-track">
+      <div class="pb-step active"><div class="pb-step__n">01</div><div class="pb-step__l">Detect</div><div class="pb-step__t">T+0:00</div></div>
+      <div class="pb-step"><div class="pb-step__n">02</div><div class="pb-step__l">Triage</div><div class="pb-step__t">T+0:15</div></div>
+      <div class="pb-step"><div class="pb-step__n">03</div><div class="pb-step__l">Contain</div><div class="pb-step__t">T+0:45</div></div>
+      <div class="pb-step"><div class="pb-step__n">04</div><div class="pb-step__l">Investigate</div><div class="pb-step__t">T+2:00</div></div>
+      <div class="pb-step"><div class="pb-step__n">05</div><div class="pb-step__l">Recover</div><div class="pb-step__t">T+24h</div></div>
+      <div class="pb-step"><div class="pb-step__n">06</div><div class="pb-step__l">Harden</div><div class="pb-step__t">T+72h</div></div>
+    </div>
+
+    <div class="warn"><b>CRITICAL:</b> Do NOT reboot any affected system — you will destroy volatile memory artifacts including in-memory encryption keys, injected shellcode, and active C2 sessions. Capture RAM before any power change.</div>
+
+    <!-- PHASE 1 -->
+    <div class="pb-section">
+      <div class="pb-section-h"><b>01</b> Detection &amp; Initial Validation <span style="color:var(--dim)">T+0 → T+15min</span></div>
+      <ul class="checklist" id="rw-p1">
+        <li data-id="rw-1"><span class="cl-n">1.1</span><div class="cl-body"><div class="cl-title">Confirm indicator type — encryption in progress vs already complete?</div><div class="cl-sub">EDR alert, ransom note, renamed files (<code>*.locked</code>, <code>*.{uuid}</code>), shadow copy deletion events (EventID 524 / vssadmin logs)</div></div><span class="cl-time">2min</span></li>
+        <li data-id="rw-2"><span class="cl-n">1.2</span><div class="cl-body"><div class="cl-title">Identify affected system count via EDR telemetry</div><div class="cl-sub">Query EDR for hosts with shadow copy deletion, large-scale file rename, <code>vssadmin.exe delete shadows</code>, or <code>wmic shadowcopy delete</code> in last 60 minutes</div></div><span class="cl-time">5min</span></li>
+        <li data-id="rw-3"><span class="cl-n">1.3</span><div class="cl-body"><div class="cl-title">Verify encryption is active or stopped — do NOT reimage without imaging first</div><div class="cl-sub">If encryption is still running: isolate network first, then image RAM. If already stopped: image RAM, then disk</div></div><span class="cl-time">3min</span></li>
+        <li data-id="rw-4"><span class="cl-n">1.4</span><div class="cl-body"><div class="cl-title">Escalate: notify IR lead, CISO, Legal, and PR immediately</div><div class="cl-sub">Start the incident timeline document. Timestamp every action from this point. Log all named responders and their roles</div></div><span class="cl-time">5min</span></li>
+      </ul>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="pb-section">
+      <div class="pb-section-h"><b>02</b> Forensic Acquisition &amp; Triage <span style="color:var(--dim)">T+15 → T+45min</span></div>
+      <ul class="checklist" id="rw-p2">
+        <li data-id="rw-5"><span class="cl-n">2.1</span><div class="cl-body"><div class="cl-title">Acquire RAM from all affected systems before any power change</div><div class="cl-sub">Use <code>winpmem</code>, <code>DumpIt</code>, or <code>FTK Imager</code>. Target: patient-zero and any system showing active encryption. RAM may contain keys, injected code, or C2 strings</div></div><span class="cl-time">20min</span></li>
+        <li data-id="rw-6"><span class="cl-n">2.2</span><div class="cl-body"><div class="cl-title">Image disk(s) of patient-zero system</div><div class="cl-sub"><code>dd if=/dev/sda bs=4M | gzip &gt; evidence.img.gz</code> or use FTK Imager (Windows). Verify SHA-256 of image immediately</div></div><span class="cl-time">variable</span></li>
+        <li data-id="rw-7"><span class="cl-n">2.3</span><div class="cl-body"><div class="cl-title">Collect volatile network state on affected systems</div><div class="cl-sub"><code>netstat -ano &gt; netstat.txt</code> · <code>ipconfig /all &gt; ipconfig.txt</code> · <code>arp -a &gt; arp.txt</code> · <code>tasklist /v &gt; tasklist.txt</code></div></div><span class="cl-time">3min</span></li>
+        <li data-id="rw-8"><span class="cl-n">2.4</span><div class="cl-body"><div class="cl-title">Collect Windows Event Logs before isolation</div><div class="cl-sub">Export Security (4624/4625/4648/7045/1102), System, Application, PowerShell/4104 scriptblock logs</div></div><span class="cl-time">5min</span></li>
+      </ul>
+      <div class="cmd-block"><span class="pmt">PS&gt;</span> winpmem_mini_x64_rc2.exe --output memdump.aff4 --format aff4
+<span class="pmt">PS&gt;</span> Get-EventLog -LogName Security -Newest 5000 | Export-Csv security.csv
+<span class="pmt">PS&gt;</span> wevtutil epl "Microsoft-Windows-PowerShell/Operational" ps-scriptblock.evtx</div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="pb-section">
+      <div class="pb-section-h"><b>03</b> Containment <span style="color:var(--dim)">T+45 → T+2h</span></div>
+      <div class="note"><b>Sequencing matters:</b> Acquire evidence BEFORE isolating. Isolation ends your visibility window — once a host is network-isolated, you lose live C2 telemetry and the ability to pivot to new hosts from that socket.</div>
+      <ul class="checklist" id="rw-p3">
+        <li data-id="rw-9"><span class="cl-n">3.1</span><div class="cl-body"><div class="cl-title">Isolate affected hosts at network layer (VLAN isolation, not power-off)</div><div class="cl-sub">EDR agent network isolation, or switch VLAN reassignment. Document which hosts are isolated and when</div></div><span class="cl-time">15min</span></li>
+        <li data-id="rw-10"><span class="cl-n">3.2</span><div class="cl-body"><div class="cl-title">Block C2 indicators at perimeter — only after scoping is complete</div><div class="cl-sub">Block identified IPs, domains, and JA3 hashes at firewall/proxy. Sinkhole DGA domains if still beaconing (preserve logs before blocking)</div></div><span class="cl-time">10min</span></li>
+        <li data-id="rw-11"><span class="cl-n">3.3</span><div class="cl-body"><div class="cl-title">Disable compromised accounts (especially service and admin accounts)</div><div class="cl-sub">Check for pass-the-hash / Kerberos ticket reuse. Disable accounts seen in malicious authentication events (4648, 4768, 4769)</div></div><span class="cl-time">20min</span></li>
+        <li data-id="rw-12"><span class="cl-n">3.4</span><div class="cl-body"><div class="cl-title">Determine exfiltration scope BEFORE negotiation — critical gate</div><div class="cl-sub">Review proxy/DLP/firewall logs for large outbound transfers 24–72h before encryption. LockBit/ALPHV exfil before encrypting. Ransom demand doubles if you admit exfil in negotiation without knowing scope</div></div><span class="cl-time">30min</span></li>
+      </ul>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="pb-section">
+      <div class="pb-section-h"><b>04</b> Investigation &amp; Root Cause <span style="color:var(--dim)">T+2h → T+24h</span></div>
+      <ul class="checklist" id="rw-p4">
+        <li data-id="rw-13"><span class="cl-n">4.1</span><div class="cl-body"><div class="cl-title">Identify patient-zero and initial access vector</div><div class="cl-sub">Analyze: phishing email (MX/mail server logs), VPN/RDP access (4624/4625 with logon type 10), exploited public-facing service (web logs). Trace EVTX timestamps backward from first encrypted file</div></div><span class="cl-time">2h</span></li>
+        <li data-id="rw-14"><span class="cl-n">4.2</span><div class="cl-body"><div class="cl-title">Map lateral movement path</div><div class="cl-sub">SMB (EventID 5140/5145), WMI (EventID 4688 with wmic/wmiprvse), PsExec (EventID 7045 PSEXESVC), RDP (4624 logon type 10), Kerberoasting (4769 RC4 tickets)</div></div><span class="cl-time">3h</span></li>
+        <li data-id="rw-15"><span class="cl-n">4.3</span><div class="cl-body"><div class="cl-title">Analyze malware sample — identify family and encryptor version</div><div class="cl-sub">Submit to sandbox (Any.run, Hybrid Analysis). Run YARA against LockBit/ALPHV/Cl0p rule sets. Identify encryptor (RSA-wrapped AES? ChaCha20? Salsa20?). Family ID determines decryption viability</div></div><span class="cl-time">2h</span></li>
+        <li data-id="rw-16"><span class="cl-n">4.4</span><div class="cl-body"><div class="cl-title">Run Volatility against RAM captures — validate process injection, keys</div><div class="cl-sub"><code>vol3 -f mem.dmp windows.malfind</code> · <code>vol3 -f mem.dmp windows.netscan</code> · <code>vol3 -f mem.dmp windows.cmdline</code>. Some encryptors leave key material in process memory if encryption didn't complete</div></div><span class="cl-time">2h</span></li>
+      </ul>
+      <div class="cmd-block"><span class="cmt"># Volatility 3 — ransomware investigation commands</span>
+<span class="pmt">$</span> python3 vol.py -f hermes07.raw windows.pslist | grep -v Idle
+<span class="pmt">$</span> python3 vol.py -f hermes07.raw windows.malfind --dump-dir ./dumps/
+<span class="pmt">$</span> python3 vol.py -f hermes07.raw windows.netscan | grep -v CLOSE
+<span class="pmt">$</span> python3 vol.py -f hermes07.raw windows.cmdline
+<span class="pmt">$</span> python3 vol.py -f hermes07.raw windows.dlllist --pid 4812
+<span class="cmt">
+# Identify ransom family via YARA</span>
+<span class="pmt">$</span> yara -r lockbit3-rules.yar /mnt/evidence/
+<span class="pmt">$</span> yara -r alphv-blackcat.yar /mnt/evidence/
+
+<span class="cmt"># Shadow copy check</span>
+<span class="pmt">PS&gt;</span> vssadmin list shadows
+<span class="pmt">PS&gt;</span> Get-WinEvent -FilterHashtable @{LogName='System';Id=7045} | Where-Object {$_.Message -match 'vsserv|vss'}</div>
+    </div>
+
+    <!-- DECISION GATE -->
+    <div class="pb-section">
+      <div class="pb-section-h"><b>GATE</b> Negotiation Decision</div>
+      <div class="decision-grid">
+        <div class="decision good">
+          <h4>Do NOT negotiate if:</h4>
+          <p>Working backups are confirmed clean (pre-infection) · Decryptor is publicly available (Europol No More Ransom) · Legal/jurisdiction prohibits payment to sanctioned entity · Data exfil scope is limited or confidential data is not confirmed exfiltrated</p>
+        </div>
+        <div class="decision bad">
+          <h4>Consider negotiation only if:</h4>
+          <p>Backups are also encrypted or confirmed compromised · Critical systems (hospital, OT) will cost lives · Confirmed exfil of sensitive PII/trade secrets and negotiation may reduce public disclosure · Legal has cleared the entity (not on OFAC SDN list)</p>
+        </div>
+      </div>
+      <div class="warn"><b>NEVER pay before:</b> Confirming entity is not OFAC-sanctioned (criminal penalty) · Getting Legal sign-off · Verifying decryptor actually works (test one non-critical file) · Securing cyber insurance notification</div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="pb-section">
+      <div class="pb-section-h"><b>05</b> Recovery Sequencing <span style="color:var(--dim)">T+24h → T+120h</span></div>
+      <ul class="checklist" id="rw-p5">
+        <li data-id="rw-17"><span class="cl-n">5.1</span><div class="cl-body"><div class="cl-title">Rebuild from known-good backups in isolated environment first</div><div class="cl-sub">Confirm backup integrity BEFORE restoring. Verify backup timestamps predate patient-zero's initial access — ransomware operators often compromise backup infrastructure first</div></div><span class="cl-time">4h</span></li>
+        <li data-id="rw-18"><span class="cl-n">5.2</span><div class="cl-body"><div class="cl-title">Reset ALL credentials — assume full domain compromise</div><div class="cl-sub">krbtgt reset (twice, 10h apart for Kerberos ticket expiry) · All domain admin, service account, and privileged user passwords · MFA re-enrollment for all admins · VPN certificates if applicable</div></div><span class="cl-time">8h</span></li>
+        <li data-id="rw-19"><span class="cl-n">5.3</span><div class="cl-body"><div class="cl-title">Prioritize recovery order by business impact tier</div><div class="cl-sub">Tier 1: life-safety, payment, authentication infrastructure · Tier 2: core business operations · Tier 3: productivity/collaboration · Tier 4: non-critical</div></div><span class="cl-time">variable</span></li>
+        <li data-id="rw-20"><span class="cl-n">5.4</span><div class="cl-body"><div class="cl-title">Validate each recovered system with EDR before returning to production</div><div class="cl-sub">Reinstall EDR agent on clean base. Confirm no persistence mechanisms remain (scheduled tasks, registry run keys, WMI subscriptions, services)</div></div><span class="cl-time">variable</span></li>
+      </ul>
+    </div>
+
+    <!-- MITRE -->
+    <div class="pb-section">
+      <div class="pb-section-h">ATT&amp;CK Coverage</div>
+      <div class="mitre-refs">
+        <span class="mitre-tag"><b>T1566</b> Phishing</span>
+        <span class="mitre-tag"><b>T1190</b> Exploit Public-Facing App</span>
+        <span class="mitre-tag"><b>T1078</b> Valid Accounts</span>
+        <span class="mitre-tag"><b>T1059</b> Command Scripting</span>
+        <span class="mitre-tag"><b>T1021</b> Remote Services</span>
+        <span class="mitre-tag"><b>T1055</b> Process Injection</span>
+        <span class="mitre-tag"><b>T1003</b> Credential Dumping</span>
+        <span class="mitre-tag"><b>T1070</b> Indicator Removal</span>
+        <span class="mitre-tag"><b>T1490</b> Inhibit System Recovery</span>
+        <span class="mitre-tag"><b>T1486</b> Data Encrypted for Impact</span>
+        <span class="mitre-tag"><b>T1048</b> Exfil Alt Protocol</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================ DATA BREACH ================================================================ -->
+  <div class="playbook" id="pb-breach">
+    <div class="pb-header">
+      <div>
+        <h2>Data Breach Incident Playbook</h2>
+        <p>Covers detection of unauthorized data access, exfiltration confirmation, regulatory notification gates, and containment. Reference cases: <b>MOVEit/Cl0p, Okta 2023, LastPass 2022</b>.</p>
+      </div>
+      <div class="pb-meta">
+        <span class="sev-tag sev-critical">CRITICAL</span>
+        <span class="pb-meta__timer">Notif. SLA: 72h (GDPR) · 30d (HIPAA)</span>
+      </div>
+    </div>
+
+    <div class="pb-progress">
+      <span>RUNBOOK PROGRESS</span>
+      <div class="pb-bar"><div class="pb-bar-fill" id="br-fill"></div></div>
+      <span class="pb-pct" id="br-pct">0%</span>
+    </div>
+
+    <div class="pb-track">
+      <div class="pb-step active"><div class="pb-step__n">01</div><div class="pb-step__l">Detect</div><div class="pb-step__t">T+0</div></div>
+      <div class="pb-step"><div class="pb-step__n">02</div><div class="pb-step__l">Scope</div><div class="pb-step__t">T+1h</div></div>
+      <div class="pb-step"><div class="pb-step__n">03</div><div class="pb-step__l">Confirm</div><div class="pb-step__t">T+4h</div></div>
+      <div class="pb-step"><div class="pb-step__n">04</div><div class="pb-step__l">Legal Gate</div><div class="pb-step__t">T+8h</div></div>
+      <div class="pb-step"><div class="pb-step__n">05</div><div class="pb-step__l">Notify</div><div class="pb-step__t">T+72h</div></div>
+      <div class="pb-step"><div class="pb-step__n">06</div><div class="pb-step__l">Remediate</div><div class="pb-step__t">T+14d</div></div>
+    </div>
+
+    <div class="pb-section">
+      <div class="pb-section-h"><b>01</b> Detection &amp; Initial Triage</div>
+      <ul class="checklist" id="br-p1">
+        <li data-id="br-1"><span class="cl-n">1.1</span><div class="cl-body"><div class="cl-title">Characterize the detection: how was exfiltration discovered?</div><div class="cl-sub">DLP alert · SIEM anomaly (large outbound to new destination) · Threat intel (data on dark web marketplace) · Third-party notification · Attacker ransom demand citing stolen data</div></div><span class="cl-time">10min</span></li>
+        <li data-id="br-2"><span class="cl-n">1.2</span><div class="cl-body"><div class="cl-title">Identify the access vector: external intrusion or internal actor?</div><div class="cl-sub">Check authentication logs for anomalous access: off-hours, impossible travel, new IP, new user-agent string. Review API access logs and file server audit logs</div></div><span class="cl-time">20min</span></li>
+        <li data-id="br-3"><span class="cl-n">1.3</span><div class="cl-body"><div class="cl-title">Engage Legal immediately — clock for regulatory notification starts now</div><div class="cl-sub">GDPR: 72h to notify supervisory authority from discovery. HIPAA: 60 days for individuals, 60 days for OCR. State breach laws vary (CA: 72h, NY: 30d). Do not confirm breach publicly until Legal approves</div></div><span class="cl-time">15min</span></li>
+      </ul>
+    </div>
+
+    <div class="pb-section">
+      <div class="pb-section-h"><b>02</b> Scope — What Was Accessed?</div>
+      <ul class="checklist" id="br-p2">
+        <li data-id="br-4"><span class="cl-n">2.1</span><div class="cl-body"><div class="cl-title">Enumerate all data repositories the compromised account/credential could access</div><div class="cl-sub">AD group memberships · SharePoint/OneDrive permissions · S3 bucket policies · Database roles · API OAuth scopes · SaaS app permissions (Salesforce, Workday, etc.)</div></div><span class="cl-time">1h</span></li>
+        <li data-id="br-5"><span class="cl-n">2.2</span><div class="cl-body"><div class="cl-title">Quantify exfiltrated data from network logs</div><div class="cl-sub">Proxy/firewall logs: bytes transferred per session, destination IPs. CASB logs for cloud uploads. DNS logs for high-volume queries (DNS tunneling). Correlate file access audit logs with data transfer volumes</div></div><span class="cl-time">2h</span></li>
+        <li data-id="br-6"><span class="cl-n">2.3</span><div class="cl-body"><div class="cl-title">Classify data types accessed: PII, PHI, financial, IP, credentials?</div><div class="cl-sub">Data classification determines regulatory obligations. PII/PHI = GDPR/HIPAA. Payment card data = PCI DSS breach notification. Trade secrets = potential economic espionage. Each triggers different notification and response requirements</div></div><span class="cl-time">2h</span></li>
+      </ul>
+      <div class="cmd-block"><span class="cmt"># Reconstruct attacker's access path — proxy logs</span>
+<span class="pmt">$</span> grep "10.1.5.42" /var/log/squid/access.log | awk '{print $1,$7,$9,$10}' | sort -n
+<span class="cmt">
+# S3 CloudTrail — what objects were accessed/downloaded</span>
+<span class="pmt">$</span> aws cloudtrail lookup-events \
+    --lookup-attributes AttributeKey=EventName,AttributeValue=GetObject \
+    --start-time 2025-03-01 --end-time 2025-03-08 \
+    --query 'Events[].{User:Username,Bucket:CloudTrailEvent}' \
+    | jq '.[].Bucket | fromjson | .requestParameters'
+<span class="cmt">
+# Identify data leaving the network by volume</span>
+<span class="pmt">$</span> tcpdump -r capture.pcap -nn 'dst not 10.0.0.0/8' | awk '{print $5}' | sort | uniq -c | sort -rn | head -20</div>
+    </div>
+
+    <div class="pb-section">
+      <div class="pb-section-h"><b>GATE</b> Notification Decision Matrix</div>
+      <table class="ioc-table">
+        <tr><th>Framework</th><th>Trigger</th><th>Timeline</th><th>Who to Notify</th></tr>
+        <tr><td>GDPR</td><td>Personal data of EU residents</td><td>72 hours from discovery</td><td>Lead supervisory authority; affected individuals if high risk</td></tr>
+        <tr><td>HIPAA</td><td>PHI of US patients</td><td>60 days; 60 days for &gt;500 individuals</td><td>OCR + affected individuals; media if &gt;500 in state</td></tr>
+        <tr><td>PCI DSS</td><td>Cardholder data</td><td>24 hours (initial); investigation report within 10 days</td><td>Card brands (Visa/MC) + acquiring bank</td></tr>
+        <tr><td>SEC Rule</td><td>Public company, material cybersecurity incident</td><td>4 business days from materiality determination</td><td>Form 8-K disclosure</td></tr>
+        <tr><td>State laws</td><td>Varies by state + data type</td><td>30–90 days (varies)</td><td>State AG + affected residents</td></tr>
+      </table>
+    </div>
+
+    <div class="mitre-refs" style="margin-top:16px">
+      <span class="mitre-tag"><b>T1190</b> Exploit Public App</span>
+      <span class="mitre-tag"><b>T1078</b> Valid Accounts</span>
+      <span class="mitre-tag"><b>T1005</b> Data from Local System</span>
+      <span class="mitre-tag"><b>T1041</b> Exfil over C2</span>
+      <span class="mitre-tag"><b>T1567</b> Exfil to Web Service</span>
+      <span class="mitre-tag"><b>T1530</b> Data from Cloud Storage</span>
+    </div>
+  </div>
+
+  <!-- ================================================================ SUPPLY CHAIN ================================================================ -->
+  <div class="playbook" id="pb-supply">
+    <div class="pb-header">
+      <div>
+        <h2>Supply Chain Compromise Playbook</h2>
+        <p>Covers vendor software verification, fleet-wide triage sequencing, dormancy handling, and sinkholing. Reference cases: <b>SolarWinds SUNBURST, 3CX, XZ Utils backdoor</b>.</p>
+      </div>
+      <div class="pb-meta">
+        <span class="sev-tag sev-high">HIGH–CRITICAL</span>
+        <span class="pb-meta__timer">Complexity: Extreme · Scope: Fleet-wide</span>
+      </div>
+    </div>
+
+    <div class="pb-progress">
+      <span>RUNBOOK PROGRESS</span>
+      <div class="pb-bar"><div class="pb-bar-fill" id="sc-fill"></div></div>
+      <span class="pb-pct" id="sc-pct">0%</span>
+    </div>
+
+    <div class="pb-section">
+      <div class="pb-section-h"><b>01</b> Binary Verification — Confirm Compromise</div>
+      <ul class="checklist" id="sc-p1">
+        <li data-id="sc-1"><span class="cl-n">1.1</span><div class="cl-body"><div class="cl-title">Hash every instance of the flagged software/library across your fleet</div><div class="cl-sub"><code>Get-FileHash -Algorithm SHA256 "C:\Program Files\Vendor\*.dll"</code> — compare against vendor's published checksums. Even one mismatch = confirmed compromise candidate</div></div><span class="cl-time">30min</span></li>
+        <li data-id="sc-2"><span class="cl-n">1.2</span><div class="cl-body"><div class="cl-title">Verify code signing certificate is legitimate AND the file contents match</div><div class="cl-sub">Supply chain attackers (SolarWinds, 3CX) used legitimate certificates. A valid signature on tampered code is exactly the scenario. Hash must also match</div></div><span class="cl-time">15min</span></li>
+        <li data-id="sc-3"><span class="cl-n">1.3</span><div class="cl-body"><div class="cl-title">Static-analyze the suspicious binary in Ghidra before running anything</div><div class="cl-sub">Look for: dormancy checks (date/time comparisons), environment checks (domain-joined?), DGA logic, encoded C2 strings, shellcode loading from registry/file</div></div><span class="cl-time">2h</span></li>
+      </ul>
+      <div class="cmd-block"><span class="cmt"># Fleet-wide hash verification (PowerShell)</span>
+<span class="pmt">PS&gt;</span> $VendorHash = "sha256_from_vendor_advisory_here"
+<span class="pmt">PS&gt;</span> Get-ChildItem -Path "C:\Program Files" -Recurse -Filter "SuspectLib.dll" |
+    ForEach-Object {
+        $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+        [PSCustomObject]@{Path=$_.FullName; Hash=$hash; Match=($hash -eq $VendorHash)}
+    } | Where-Object {-not $_.Match}
+
+<span class="cmt"># Linux: verify against vendor checksum</span>
+<span class="pmt">$</span> sha256sum /usr/lib/libxz.so.5.4.6 | diff - vendor-checksums.txt
+<span class="pmt">$</span> objdump -d /usr/lib/libxz.so.5.4.6 | grep -A5 "call"  <span class="cmt"># look for unexpected calls</span></div>
+    </div>
+
+    <div class="pb-section">
+      <div class="pb-section-h"><b>02</b> Dormancy-Aware Triage</div>
+      <div class="note"><b>Key insight:</b> Supply chain backdoors typically include dormancy periods (SolarWinds: 14 days; XZ Utils: conditional on systemd). A sandbox seeing "nothing" means nothing — static analysis and fleet behavioral data matter more than sandbox detonation.</div>
+      <ul class="checklist" id="sc-p2">
+        <li data-id="sc-4"><span class="cl-n">2.1</span><div class="cl-body"><div class="cl-title">Query fleet: install date vs dormancy window</div><div class="cl-sub">If backdoor activates 14 days post-install: hosts installed &gt;14 days ago = active. Hosts installed &lt;14 days = dormant. Contain active tier first; monitor dormant tier</div></div><span class="cl-time">1h</span></li>
+        <li data-id="sc-5"><span class="cl-n">2.2</span><div class="cl-body"><div class="cl-title">Sinkhole the C2 domain/DGA to enumerate active beaconing hosts</div><div class="cl-sub">Work with DNS/NOC team: redirect the DGA TLD or C2 domain to an internal honeypot. Log all connecting IPs — this gives you ground-truth active host list without alerting the adversary</div></div><span class="cl-time">2h</span></li>
+        <li data-id="sc-6"><span class="cl-n">2.3</span><div class="cl-body"><div class="cl-title">Determine if second stage was delivered to any host before sinkholing</div><div class="cl-sub">Hunt: unusual child processes of the vendor software, new registry keys, scheduled tasks, services. Check network logs for resolved C2 before sinkhole was in place</div></div><span class="cl-time">4h</span></li>
+      </ul>
+    </div>
+
+    <div class="mitre-refs" style="margin-top:8px">
+      <span class="mitre-tag"><b>T1195.002</b> Software Supply Chain</span>
+      <span class="mitre-tag"><b>T1497</b> Virtualization/Sandbox Evasion</span>
+      <span class="mitre-tag"><b>T1568.002</b> DGA</span>
+      <span class="mitre-tag"><b>T1055</b> Process Injection</span>
+      <span class="mitre-tag"><b>T1003</b> Credential Dumping</span>
+    </div>
+  </div>
+
+  <!-- ================================================================ BEC ================================================================ -->
+  <div class="playbook" id="pb-bec">
+    <div class="pb-header">
+      <div>
+        <h2>Business Email Compromise (BEC) Playbook</h2>
+        <p>Covers account takeover detection, wire fraud interception, mail-rule backdoor removal, and tenant hardening. Reference cases: <b>Microsoft 365 OAuth abuse, Octo Tempest / Scattered Spider BEC</b>.</p>
+      </div>
+      <div class="pb-meta">
+        <span class="sev-tag sev-high">HIGH</span>
+        <span class="pb-meta__timer">Wire recall window: &lt;24h</span>
+      </div>
+    </div>
+
+    <div class="pb-progress">
+      <span>RUNBOOK PROGRESS</span>
+      <div class="pb-bar"><div class="pb-bar-fill" id="bec-fill"></div></div>
+      <span class="pb-pct" id="bec-pct">0%</span>
+    </div>
+
+    <div class="warn"><b>TIME CRITICAL:</b> Wire fraud has a recall window of approximately 24–72 hours. Initiate wire recall/hold through your bank's fraud team IMMEDIATELY upon confirmation of a fraudulent transfer — before any forensics.</div>
+
+    <div class="pb-section">
+      <div class="pb-section-h"><b>01</b> Account Takeover Validation</div>
+      <ul class="checklist" id="bec-p1">
+        <li data-id="bec-1"><span class="cl-n">1.1</span><div class="cl-body"><div class="cl-title">Pull Azure AD / Entra ID sign-in logs for the affected account</div><div class="cl-sub">Check: impossible travel (sign-in from US + Europe within minutes) · new device/IP · MFA fatigue attacks (many push notifications) · legacy auth bypass (no MFA required for IMAP/SMTP)</div></div><span class="cl-time">15min</span></li>
+        <li data-id="bec-2"><span class="cl-n">1.2</span><div class="cl-body"><div class="cl-title">Enumerate malicious mail rules created by attacker</div><div class="cl-sub">BEC attackers create inbox rules to hide replies, forward to attacker, delete security alerts. <code>Get-InboxRule -Mailbox victim@company.com</code> — look for rules forwarding to external addresses or moving mail to trash</div></div><span class="cl-time">10min</span></li>
+        <li data-id="bec-3"><span class="cl-n">1.3</span><div class="cl-body"><div class="cl-title">Check OAuth app consents — attackers register apps to maintain access post-password-reset</div><div class="cl-sub">Azure portal: Entra ID → Enterprise Applications → filter "Granted by users". Remove any app the user doesn't recognize. This is how attackers survive password resets and maintain M365 access</div></div><span class="cl-time">10min</span></li>
+      </ul>
+      <div class="cmd-block"><span class="cmt"># Exchange Online — dump inbox rules</span>
+<span class="pmt">PS&gt;</span> Connect-ExchangeOnline
+<span class="pmt">PS&gt;</span> Get-InboxRule -Mailbox "victim@company.com" | Select Name,Enabled,ForwardTo,DeleteMessage,MoveToFolder
+
+<span class="cmt"># Azure AD sign-in logs — impossible travel detection</span>
+<span class="pmt">PS&gt;</span> Get-AzureADAuditSignInLogs -Filter "userPrincipalName eq 'victim@company.com'" |
+    Select-Object createdDateTime,ipAddress,location,status,clientAppUsed |
+    Sort-Object createdDateTime | Format-Table
+
+<span class="cmt"># OAuth consents</span>
+<span class="pmt">PS&gt;</span> Get-MgUserOAuth2PermissionGrant -UserId victim@company.com |
+    Select-Object ClientId,Scope,ConsentType | Format-Table</div>
+    </div>
+
+    <div class="pb-section">
+      <div class="pb-section-h"><b>02</b> Wire Fraud Interception</div>
+      <ul class="checklist" id="bec-p2">
+        <li data-id="bec-4"><span class="cl-n">2.1</span><div class="cl-body"><div class="cl-title">Contact bank fraud team IMMEDIATELY with transfer details</div><div class="cl-sub">Request SWIFT recall or wire reversal. Provide: date/time, amount, beneficiary bank/account, SWIFT/routing number. US: contact FBI IC3 and FinCEN Financial Fraud Kill Chain (FFKC)</div></div><span class="cl-time">IMMEDIATE</span></li>
+        <li data-id="bec-5"><span class="cl-n">2.2</span><div class="cl-body"><div class="cl-title">Preserve all email threads related to the fraudulent transfer request</div><div class="cl-sub">Legal hold on mailbox. Export headers, body, attachments. Check if email was impersonation (spoofing) vs account takeover — different forensic paths</div></div><span class="cl-time">30min</span></li>
+        <li data-id="bec-6"><span class="cl-n">2.3</span><div class="cl-body"><div class="cl-title">File FBI IC3 complaint and local law enforcement report</div><div class="cl-sub">FBI IC3 (ic3.gov) handles wire fraud. Report within 72h for best chance of fund recovery through the FFKC program. Provide all transaction details and fraud communication evidence</div></div><span class="cl-time">4h</span></li>
+      </ul>
+    </div>
+
+    <div class="pb-section">
+      <div class="pb-section-h"><b>03</b> M365 Tenant Hardening</div>
+      <ul class="checklist" id="bec-p3">
+        <li data-id="bec-7"><span class="cl-n">3.1</span><div class="cl-body"><div class="cl-title">Revoke all sessions and tokens for compromised accounts</div><div class="cl-sub"><code>Revoke-AzureADUserAllRefreshToken -ObjectId user_id</code> and reset password. Remove all OAuth consents. This invalidates existing access tokens but attacker may re-authenticate if credential still valid</div></div><span class="cl-time">5min</span></li>
+        <li data-id="bec-8"><span class="cl-n">3.2</span><div class="cl-body"><div class="cl-title">Enable Conditional Access: require MFA, block legacy auth protocols</div><div class="cl-sub">Block: IMAP, POP3, SMTP AUTH, Exchange ActiveSync without MFA. These bypass MFA by design and are the primary BEC entry vector. Require compliant device for M365 access</div></div><span class="cl-time">2h</span></li>
+        <li data-id="bec-9"><span class="cl-n">3.3</span><div class="cl-body"><div class="cl-title">Enable Microsoft Secure Score remediations specific to BEC</div><div class="cl-sub">Turn on: DMARC+DKIM+SPF enforcement · Anti-phishing policy (impersonation protection) · Safe Links · Disable auto-forwarding to external domains (anti-exfil rule)</div></div><span class="cl-time">1h</span></li>
+      </ul>
+    </div>
+
+    <div class="mitre-refs" style="margin-top:8px">
+      <span class="mitre-tag"><b>T1566.002</b> Spearphishing Link</span>
+      <span class="mitre-tag"><b>T1078.004</b> Cloud Accounts</span>
+      <span class="mitre-tag"><b>T1114</b> Email Collection</span>
+      <span class="mitre-tag"><b>T1137</b> Office App Persistence</span>
+      <span class="mitre-tag"><b>T1550.001</b> OAuth Tokens</span>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<footer>
+  <span><a href="index.html">⌂ Home</a> · <a href="console.html">Console</a> · <a href="challenge.html">CTF</a> · <a href="tools.html">Tools</a> · <a href="intel.html">Intel</a></span>
+  <span style="color:var(--ash)">BLACKVAULT // IR Playbooks — educational use only</span>
+</footer>
+
+<script>
+// Tab switching
+document.querySelectorAll('.pb-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.pb-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.playbook').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('pb-'+tab.dataset.pb).classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+// Checklist items
+const DONE_KEY='bv_playbook_done';
+let done=JSON.parse(localStorage.getItem(DONE_KEY)||'{}');
+
+function saveDone(){localStorage.setItem(DONE_KEY,JSON.stringify(done));}
+function updateProgress(){
+  const pbs=[
+    {fill:'rw-fill',pct:'rw-pct',items:document.querySelectorAll('#pb-ransomware .checklist li')},
+    {fill:'br-fill',pct:'br-pct',items:document.querySelectorAll('#pb-breach .checklist li')},
+    {fill:'sc-fill',pct:'sc-pct',items:document.querySelectorAll('#pb-supply .checklist li')},
+    {fill:'bec-fill',pct:'bec-pct',items:document.querySelectorAll('#pb-bec .checklist li')},
+  ];
+  pbs.forEach(pb=>{
+    const total=pb.items.length;if(!total)return;
+    const checked=[...pb.items].filter(li=>li.classList.contains('done')).length;
+    const pct=Math.round(checked/total*100);
+    const f=document.getElementById(pb.fill);const p=document.getElementById(pb.pct);
+    if(f)f.style.width=pct+'%';if(p)p.textContent=pct+'%';
+  });
+}
+
+document.querySelectorAll('.checklist li').forEach(li=>{
+  const id=li.dataset.id;
+  if(done[id])li.classList.add('done');
+  li.addEventListener('click',()=>{
+    if(done[id]){delete done[id];li.classList.remove('done');}
+    else{done[id]=1;li.classList.add('done');}
+    saveDone();updateProgress();
+  });
+});
+
+updateProgress();
+</script>
+</body>
+</html>

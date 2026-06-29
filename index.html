@@ -3,686 +3,836 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="BLACKVAULT — self-directed security training range for Reverse Engineering, Malware Analysis, and Digital Forensics. 25+ hands-on labs, real artifacts, 12-phase curriculum.">
+<meta name="description" content="BLACKVAULT — self-directed security training range for Reverse Engineering, Malware Analysis, and Digital Forensics. 12 phases, 25+ labs, real artifacts, MITRE ATT&CK coverage.">
 <title>BLACKVAULT // Security Training Range</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
-  --void:#050706;--panel:#0b0f0d;--panel2:#101512;--bone:#e9e7dc;--ash:#878d85;
-  --blood:#fb3640;--volt:#2de2e6;--amber:#f4b740;--lime:#57d977;
-  --line:rgba(233,231,220,.13);
-  --grot:'Space Grotesk',-apple-system,sans-serif;
-  --mono:'Space Mono',ui-monospace,monospace;
+  --void:#060908; --panel:#0C1410; --panel2:#111C16; --panel3:#172218;
+  --line:#1C2C22; --line2:#243828;
+  --bone:#D0E4D8; --ash:#6A8C72; --dim:#374D3C;
+  --blood:#E53540; --volt:#00C8A0; --amber:#D99820; --blue:#3CB8E0;
+  --grot:'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:'Space Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
 }
 *{box-sizing:border-box}html,body{margin:0;padding:0}
 body{
   background:var(--void);color:var(--bone);font-family:var(--grot);
   font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
   background-image:
-    linear-gradient(rgba(45,226,230,.025) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(45,226,230,.025) 1px,transparent 1px);
+    linear-gradient(rgba(0,200,160,.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,200,160,.02) 1px,transparent 1px);
   background-size:44px 44px;min-height:100vh;
 }
 body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
-  background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.14) 0 1px,transparent 1px 3px);
   opacity:.35;mix-blend-mode:multiply;}
 a{color:inherit;text-decoration:none}
 ::selection{background:var(--blood);color:var(--void)}
-.wrap{max-width:1160px;margin:0 auto;padding:0 22px 90px}
 
-/* NAV */
-.topbar{position:sticky;top:0;z-index:20;background:rgba(5,7,6,.95);backdrop-filter:blur(8px);border-bottom:2px solid var(--bone);}
-.topbar__in{max-width:1160px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.brand{display:flex;align-items:baseline;gap:10px}
-.brand b{font-weight:700;letter-spacing:-.02em;font-size:20px}
-.brand b i{color:var(--blood);font-style:normal}
-.brand span{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--ash);text-transform:uppercase}
-.topnav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
-.topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);padding:7px 11px;border:1.5px solid transparent;transition:.12s}
-.topnav a:hover{color:var(--bone);border-color:var(--line)}
-.topnav a.cta{color:var(--void);background:var(--bone);border-color:var(--bone)}
-.topnav a.cta:hover{background:var(--volt);border-color:var(--volt)}
+/* ===== HEADER ===== */
+.header{position:sticky;top:0;z-index:30;background:rgba(6,9,8,.96);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.header__in{max-width:1240px;margin:0 auto;padding:12px 28px;
+  display:flex;align-items:center;gap:20px}
+.logo{display:flex;align-items:baseline;gap:10px;flex-shrink:0}
+.logo__mark{font-family:var(--grot);font-weight:700;font-size:18px;letter-spacing:-.02em;color:var(--bone)}
+.logo__mark em{color:var(--blood);font-style:normal}
+.logo__sub{font-family:var(--mono);font-size:9px;letter-spacing:.28em;color:var(--ash);text-transform:uppercase}
+.header-nav{display:flex;gap:2px;margin-left:auto;align-items:center}
+.header-nav a{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ash);padding:7px 12px;border:1.5px solid transparent;transition:.12s}
+.header-nav a:hover{color:var(--bone);border-color:var(--line)}
+.header-nav .cta{background:var(--volt);color:var(--void);border-color:var(--volt);font-weight:700}
+.header-nav .cta:hover{background:var(--bone);border-color:var(--bone)}
 
-/* HERO */
-.hero{padding:56px 0 42px}
-.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--volt);margin-bottom:10px}
-.h1{font-size:clamp(34px,7vw,64px);font-weight:700;letter-spacing:-.03em;line-height:1.0;margin:0 0 18px}
-.h1 em{color:var(--blood);font-style:normal}
-.lede{color:var(--ash);max-width:66ch;font-size:17px;line-height:1.6;margin:0 0 32px}
-.lede b{color:var(--bone)}
-.ctas{display:flex;gap:14px;flex-wrap:wrap}
-.btn{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
-  background:var(--bone);color:var(--void);border:2px solid var(--bone);padding:12px 20px;
-  box-shadow:6px 6px 0 var(--blood);transition:.12s;display:inline-block}
-.btn:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--blood)}
-.btn--ghost{background:transparent;color:var(--bone);box-shadow:6px 6px 0 rgba(45,226,230,.4)}
-.btn--ghost:hover{box-shadow:8px 8px 0 var(--volt);color:var(--volt);border-color:var(--volt)}
+/* ===== WRAP ===== */
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px 90px}
 
-/* STATS BAR */
-.statsbar{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0;margin:32px 0;
-  display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
-.stat{text-align:center;padding:0 8px}
-.stat b{display:block;font-family:var(--mono);font-size:28px;font-weight:700;color:var(--volt);letter-spacing:-.02em}
-.stat span{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash)}
+/* ===== HERO ===== */
+.hero{padding:72px 0 52px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.hero-left{}
+.hero-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--volt);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.hero-eyebrow::before{content:"";display:inline-block;width:28px;height:2px;background:var(--volt)}
+.hero-h1{font-size:clamp(36px,5.5vw,62px);font-weight:700;letter-spacing:-.04em;line-height:1.0;margin:0 0 20px;color:var(--bone)}
+.hero-h1 em{color:var(--blood);font-style:normal;display:block}
+.hero-lede{color:var(--ash);max-width:52ch;font-size:16px;line-height:1.65;margin:0 0 30px}
+.hero-lede b{color:var(--bone)}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap}
+.btn{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;
+  display:inline-block;padding:12px 22px;border:2px solid;transition:.12s}
+.btn-primary{background:var(--bone);color:var(--void);border-color:var(--bone);box-shadow:5px 5px 0 var(--blood)}
+.btn-primary:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--blood)}
+.btn-ghost{background:transparent;color:var(--bone);border-color:var(--line2);box-shadow:5px 5px 0 rgba(0,200,160,.3)}
+.btn-ghost:hover{border-color:var(--volt);color:var(--volt);box-shadow:8px 8px 0 rgba(0,200,160,.4)}
+.btn-sm{font-size:10px;padding:8px 14px}
 
-/* SECTION */
-.sec__h{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ash);
-  border-bottom:1px solid var(--line);padding-bottom:8px;margin:50px 0 20px;display:flex;align-items:center;gap:12px}
-.sec__h::after{content:"";flex:1;height:1px;background:var(--line)}
+/* ===== HERO TERMINAL ===== */
+.hero-term{background:#04100c;border:1.5px solid var(--line2);font-family:var(--mono);
+  font-size:12px;line-height:1.6;color:#bfe9d8;box-shadow:0 0 60px rgba(0,200,160,.08);
+  position:relative;overflow:hidden}
+.hero-term::before{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.06) 0 1px,transparent 1px 3px);
+  pointer-events:none;z-index:1}
+.term-bar{background:#081610;padding:9px 14px;display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--line)}
+.term-dot{width:10px;height:10px;border-radius:50%;background:var(--dim)}
+.term-dot:first-child{background:#e05252}
+.term-dot:nth-child(2){background:#c9a93a}
+.term-dot:nth-child(3){background:#2d8c4e}
+.term-title{font-size:10px;letter-spacing:.18em;color:var(--ash);margin-left:4px;text-transform:uppercase}
+.term-body{padding:16px;overflow:hidden;position:relative;z-index:2}
+.term-body .pmt{color:var(--volt)}
+.term-body .out{color:#9fcabb}
+.term-body .hl{color:var(--amber)}
+.term-body .err{color:var(--blood)}
+.term-body .dim{color:var(--dim)}
+.cursor{display:inline-block;width:7px;height:13px;background:var(--volt);
+  animation:blink .9s step-end infinite;vertical-align:text-bottom;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
 
-/* TRACK CARDS */
-.tracks{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:12px}
-.tcard{border:2px solid var(--line);background:var(--panel);padding:24px;position:relative;overflow:hidden}
-.tcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--tc,var(--ash))}
-.tcard h3{margin:0 0 8px;font-size:20px;letter-spacing:-.01em}
-.tcard p{color:var(--ash);font-size:14px;margin:0 0 14px;line-height:1.6}
-.tcard ul{list-style:none;padding:0;margin:0}
-.tcard ul li{font-family:var(--mono);font-size:12px;color:var(--ash);padding:4px 0;border-bottom:1px dashed var(--line)}
-.tcard ul li::before{content:"› ";color:var(--tc,var(--ash))}
-.chip{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:2px 6px;border:1.5px solid;text-transform:uppercase;margin-right:4px;display:inline-block}
-.t-DF{color:var(--amber);border-color:var(--amber);--tc:var(--amber)}
-.t-RE{color:var(--volt);border-color:var(--volt);--tc:var(--volt)}
-.t-MA{color:var(--blood);border-color:var(--blood);--tc:var(--blood)}
+/* ===== STATS STRIP ===== */
+.stats-strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  padding:24px 0;margin:0 0 56px;display:grid;grid-template-columns:repeat(6,1fr)}
+.stat{text-align:center;padding:0 8px;border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat__n{font-family:var(--grot);font-size:32px;font-weight:700;color:var(--volt);
+  letter-spacing:-.03em;line-height:1;display:block}
+.stat__l{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ash);display:block;margin-top:5px}
 
-/* CURRICULUM TABLE */
-.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
-.tbl th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ash);text-transform:uppercase;border-bottom:2px solid var(--line);padding:9px 10px}
-.tbl td{border-bottom:1px solid var(--line);padding:10px 10px;vertical-align:top}
-.tbl td.n{font-family:var(--mono);color:var(--amber);width:30px;padding-right:0}
-.tbl code{font-family:var(--mono);font-size:11.5px;color:var(--volt);background:var(--panel2);border:1px solid var(--line);padding:2px 5px}
-.tbl .art{color:var(--bone);font-weight:500}
-.tbl .cmd{color:var(--ash);font-family:var(--mono);font-size:11.5px}
-.tbl .desc{color:var(--ash);font-size:13px;margin-top:3px}
-.tbl tr:hover td{background:rgba(45,226,230,.03)}
-.phase-row td.art small{display:block;color:var(--ash);font-size:12px;margin-top:3px;font-weight:400}
+/* ===== SECTION HEADER ===== */
+.sec-h{display:flex;align-items:center;gap:14px;margin:0 0 24px}
+.sec-h h2{font-family:var(--mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ash);margin:0;white-space:nowrap}
+.sec-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec-h a{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--volt);white-space:nowrap;flex-shrink:0}
+.section{margin:0 0 62px}
 
-/* TOOL GRID */
-.toolg{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.toolcard{border:2px solid var(--line);background:var(--panel);padding:16px}
-.toolcard h4{margin:0 0 6px;font-size:15px;display:flex;align-items:center;gap:8px}
-.toolcard p{color:var(--ash);font-size:13px;margin:0 0 10px}
-.toolcard code{font-family:var(--mono);font-size:12px;color:var(--volt);background:var(--panel2);border:1px solid var(--line);padding:2px 6px;cursor:pointer;display:block;margin-top:6px;white-space:pre-wrap}
-.toolcard:hover{border-color:var(--volt)}
+/* ===== TRACKS ===== */
+.tracks{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.tcard{background:var(--panel);border:2px solid var(--line);padding:26px;position:relative;overflow:hidden;transition:.12s}
+.tcard:hover{border-color:var(--tc,var(--ash));transform:translateY(-2px)}
+.tcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tc,var(--ash))}
+.tcard-eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--tc,var(--ash));margin-bottom:10px}
+.tcard h3{margin:0 0 10px;font-size:19px;letter-spacing:-.01em;color:var(--bone)}
+.tcard p{color:var(--ash);font-size:13.5px;margin:0 0 16px;line-height:1.6}
+.tcard-list{list-style:none;padding:0;margin:0}
+.tcard-list li{font-family:var(--mono);font-size:11.5px;color:var(--ash);padding:5px 0;
+  border-bottom:1px dashed var(--line);display:flex;align-items:flex-start;gap:6px}
+.tcard-list li::before{content:"›";color:var(--tc,var(--ash));flex-shrink:0}
+.chip{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:2px 6px;
+  border:1.5px solid;text-transform:uppercase;display:inline-block}
+.t-DF{color:var(--amber);border-color:var(--amber)}
+.t-RE{color:var(--volt);border-color:var(--volt)}
+.t-MA{color:var(--blood);border-color:var(--blood)}
 
-/* WORKFLOW */
-.workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative;margin:20px 0}
-.wstep{border:2px solid var(--line);background:var(--panel);padding:18px 16px;position:relative}
-.wstep::after{content:"→";position:absolute;right:-18px;top:50%;transform:translateY(-50%);font-family:var(--mono);color:var(--ash);z-index:1;font-size:14px}
-.wstep:last-child::after{display:none}
-.wstep .wn{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--ash);margin-bottom:8px}
-.wstep h4{margin:0 0 6px;font-size:16px}
-.wstep p{color:var(--ash);font-size:13px;margin:0}
+/* ===== CURRICULUM TABLE ===== */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--ash);
+  text-transform:uppercase;border-bottom:2px solid var(--line);padding:10px 12px;font-weight:400}
+.tbl td{border-bottom:1px solid var(--line);padding:11px 12px;vertical-align:top}
+.tbl td.n{font-family:var(--mono);color:var(--amber);width:34px;font-size:11px;letter-spacing:.08em}
+.tbl .phase-title{font-weight:600;font-size:14px;color:var(--bone);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tbl .phase-sub{font-family:var(--mono);font-size:11px;color:var(--ash);margin-top:4px}
+.tbl .art{font-family:var(--mono);font-size:11.5px;color:var(--volt)}
+.tbl .cmd{color:var(--ash);font-family:var(--mono);font-size:11px;line-height:1.5}
+.tbl tr:hover td{background:rgba(0,200,160,.025)}
+.tbl code{font-family:var(--mono);font-size:11px;color:var(--volt);background:var(--panel2);
+  border:1px solid var(--line);padding:1px 5px}
 
-/* PATH CARDS */
-.paths{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.pathcard{border:2px solid var(--line);background:var(--panel);padding:22px}
-.pathcard h3{margin:0 0 6px;font-size:18px}
-.pathcard .dur{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;display:block}
-.pathcard p{color:var(--ash);font-size:13.5px;margin:0 0 14px}
-.pathcard ol{color:var(--ash);font-size:13px;padding-left:18px;margin:0}
-.pathcard ol li{padding:3px 0}
+/* ===== FEATURE GRID ===== */
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.feat{background:var(--panel);border:1px solid var(--line);padding:20px 22px;transition:.12s}
+.feat:hover{border-color:var(--line2)}
+.feat__icon{font-size:22px;margin-bottom:10px}
+.feat__title{font-size:15.5px;font-weight:600;color:var(--bone);margin:0 0 6px}
+.feat__desc{color:var(--ash);font-size:13.5px;margin:0;line-height:1.55}
+.feat__code{font-family:var(--mono);font-size:11.5px;color:var(--volt);background:var(--panel2);
+  border:1px solid var(--line);padding:8px 12px;margin-top:12px;display:block;white-space:pre;overflow-x:auto}
 
-/* ARTIFACTS GRID */
-.artg{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
-.artcard{border:2px solid var(--line);background:var(--panel);padding:16px}
-.artcard h4{margin:0 0 6px;font-size:15px;color:var(--bone)}
-.artcard p{color:var(--ash);font-size:13px;margin:0 0 10px}
-.artcard pre{font-family:var(--mono);font-size:11.5px;color:#bfe9d8;background:var(--void);border:1px solid var(--line);padding:9px 11px;overflow:auto;margin:0;white-space:pre-wrap}
-.artcard:hover{border-color:var(--amber)}
+/* ===== TERMINAL DEMO SECTION ===== */
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.demo-term{background:#04100c;border:1.5px solid var(--line);font-family:var(--mono);font-size:12px;line-height:1.55}
+.demo-term-bar{background:#081610;padding:8px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.demo-term-bar span{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash)}
+.demo-term-bar .track{color:var(--volt);font-size:9px}
+.demo-term-body{padding:14px 16px;color:#9fcabb;white-space:pre-wrap;overflow:hidden}
+.demo-term-body .pmt{color:var(--volt)}
+.demo-term-body .hl{color:var(--amber)}
+.demo-term-body .hit{background:rgba(229,53,64,.18);color:var(--bone)}
+.demo-term-body .ok{color:var(--volt)}
+.demo-term-body .dim{color:var(--dim)}
+.demo-term-body .blue{color:var(--blue)}
 
-/* CERT / ALIGNMENT */
-.certg{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
-.certcard{border:1.5px solid var(--line);background:var(--panel);padding:14px 16px}
-.certcard h4{margin:0 0 4px;font-size:14px;font-family:var(--mono);color:var(--volt)}
-.certcard span{font-size:13px;color:var(--ash)}
+/* ===== LEARNING PATHS ===== */
+.paths{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.path{background:var(--panel);border:2px solid var(--line);padding:24px;position:relative}
+.path::before{content:"";position:absolute;left:0;top:0;right:0;height:3px;background:var(--path-color,var(--ash))}
+.path h3{margin:0 0 4px;font-size:17px;color:var(--bone)}
+.path-dur{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--path-color,var(--ash));margin-bottom:12px;display:block}
+.path p{color:var(--ash);font-size:13px;margin:0 0 14px;line-height:1.55}
+.path ol{color:var(--ash);font-size:13px;padding-left:16px;margin:0}
+.path ol li{padding:4px 0;line-height:1.4}
 
-/* NOTE / CALLOUT */
-.callout{border-left:4px solid var(--amber);background:rgba(244,183,64,.07);padding:14px 18px;margin:24px 0;font-size:14px;color:var(--ash)}
-.callout b{color:var(--amber)}
-.callout.blood{border-left-color:var(--blood);background:rgba(251,54,64,.06)}
-.callout.blood b{color:var(--blood)}
-.callout.volt{border-left-color:var(--volt);background:rgba(45,226,230,.05)}
-.callout.volt b{color:var(--volt)}
+/* ===== CALLOUTS ===== */
+.callout{border-left:4px solid;padding:14px 18px;margin:24px 0;font-size:14px;color:var(--ash);line-height:1.55}
+.callout b{font-weight:600}
+.callout-volt{border-left-color:var(--volt);background:rgba(0,200,160,.04)}
+.callout-volt b{color:var(--volt)}
+.callout-blood{border-left-color:var(--blood);background:rgba(229,53,64,.05)}
+.callout-blood b{color:var(--blood)}
+.callout-amber{border-left-color:var(--amber);background:rgba(217,152,32,.05)}
+.callout-amber b{color:var(--amber)}
 
-/* RESOURCES */
-.resg{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.rescard{border:2px solid var(--line);background:var(--panel);padding:16px}
-.rescard h4{margin:0 0 8px;font-size:14px;font-family:var(--mono);letter-spacing:.06em;color:var(--volt)}
+/* ===== CERT GRID ===== */
+.certg{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.certcard{background:var(--panel);border:1px solid var(--line);padding:14px 16px;transition:.12s}
+.certcard:hover{border-color:var(--volt)}
+.certcard h4{margin:0 0 5px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--volt)}
+.certcard span{font-size:12.5px;color:var(--ash);line-height:1.45}
+
+/* ===== TOOL MATRIX ===== */
+.toolg{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.toolcard{background:var(--panel);border:1px solid var(--line);padding:16px;transition:.12s}
+.toolcard:hover{border-color:var(--line2)}
+.toolcard h4{margin:0 0 6px;font-size:14px;display:flex;align-items:center;gap:8px}
+.toolcard p{color:var(--ash);font-size:12.5px;margin:0 0 8px}
+.toolcard code{font-family:var(--mono);font-size:11px;color:var(--volt);background:var(--panel2);
+  border:1px solid var(--line);padding:6px 10px;display:block;cursor:pointer;white-space:pre-wrap;line-height:1.5}
+.toolcard code:hover{border-color:var(--volt)}
+
+/* ===== RESOURCES ===== */
+.resg{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.rescard{background:var(--panel);border:1px solid var(--line);padding:16px}
+.rescard h4{margin:0 0 12px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--volt)}
 .rescard ul{list-style:none;padding:0;margin:0}
-.rescard li{color:var(--ash);font-size:13px;padding:4px 0;border-bottom:1px dashed var(--line)}
-.rescard li b{color:var(--bone);display:block}
-.rescard li i{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--amber)}
+.rescard li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.rescard li:last-child{border-bottom:0}
+.rescard li b{color:var(--bone);display:block;font-size:13px}
+.rescard li i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--ash)}
 
-/* ATTCK MINI */
+/* ===== QUICK START ===== */
+.setup{background:var(--panel);border:1.5px solid var(--line)}
+.setup-bar{background:#081610;padding:10px 16px;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash)}
+.setup pre{font-family:var(--mono);font-size:12.5px;color:#bfe9d8;padding:18px 18px;margin:0;
+  overflow:auto;line-height:1.7;white-space:pre}
+.setup pre .cmt{color:var(--ash)}
+
+/* ===== MITRE MINI ===== */
 .attckg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.attckcell{border:1.5px solid var(--line);background:var(--panel);padding:12px 14px}
-.attckcell h5{margin:0 0 6px;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--blood)}
+.attckcell{background:var(--panel);border:1px solid var(--line);padding:14px 16px}
+.attckcell h5{margin:0 0 10px;font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--blood)}
 .attckcell ul{list-style:none;padding:0;margin:0}
-.attckcell li{font-size:12.5px;color:var(--ash);padding:3px 0;font-family:var(--mono)}
-.attckcell li b{color:var(--bone)}
+.attckcell li{font-size:12.5px;color:var(--ash);padding:4px 0;border-bottom:1px dashed var(--line);display:flex;gap:8px;align-items:baseline}
+.attckcell li:last-child{border-bottom:0}
+.attckcell li b{font-family:var(--mono);font-size:10px;color:var(--bone);min-width:60px;flex-shrink:0}
 
-/* FOOTER */
-.foot{margin-top:60px;border-top:1px solid var(--line);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--ash);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.foot a{color:var(--volt)}
+/* ===== FOOTER ===== */
+.foot{border-top:1px solid var(--line);padding:22px 0;margin-top:60px;
+  font-family:var(--mono);font-size:11px;color:var(--ash);
+  display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.foot a{color:var(--volt);transition:.1s}
+.foot a:hover{color:var(--bone)}
+.foot-links{display:flex;gap:16px}
 
-/* QUICK SETUP */
-.setup{background:var(--panel);border:2px solid var(--line);padding:20px 22px;margin:0}
-.setup pre{font-family:var(--mono);font-size:12.5px;color:#bfe9d8;background:var(--void);border:1px solid var(--line);padding:12px 14px;overflow:auto;margin:12px 0 0;white-space:pre-wrap;line-height:1.6}
-
-/* RESPONSIVE */
-@media(max-width:900px){.tracks,.workflow,.paths,.attckg{grid-template-columns:1fr 1fr}}
-@media(max-width:640px){.tracks,.statsbar,.paths,.attckg,.workflow{grid-template-columns:1fr}.topnav .btn--ghost{display:none}}
+/* ===== RESPONSIVE ===== */
+@media(max-width:1000px){
+  .hero{grid-template-columns:1fr;gap:28px}
+  .hero-term{max-height:300px;overflow:hidden}
+  .demo-grid{grid-template-columns:1fr}
+}
+@media(max-width:900px){
+  .tracks,.paths,.attckg{grid-template-columns:1fr 1fr}
+  .stats-strip{grid-template-columns:repeat(3,1fr)}
+  .stat:nth-child(3){border-right:0}
+  .stat:nth-child(4){border-top:1px solid var(--line)}
+  .wrap{padding:0 18px 70px}
+  .header__in{padding:12px 18px}
+}
+@media(max-width:600px){
+  .tracks,.paths,.attckg{grid-template-columns:1fr}
+  .stats-strip{grid-template-columns:repeat(2,1fr)}
+  .hero-h1{font-size:36px}
+  .header-nav .hide-sm{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="topbar__in">
-    <div class="brand"><b>BLACK<i>VAULT</i></b><span>Security Training Range</span></div>
-    <nav class="topnav">
-      <a href="console.html">Console</a>
-      <a href="tools.html">Tools</a>
-      <a href="intel.html">Intel</a>
-      <a href="range/README.md">Range</a>
-      <a class="cta" href="console.html">▶ Enter Console</a>
+<div class="header">
+  <div class="header__in">
+    <a class="logo" href="index.html">
+      <div class="logo__mark">BLACK<em>VAULT</em></div>
+      <div class="logo__sub">Training Range</div>
+    </a>
+    <nav class="header-nav">
+      <a href="console.html" class="hide-sm">Console</a>
+      <a href="playbook.html" class="hide-sm">Playbooks</a>
+      <a href="tools.html" class="hide-sm">Tools</a>
+      <a href="intel.html" class="hide-sm">Intel</a>
+      <a href="challenge.html" class="hide-sm">CTF</a>
+      <a href="console.html" class="cta">▶ Enter Console</a>
     </nav>
   </div>
 </div>
 
 <div class="wrap">
+
+  <!-- ===== HERO ===== -->
   <div class="hero">
-    <div class="eyebrow">Reverse Engineering · Malware Analysis · Digital Forensics &amp; IR</div>
-    <h1 class="h1">You don't learn security<br>by <em>reading</em> about it.</h1>
-    <p class="lede">BLACKVAULT is a self-directed training range combining a <b>25-lab interactive console</b> with a folder of <b>real, runnable artifacts</b> — a forensic disk image, UPX-packed binaries, live pcaps, crackmes, memory dumps. Every concept has a hands-on twin you crack with the actual tools.</p>
-    <div class="ctas">
-      <a class="btn" href="console.html">▶ Enter Study Console</a>
-      <a class="btn btn--ghost" href="range/README.md">⛓ Open Field Guide</a>
-      <a class="btn btn--ghost" href="tools.html">🔧 Tool Arsenal</a>
+    <div class="hero-left">
+      <div class="hero-eyebrow">RE · MA · DFIR · ATT&amp;CK</div>
+      <h1 class="hero-h1">Your adversary<br>trained today.<em>Did you?</em></h1>
+      <p class="hero-lede">BLACKVAULT is a self-directed security training range — <b>12 phases</b>, <b>25+ interactive labs</b>, and real forensic artifacts: disk images, pcap files, memory dumps, crackmes, malware samples. From raw hex to full kill-chain reconstruction.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="console.html">▶ Enter Console</a>
+        <a class="btn btn-ghost" href="playbook.html">IR Playbooks</a>
+        <a class="btn btn-ghost btn-sm" href="challenge.html">⚡ CTF</a>
+      </div>
+    </div>
+    <div class="hero-term">
+      <div class="term-bar">
+        <span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span>
+        <span class="term-title">blackvault — analyst@range:~</span>
+      </div>
+      <div class="term-body"><span class="pmt">$</span> vol3 -f hermes07.raw windows.malfind
+<span class="out">Volatility 3 Framework 2.7.0
+PID    Process       Start       End         Tag  Prot
+----   ----------    ------      ------      ---  ----
+<span class="hl">3824   svchost.exe   0x1e80000   0x1ebffff   VadS PAGE_EXECUTE_READWRITE</span>
+       MZ header at 0x1e80000 — injected PE</span>
+
+<span class="pmt">$</span> vol3 -f hermes07.raw windows.netscan
+<span class="out">PID    Process       LocalAddr         ForeignAddr         State
+<span class="hl">3824   svchost.exe   192.168.1.50:49821  185.220.101.47:443  ESTABLISHED</span></span>
+
+<span class="pmt">$</span> sha256sum dumps/pid.3824.0x1e80000.dmp
+<span class="out"><span class="hl">a3f8e2c1...</span>  pid.3824.0x1e80000.dmp</span>
+
+<span class="pmt">$</span> yara -r range/yara/rules.yar dumps/
+<span class="out"><span class="hl">BV_Capability_ProcessInjection</span>: pid.3824.0x1e80000.dmp
+<span class="hl">BV_HighConf_Ransomware_EarlyStage</span>: pid.3824.0x1e80000.dmp</span>
+
+<span class="pmt">$</span> <span class="cursor"></span></div>
     </div>
   </div>
 
-  <div class="statsbar">
-    <div class="stat"><b>12</b><span>Phases</span></div>
-    <div class="stat"><b>25+</b><span>Range Labs</span></div>
-    <div class="stat"><b>45+</b><span>Commands</span></div>
-    <div class="stat"><b>9</b><span>Artifact Types</span></div>
-    <div class="stat"><b>3</b><span>Skill Tracks</span></div>
+  <!-- ===== STATS ===== -->
+  <div class="stats-strip">
+    <div class="stat"><span class="stat__n">12</span><span class="stat__l">Phases</span></div>
+    <div class="stat"><span class="stat__n">25+</span><span class="stat__l">Range Labs</span></div>
+    <div class="stat"><span class="stat__n">30</span><span class="stat__l">CTF Challenges</span></div>
+    <div class="stat"><span class="stat__n">70+</span><span class="stat__l">ATT&amp;CK Techniques</span></div>
+    <div class="stat"><span class="stat__n">4</span><span class="stat__l">IR Playbooks</span></div>
+    <div class="stat"><span class="stat__n">22</span><span class="stat__l">Achievements</span></div>
   </div>
 
-  <!-- TRACKS -->
-  <div class="sec__h">Three skill tracks</div>
-  <div class="tracks">
-    <div class="tcard" style="--tc:var(--amber)">
-      <span class="chip t-DF">DF</span>
-      <h3 style="color:var(--amber)">Digital Forensics &amp; IR</h3>
-      <p>Evidence acquisition, file system analysis, memory forensics, network forensics, timeline reconstruction — the analyst's full workflow from first alert to final report.</p>
-      <ul>
-        <li>Disk &amp; file system triage (Phases 1, 12)</li>
-        <li>Memory forensics — Volatility (Phase 8)</li>
-        <li>Network capture analysis (Phase 9)</li>
-        <li>Rootkit detection &amp; timeline (Phase 11)</li>
-        <li>Full incident reconstruction (Phase 12)</li>
-      </ul>
+  <!-- ===== TRACKS ===== -->
+  <div class="section">
+    <div class="sec-h"><h2>Three skill tracks</h2></div>
+    <div class="tracks">
+      <div class="tcard" style="--tc:var(--amber)">
+        <div class="tcard-eyebrow">DF — Digital Forensics &amp; IR</div>
+        <h3>Forensics &amp; Response</h3>
+        <p>Evidence acquisition, file system triage, memory forensics, network analysis, timeline reconstruction — the full analyst workflow from first alert to written report.</p>
+        <ul class="tcard-list">
+          <li>Disk &amp; file system triage with Sleuth Kit</li>
+          <li>Memory forensics — Volatility 3</li>
+          <li>Network PCAP analysis, JA3, DGA detection</li>
+          <li>Super-timeline with log2timeline/plaso</li>
+          <li>Full incident reconstruction (Phase 12)</li>
+        </ul>
+      </div>
+      <div class="tcard" style="--tc:var(--volt)">
+        <div class="tcard-eyebrow">RE — Reverse Engineering</div>
+        <h3>Reverse Engineering</h3>
+        <p>From raw hex to readable logic — x64 assembly fluency, binary format internals, Ghidra decompiler workflows, crackme progression, and custom protocol decoding.</p>
+        <ul class="tcard-list">
+          <li>x86/x64 assembly and calling conventions</li>
+          <li>PE/ELF format internals</li>
+          <li>Ghidra: P-code, decompiler, struct recovery</li>
+          <li>Three-level crackme progression</li>
+          <li>Custom C2 protocol reversal (Phase 10)</li>
+        </ul>
+      </div>
+      <div class="tcard" style="--tc:var(--blood)">
+        <div class="tcard-eyebrow">MA — Malware Analysis</div>
+        <h3>Malware Analysis</h3>
+        <p>Static triage, behavioral detonation, unpacking, YARA rule writing, capability mapping to ATT&amp;CK — from "what is this file?" to a full behavioral report.</p>
+        <ul class="tcard-list">
+          <li>Static analysis — strings, FLOSS, capa, YARA</li>
+          <li>Dynamic analysis — strace, Frida, sandbox</li>
+          <li>Unpacking UPX, OEP recovery, IAT fix</li>
+          <li>Rootkits and persistence mechanisms</li>
+          <li>Ransomware kill-chain capstone</li>
+        </ul>
+      </div>
     </div>
-    <div class="tcard" style="--tc:var(--volt)">
-      <span class="chip t-RE">RE</span>
-      <h3 style="color:var(--volt)">Reverse Engineering</h3>
-      <p>From raw hex to readable logic — assembly fluency, binary format internals, decompilers, crackmes, keygen challenges, and custom protocol decoding.</p>
-      <ul>
-        <li>x86/x64 assembly &amp; calling conventions (Phase 2)</li>
-        <li>PE/ELF format deep dive (Phase 3)</li>
-        <li>Ghidra decompiler workflow (Phase 5)</li>
-        <li>Three-level crackme progression</li>
-        <li>Custom C2 protocol reversal (Phase 10)</li>
-      </ul>
-    </div>
-    <div class="tcard" style="--tc:var(--blood)">
-      <span class="chip t-MA">MA</span>
-      <h3 style="color:var(--blood)">Malware Analysis</h3>
-      <p>Static triage, behavioral detonation in an isolated lab, unpacking, YARA, capability mapping to ATT&amp;CK — from "what is this file" to a full behavioral report.</p>
-      <ul>
-        <li>Static analysis — strings, YARA, capa (Phase 4)</li>
-        <li>Dynamic analysis — strace/Frida (Phase 6)</li>
-        <li>Unpacking &amp; binary patching (Phase 7)</li>
-        <li>Rootkits &amp; persistence artifacts (Phase 11)</li>
-        <li>Ransomware kill-chain capstone (Phase 12)</li>
-      </ul>
-    </div>
+    <div class="callout callout-volt"><b>Everything is synthetic and defensive.</b> Crackmes, simulated pcaps, fabricated binaries, and fictitious log files — built for learning DFIR/RE/MA skills. No live malware. Every artifact has documented educational purpose and maps to a specific curriculum phase.</div>
   </div>
 
-  <div class="callout volt"><b>Everything is synthetic &amp; defensive.</b> Crackmes, simulated pcaps, fabricated binaries, and fictitious log files — built for learning DFIR / RE / MA skills. Nothing here is live malware, and every artifact has a documented educational purpose.</div>
+  <!-- ===== LIVE TERMINAL DEMOS ===== -->
+  <div class="section">
+    <div class="sec-h"><h2>What the labs look like</h2></div>
+    <div class="demo-grid">
+      <div class="demo-term">
+        <div class="demo-term-bar"><span>Phase 8 — Memory Forensics</span><span class="track">DF · Volatility 3</span></div>
+        <div class="demo-term-body"><span class="pmt">analyst@range:~$</span> vol3 -f hermes07.raw windows.psscan
+<span class="dim">PID    PPID   ImageFileName  Offset
+----   ----   ------------   ------</span>
+4      0      System         0xf80000280e90
+<span class="hl">408    4      smss.exe       0xfa80019e4040</span>
+568    560    csrss.exe      0xfa8001b13060
+628    620    winlogon.exe   0xfa8001c5d940
+676    668    services.exe   0xfa80021e8b30
+<span class="hit">3488   676    svch0st.exe    0xfa80028e5060   ← typosquat!</span>
+3824   3488   cmd.exe        0xfa80031a2180
 
-  <!-- CURRICULUM -->
-  <div class="sec__h">12-phase curriculum</div>
-  <table class="tbl">
-    <colgroup>
-      <col style="width:34px">
-      <col style="width:230px">
-      <col style="width:200px">
-      <col>
-    </colgroup>
-    <tr><th class="n">#</th><th>Phase</th><th>Artifact (<code>range/</code>)</th><th>Key commands / concepts</th></tr>
+<span class="pmt">analyst@range:~$</span> vol3 -f hermes07.raw windows.dlllist --pid 3488
+<span class="hl">svch0st.exe pid: 3488</span>
+<span class="hit">0x180000  \Temp\svch0st.exe          ← executed from Temp</span></div>
+      </div>
+      <div class="demo-term">
+        <div class="demo-term-bar"><span>Phase 9 — Network Forensics</span><span class="track">DF · tshark</span></div>
+        <div class="demo-term-body"><span class="pmt">analyst@range:~$</span> tshark -r capture.pcap \
+  -Y 'tcp.flags.syn==1 && !tcp.flags.ack==1' \
+  -T fields -e frame.time -e ip.dst -e tcp.dstport
 
-    <tr class="phase-row">
-      <td class="n">01</td>
-      <td class="art">Disk &amp; File Systems<span class="chip t-DF">DF</span><small>MBR/GPT · NTFS/ext4 · inodes · carving</small></td>
-      <td><code>disk/disk.img</code></td>
-      <td class="cmd">mmls disk.img · fls -o 2048 disk.img · icat -o 2048 disk.img 14 · photorec</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">02</td>
-      <td class="art">x86 / x64 Assembly<span class="chip t-RE">RE</span><small>registers · calling conventions · stack frames</small></td>
-      <td><code>asm/trace.c</code> + <code>asm/trace</code></td>
-      <td class="cmd">gdb ./trace · break compute · stepi · info registers · x/20i $rip</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">03</td>
-      <td class="art">PE &amp; ELF Binary Format<span class="chip t-RE">RE</span><span class="chip t-MA">MA</span><small>headers · imports · entropy · sections</small></td>
-      <td><code>crackmes/crackme1</code></td>
-      <td class="cmd">readelf -a crackme1 · objdump -d -M intel crackme1 · rabin2 -I · rabin2 -i</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">04</td>
-      <td class="art">Static Malware Analysis<span class="chip t-MA">MA</span><small>strings · YARA · packing detection · hashing</small></td>
-      <td><code>malware/packed.exe</code></td>
-      <td class="cmd">strings -a -el packed.exe · sha256sum · capa · floss · yara rules.yar</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">05</td>
-      <td class="art">Ghidra &amp; Disassembly<span class="chip t-RE">RE</span><small>decompiler · xrefs · struct recovery · P-code</small></td>
-      <td><code>crackmes/crackme2</code></td>
-      <td class="cmd">r2 -A crackme2 · s main · pdf · pdc (pseudo-C) · Ghidra GUI: xrefs, retype</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">06</td>
-      <td class="art">Dynamic Malware Analysis<span class="chip t-MA">MA</span><small>syscalls · strace/ltrace · sandbox · behavioral sigs</small></td>
-      <td><code>crackmes/crackme*</code></td>
-      <td class="cmd">strace -f -e trace=file,network,process ./sample · ltrace · inotifywait -mr ~/bait</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">07</td>
-      <td class="art">Unpacking &amp; Binary Patching<span class="chip t-MA">MA</span><span class="chip t-RE">RE</span><small>OEP hunting · IAT fix · NOP patching</small></td>
-      <td><code>malware/packed.exe</code></td>
-      <td class="cmd">upx -d packed.exe · (gdb) hbreak *0xADDR · dump memory · r2 -w (patch)</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">08</td>
-      <td class="art">Memory Forensics<span class="chip t-DF">DF</span><small>EPROCESS · VAD trees · injected shellcode</small></td>
-      <td><code>memory/memory-sample.raw</code></td>
-      <td class="cmd">vol -f mem.raw windows.pslist · windows.psscan · windows.malfind · windows.netscan</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">09</td>
-      <td class="art">Network Forensics<span class="chip t-DF">DF</span><small>PCAP · C2 beaconing · JA3 · DNS tunneling</small></td>
-      <td><code>network/capture.pcap</code></td>
-      <td class="cmd">tcpdump -nr capture.pcap · tshark -z conv,ip · zeek -r capture.pcap</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">10</td>
-      <td class="art">Protocol RE &amp; C2<span class="chip t-RE">RE</span><span class="chip t-MA">MA</span><small>custom binary protocols · Frida · wire↔code</small></td>
-      <td><code>protocol/c2_capture.bin</code></td>
-      <td class="cmd">xxd c2_capture.bin · parse BE EF frames · frida-trace -i "send" -p PID</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">11</td>
-      <td class="art">Rootkits &amp; Forensic Artifacts<span class="chip t-MA">MA</span><span class="chip t-DF">DF</span><small>DKOM · MFT · registry · event logs · timestamps</small></td>
-      <td><code>logs/</code> + <code>memory/</code></td>
-      <td class="cmd">MFTECmd -f $MFT --csv . · EvtxECmd · AppCompatCacheParser · log2timeline.py</td>
-    </tr>
-    <tr class="phase-row">
-      <td class="n">12</td>
-      <td class="art">Full Investigation Scenario<span class="chip t-DF">DF</span><span class="chip t-RE">RE</span><span class="chip t-MA">MA</span><small>end-to-end kill chain reconstruction</small></td>
-      <td>all artifacts</td>
-      <td class="cmd">chain: disk → pcap → memory → logs → binary → ATT&amp;CK map → Sigma/Suricata/YARA</td>
-    </tr>
-  </table>
+<span class="dim">2025-03-14 07:23:41  185.220.101.47  443
+2025-03-14 07:24:41  185.220.101.47  443</span>   <span class="hl">← 60s beacon!</span>
+<span class="dim">2025-03-14 07:25:41  185.220.101.47  443</span>
 
-  <!-- HOW IT WORKS -->
-  <div class="sec__h">How it works</div>
-  <div class="workflow">
-    <div class="wstep">
-      <div class="wn">STEP 01</div>
-      <h4>Study Console</h4>
-      <p>12 phases on the Map. Deep-dive study notes, concept cards, flashcard drills, and scored quizzes — all in-browser.</p>
-    </div>
-    <div class="wstep">
-      <div class="wn">STEP 02</div>
-      <h4>⚡ Range Labs</h4>
-      <p>Simulated terminals inside the console — Volatility shell, Wireshark pcap, RE bench, log triage — scored objectives.</p>
-    </div>
-    <div class="wstep">
-      <div class="wn">STEP 03</div>
-      <h4>Real Artifacts</h4>
-      <p>Open the <code>range/</code> folder and run the actual tools: gdb, radare2, Volatility, tcpdump — no simulation.</p>
-    </div>
-    <div class="wstep">
-      <div class="wn">STEP 04</div>
-      <h4>Pivot &amp; Report</h4>
-      <p>Phase 12 chains all artifacts into one kill-chain reconstruction, producing ATT&amp;CK mapping + detection rules.</p>
+<span class="pmt">analyst@range:~$</span> tshark -r capture.pcap -Y 'dns' \
+  -T fields -e dns.qry.name | sort | uniq -c | sort -rn | head
+
+<span class="dim">   3</span>  <span class="hit">xvt8k3p2q1mnzabc.attacker-c2.com</span>  <span class="hl">← DGA!</span>
+<span class="dim">   1  google.com
+   1  windowsupdate.microsoft.com</span>
+
+<span class="pmt">analyst@range:~$</span> ja3 capture.pcap
+<span class="hit">769,47-53,...  →  51c64c77e60f3980eea8...</span>  <span class="hl">← Cobalt Strike</span></div>
+      </div>
+      <div class="demo-term">
+        <div class="demo-term-bar"><span>Phase 4 — Static Analysis</span><span class="track">MA · capa · strings</span></div>
+        <div class="demo-term-body"><span class="pmt">analyst@range:~$</span> capa range/malware/packed.exe
+
+<span class="dim">┍━━━━━━━━━━━━━━━━┑</span>
+<span class="hl">│ md5  │ a3f8e2c1...│</span>
+<span class="dim">┕━━━━━━━━━━━━━━━━┙</span>
+
+<span class="out">CAPABILITIES DETECTED
+</span><span class="hl">  create remote thread
+  inject PE into process
+  schedule task via COM
+  delete shadow copies
+  resolve API by hash</span>
+<span class="out">
+MITRE ATT&CK
+  T1055    Process Injection
+  T1053    Scheduled Task
+  T1490    Inhibit System Recovery</span>
+
+<span class="pmt">analyst@range:~$</span> floss packed.exe | grep -i 'http\|cmd\|powershell'
+<span class="hit">cmd.exe /c powershell -enc JAB...</span>
+<span class="hit">http://185.220.101.47/beacon</span></div>
+      </div>
+      <div class="demo-term">
+        <div class="demo-term-bar"><span>Phase 1 — Disk Forensics</span><span class="track">DF · Sleuth Kit</span></div>
+        <div class="demo-term-body"><span class="pmt">analyst@range:~$</span> mmls range/disk/disk.img
+<span class="dim">DOS Partition Table
+Offset Sector: 0
+Units are in 512-byte sectors</span>
+
+<span class="dim">      Slot  Start       End         Length
+000:  Meta  0000000000  0000000000  0000000001
+001:  ----  0000000001  0000002047  0000002047
+002:  000   0000002048  0000022527  0000020480   Linux (0x83)</span>
+
+<span class="pmt">analyst@range:~$</span> fls -r -d -o 2048 range/disk/disk.img
+<span class="dim">r/r * 14:   </span><span class="hit">secret.txt   ← deleted!</span>
+
+<span class="pmt">analyst@range:~$</span> icat -o 2048 range/disk/disk.img 14
+<span class="ok">BV{deleted_but_not_gone}</span>
+
+<span class="pmt">analyst@range:~$</span> istat -o 2048 range/disk/disk.img 14
+<span class="dim">inode: 14   File size: 31
+Modified:  </span><span class="hl">2025-03-14 07:22:11</span>
+<span class="dim">Accessed:  2025-03-14 07:22:11</span></div>
+      </div>
     </div>
   </div>
 
-  <!-- CROSS-CUTTING SKILL LABS -->
-  <div class="sec__h">Cross-cutting skill labs</div>
-  <div class="artg">
-    <div class="artcard">
-      <h4>🔐 Cryptanalysis &amp; Hash Cracking</h4>
-      <p>Four encoded flags (Caesar, Base64, XOR, reversed). Three MD5 hashes against a wordlist. Understand why algorithm choice matters.</p>
-      <pre>cat range/crypto/ciphertexts.txt
-hashcat -m 0 range/hashcrack/hashes.txt \
-        range/hashcrack/wordlist.txt
-# all decode to BV{...} flags</pre>
-    </div>
-    <div class="artcard">
-      <h4>🕵️ Steganography &amp; Data Carving</h4>
-      <p>A PNG with hidden data past the IEND marker. A text file with an appended ZIP archive. File carving by signature without a filesystem.</p>
-      <pre>file range/stego/photo.png
-strings range/stego/photo.png | grep BV
-binwalk range/stego/photo.png
-unzip -p range/stego/carve_me.bin</pre>
-    </div>
-    <div class="artcard">
-      <h4>🔓 Crackme Progression</h4>
-      <p>Three compiled ELF crackmes of increasing complexity: hardcoded string → XOR cipher → weighted-checksum keygen.</p>
-      <pre>cd range/crackmes && make
-./crackme1 letmein          # ACCESS GRANTED
-r2 -A crackme2              # pdc at xor_gate
-# crackme3: derive the serial rule</pre>
-    </div>
-    <div class="artcard">
-      <h4>🖥️ Incident Response Logs</h4>
-      <p>SSH brute-force followed by successful admin login. Web shell upload and execution. A full attack kill-chain captured in log format.</p>
-      <pre>grep "Failed password" range/logs/auth.log
-grep "POST" range/logs/access.log
-# spot: brute force → upload → shell exec</pre>
-    </div>
-    <div class="artcard">
-      <h4>📀 Disk Forensics</h4>
-      <p>A 7 MB DOS-partitioned disk image with an ext4 partition, a deleted file, and a FAT32 partition. Use Sleuth Kit to recover evidence.</p>
-      <pre>mmls range/disk/disk.img
-fls -o 2048 range/disk/disk.img
-icat -o 2048 range/disk/disk.img 14
-# the deleted secret.txt lives at inode 14</pre>
-    </div>
-    <div class="artcard">
-      <h4>🧠 Memory Forensics</h4>
-      <p>512 KB simulated RAM with planted IOCs — a typo-squatted process name, C2 IP, and a Base64-encoded flag. Use strings and pattern matching.</p>
-      <pre>strings -n6 range/memory/memory-sample.raw \
-  | grep -Ei 'svch0st|185\.220|exfil'
-# find the base64 blob and decode it
-base64 -d <<< "QlZ7..."</pre>
+  <!-- ===== CURRICULUM ===== -->
+  <div class="section">
+    <div class="sec-h"><h2>12-phase curriculum</h2><a href="console.html">→ Enter Console</a></div>
+    <table class="tbl">
+      <tr><th style="width:36px">#</th><th style="width:250px">Phase</th><th style="width:190px">Artifact</th><th>Key tools &amp; concepts</th></tr>
+      <tr><td class="n">01</td><td><div class="phase-title">Disk &amp; File Systems <span class="chip t-DF">DF</span></div><div class="phase-sub">MBR/GPT · NTFS/ext4 · inodes · carving · slack space</div></td><td class="art">disk/disk.img</td><td class="cmd">mmls · fls · icat · istat · photorec · xxd · file carving</td></tr>
+      <tr><td class="n">02</td><td><div class="phase-title">x86/x64 Assembly <span class="chip t-RE">RE</span></div><div class="phase-sub">registers · calling conventions · stack frames · endianness</div></td><td class="art">asm/trace</td><td class="cmd">gdb · objdump -d -M intel · info registers · stepi · x/20i</td></tr>
+      <tr><td class="n">03</td><td><div class="phase-title">PE &amp; ELF Binary Formats <span class="chip t-RE">RE</span> <span class="chip t-MA">MA</span></div><div class="phase-sub">headers · sections · imports · entropy · magic bytes</div></td><td class="art">crackmes/crackme1</td><td class="cmd">readelf -a · rabin2 -I · objdump · pefile · ent</td></tr>
+      <tr><td class="n">04</td><td><div class="phase-title">Static Malware Analysis <span class="chip t-MA">MA</span></div><div class="phase-sub">strings · FLOSS · YARA · capa · packing detection · hashing</div></td><td class="art">malware/packed.exe</td><td class="cmd">strings · floss · capa · yara · sha256sum · ssdeep · ent</td></tr>
+      <tr><td class="n">05</td><td><div class="phase-title">Ghidra &amp; Decompiler Analysis <span class="chip t-RE">RE</span></div><div class="phase-sub">P-code · xrefs · struct recovery · variable retyping</div></td><td class="art">crackmes/crackme2</td><td class="cmd">Ghidra · r2 · pdf · pdc · xrefs (X) · retype (Ctrl+L)</td></tr>
+      <tr><td class="n">06</td><td><div class="phase-title">Dynamic Malware Analysis <span class="chip t-MA">MA</span></div><div class="phase-sub">syscalls · strace · sandbox · behavioral signatures · hooking</div></td><td class="art">crackmes/</td><td class="cmd">strace -f · ltrace · Frida · inotifywait · inetsim · any.run</td></tr>
+      <tr><td class="n">07</td><td><div class="phase-title">Unpacking &amp; Binary Patching <span class="chip t-MA">MA</span> <span class="chip t-RE">RE</span></div><div class="phase-sub">UPX · OEP hunting · IAT reconstruction · NOP patching</div></td><td class="art">malware/packed.exe</td><td class="cmd">upx -d · hbreak at OEP · dump memory · x64dbg + Scylla</td></tr>
+      <tr><td class="n">08</td><td><div class="phase-title">Memory Forensics <span class="chip t-DF">DF</span></div><div class="phase-sub">EPROCESS · VAD trees · injected shellcode · DKOM</div></td><td class="art">memory/memory-sample.raw</td><td class="cmd">vol3 pslist · psscan · malfind · netscan · dlllist · cmdline</td></tr>
+      <tr><td class="n">09</td><td><div class="phase-title">Network Forensics <span class="chip t-DF">DF</span></div><div class="phase-sub">PCAP · C2 beaconing · JA3 · DNS tunneling · TLS analysis</div></td><td class="art">network/capture.pcap</td><td class="cmd">tshark · zeek · suricata · ja3 · Wireshark filters</td></tr>
+      <tr><td class="n">10</td><td><div class="phase-title">Protocol RE &amp; C2 <span class="chip t-RE">RE</span> <span class="chip t-MA">MA</span></div><div class="phase-sub">custom binary protocols · Frida hooks · wire↔code correlation</div></td><td class="art">protocol/c2_capture.bin</td><td class="cmd">xxd · struct parsing · Frida frida-trace · Scapy</td></tr>
+      <tr><td class="n">11</td><td><div class="phase-title">Rootkits &amp; Forensic Artifacts <span class="chip t-MA">MA</span> <span class="chip t-DF">DF</span></div><div class="phase-sub">DKOM · MFT · registry · event logs · timestomping · LD_PRELOAD</div></td><td class="art">logs/ + memory/</td><td class="cmd">MFTECmd · EvtxECmd · AppCompatCacheParser · log2timeline</td></tr>
+      <tr><td class="n">12</td><td><div class="phase-title">Full Investigation Scenario <span class="chip t-DF">DF</span> <span class="chip t-RE">RE</span> <span class="chip t-MA">MA</span></div><div class="phase-sub">end-to-end kill chain · super-timeline · ATT&amp;CK mapping · detection rules</div></td><td class="art">all artifacts</td><td class="cmd">disk → pcap → memory → logs → binary → Sigma/Suricata/YARA</td></tr>
+    </table>
+  </div>
+
+  <!-- ===== FEATURE CARDS ===== -->
+  <div class="section">
+    <div class="sec-h"><h2>Platform features</h2></div>
+    <div class="feature-grid">
+      <div class="feat">
+        <div class="feat__icon">⚡</div>
+        <div class="feat__title">Interactive Range Labs</div>
+        <div class="feat__desc">Simulated terminals inside the browser — Volatility shell, Wireshark pcap viewer, RE bench with live disassembly, log triage engine. Scored objectives track your progress.</div>
+      </div>
+      <div class="feat">
+        <div class="feat__icon">🎯</div>
+        <div class="feat__title">30 CTF Challenges</div>
+        <div class="feat__desc">Five categories (RE, DF, MA, Crypto, Network) across Easy→Expert. Progressive hints, point scoring, and BV{} flag format. Real-world skill transfer.</div>
+        <code class="feat__code">$ echo "QlZ7..." | base64 -d
+BV{base64_is_encoding_not_encryption}</code>
+      </div>
+      <div class="feat">
+        <div class="feat__icon">⊙</div>
+        <div class="feat__title">MITRE ATT&amp;CK Grid</div>
+        <div class="feat__desc">Full ATT&amp;CK Enterprise matrix with 12 tactics and 70+ techniques. Curriculum-covered techniques highlighted with phase references.</div>
+      </div>
+      <div class="feat">
+        <div class="feat__icon">📋</div>
+        <div class="feat__title">IR Playbooks</div>
+        <div class="feat__desc">Four interactive runbooks: ransomware, data breach, supply chain, BEC. Sequenced checklists with persistent state, regulatory gates, and real command references.</div>
+      </div>
+      <div class="feat">
+        <div class="feat__icon">★</div>
+        <div class="feat__title">Badge System</div>
+        <div class="feat__desc">22 achievements unlock as you study, drill, quiz, and investigate. Track mastery across concepts, flashcard decks, exam scores, and case investigations.</div>
+      </div>
+      <div class="feat">
+        <div class="feat__icon">⊞</div>
+        <div class="feat__title">Flashcard Engine</div>
+        <div class="feat__desc">85+ flashcards across all 12 phases. Known/unknown tracking, weak-card filtering, shuffle mode. Keyboard shortcuts for rapid-fire recall practice.</div>
+        <code class="feat__code">Space → flip · ← → navigate · K → mark known</code>
+      </div>
+      <div class="feat">
+        <div class="feat__icon">⊡</div>
+        <div class="feat__title">Case Files</div>
+        <div class="feat__desc">Four multi-branch investigation scenarios: LockBit ransomware, NItro fileless attack, SOLAR-TRACE supply chain compromise, and EXODUS-9 insider threat.</div>
+      </div>
+      <div class="feat">
+        <div class="feat__icon">◈</div>
+        <div class="feat__title">Detection Rules</div>
+        <div class="feat__desc">15 Sigma detection rules and 20 YARA rules — from PS encoded commands to LSASS dumps to shadow copy deletion. Convertible to Splunk/Elastic queries.</div>
+        <code class="feat__code">sigma convert -t splunk range/sigma/detection-rules.yml</code>
+      </div>
+      <div class="feat">
+        <div class="feat__icon">↓</div>
+        <div class="feat__title">Progress Export</div>
+        <div class="feat__desc">Export your full progress as JSON — mastery per phase, badges earned, notes, and cases solved. Persistent localStorage with zero external dependencies.</div>
+      </div>
     </div>
   </div>
 
-  <!-- LEARNING PATHS -->
-  <div class="sec__h">Learning paths</div>
-  <div class="paths">
-    <div class="pathcard">
-      <h3>Fast Track</h3>
-      <span class="dur">~40 hours · DFIR focus</span>
-      <p>Minimum path to functional incident response competency. Skip deep RE dives; hit the core forensics workflow.</p>
-      <ol>
-        <li>Phase 1 — Disk &amp; File Systems</li>
-        <li>Phase 4 — Static Analysis (triage)</li>
-        <li>Phase 8 — Memory Forensics</li>
-        <li>Phase 9 — Network Forensics</li>
-        <li>Phase 11 — Rootkits &amp; Artifacts</li>
-        <li>Phase 12 — Full Investigation</li>
-      </ol>
-    </div>
-    <div class="pathcard">
-      <h3>Deep Dive</h3>
-      <span class="dur">~120 hours · all tracks</span>
-      <p>All 12 phases in order. Deep understanding of the connections between phases. The recommended path.</p>
-      <ol>
-        <li>Phases 1–3: foundations</li>
-        <li>Phases 4–5: static analysis + Ghidra</li>
-        <li>Phases 6–7: dynamic + unpacking</li>
-        <li>Phases 8–9: memory + network</li>
-        <li>Phases 10–12: protocol + capstone</li>
-      </ol>
-    </div>
-    <div class="pathcard">
-      <h3>RE Specialist</h3>
-      <span class="dur">~60 hours · RE + MA focus</span>
-      <p>For those targeting malware analyst or vulnerability researcher roles. Heavy on assembly, decompilers, and dynamic tooling.</p>
-      <ol>
-        <li>Phase 2 — Assembly deep dive</li>
-        <li>Phase 3 — Binary formats</li>
-        <li>Phase 5 — Ghidra / radare2</li>
-        <li>Phase 6 — Dynamic analysis</li>
-        <li>Phase 7 — Unpacking</li>
-        <li>Phase 10 — Protocol RE</li>
-      </ol>
-    </div>
-  </div>
-
-  <!-- ATT&CK COVERAGE -->
-  <div class="sec__h">MITRE ATT&amp;CK coverage</div>
-  <p style="color:var(--ash);font-size:14px;margin:0 0 14px">Each phase produces hands-on evidence of the techniques listed. Phase 12 maps all findings onto the ATT&amp;CK matrix. <a href="intel.html" style="color:var(--volt)">→ Full intel reference</a></p>
-  <div class="attckg">
-    <div class="attckcell">
-      <h5>Initial Access / Execution</h5>
-      <ul>
-        <li><b>T1566</b> Phishing (macro dropper)</li>
-        <li><b>T1059.001</b> PowerShell cradle</li>
-        <li><b>T1204</b> User execution (Phase 12)</li>
-      </ul>
-    </div>
-    <div class="attckcell">
-      <h5>Defense Evasion</h5>
-      <ul>
-        <li><b>T1027</b> Obfuscated files (UPX pack)</li>
-        <li><b>T1070.006</b> Timestomping ($SI/$FN)</li>
-        <li><b>T1070.001</b> Clear event logs (1102)</li>
-        <li><b>T1055</b> Process injection (shellcode)</li>
-      </ul>
-    </div>
-    <div class="attckcell">
-      <h5>Persistence</h5>
-      <ul>
-        <li><b>T1547.001</b> Registry Run key</li>
-        <li><b>T1543.003</b> Windows Service (7045)</li>
-        <li><b>T1053</b> Scheduled task</li>
-        <li><b>T1546.003</b> WMI subscription</li>
-      </ul>
-    </div>
-    <div class="attckcell">
-      <h5>Command &amp; Control</h5>
-      <ul>
-        <li><b>T1071.001</b> Web protocols (HTTPS C2)</li>
-        <li><b>T1071.004</b> DNS tunneling (exfil)</li>
-        <li><b>T1095</b> Custom C2 protocol</li>
-        <li><b>T1132</b> Data encoding (XOR, Base64)</li>
-      </ul>
-    </div>
-    <div class="attckcell">
-      <h5>Discovery / Collection</h5>
-      <ul>
-        <li><b>T1057</b> Process discovery (memory)</li>
-        <li><b>T1083</b> File enumeration (ransomware)</li>
-        <li><b>T1005</b> Data from local system</li>
-      </ul>
-    </div>
-    <div class="attckcell">
-      <h5>Exfiltration / Impact</h5>
-      <ul>
-        <li><b>T1048</b> Exfiltration over DNS</li>
-        <li><b>T1486</b> Ransomware encryption</li>
-        <li><b>T1567</b> C2-hosted exfil</li>
-      </ul>
+  <!-- ===== LEARNING PATHS ===== -->
+  <div class="section">
+    <div class="sec-h"><h2>Learning paths</h2></div>
+    <div class="paths">
+      <div class="path" style="--path-color:var(--amber)">
+        <h3>DFIR Fast Track</h3>
+        <span class="path-dur">~40 hours · forensics focus</span>
+        <p>Minimum path to functional incident response competency. Skip deep RE; hit the core forensics workflow.</p>
+        <ol>
+          <li>Phase 1 — Disk &amp; File Systems</li>
+          <li>Phase 4 — Static Analysis (triage)</li>
+          <li>Phase 8 — Memory Forensics</li>
+          <li>Phase 9 — Network Forensics</li>
+          <li>Phase 11 — Rootkits &amp; Artifacts</li>
+          <li>Phase 12 — Full Investigation</li>
+        </ol>
+      </div>
+      <div class="path" style="--path-color:var(--volt)">
+        <h3>Full Curriculum</h3>
+        <span class="path-dur">~120 hours · all tracks</span>
+        <p>All 12 phases in sequence. Deep understanding of cross-phase connections. The recommended path for maximum skill transfer.</p>
+        <ol>
+          <li>Phases 1–3: foundations</li>
+          <li>Phases 4–5: static analysis + Ghidra</li>
+          <li>Phases 6–7: dynamic + unpacking</li>
+          <li>Phases 8–9: memory + network</li>
+          <li>Phases 10–12: protocol + capstone</li>
+        </ol>
+      </div>
+      <div class="path" style="--path-color:var(--blood)">
+        <h3>Malware Analyst</h3>
+        <span class="path-dur">~60 hours · RE + MA focus</span>
+        <p>For malware analyst or vulnerability researcher roles. Heavy on assembly, decompilers, and behavioral tooling.</p>
+        <ol>
+          <li>Phase 2 — Assembly deep dive</li>
+          <li>Phase 3 — Binary formats</li>
+          <li>Phase 4 — Static analysis</li>
+          <li>Phase 5 — Ghidra / radare2</li>
+          <li>Phase 6 — Dynamic analysis</li>
+          <li>Phase 7 — Unpacking</li>
+          <li>Phase 10 — Protocol RE</li>
+        </ol>
+      </div>
     </div>
   </div>
 
-  <!-- TOOL ARSENAL PREVIEW -->
-  <div class="sec__h">tool arsenal — by category</div>
-  <p style="color:var(--ash);font-size:14px;margin:0 0 16px">Every tool referenced in the curriculum, organized by discipline. <a href="tools.html" style="color:var(--volt)">→ Full reference page</a></p>
-  <div class="toolg">
-    <div class="toolcard">
-      <h4><span class="chip t-DF">DF</span> Disk Forensics</h4>
-      <p>Sleuth Kit for partition/inode triage, photorec for carving, xxd for hex inspection.</p>
-      <code>mmls / fls / icat / istat / photorec / xxd</code>
-    </div>
-    <div class="toolcard">
-      <h4><span class="chip t-RE">RE</span> Disassembly &amp; Debugging</h4>
-      <p>GNU debugger for stepping; objdump for quick disassembly; ndisasm for raw shellcode.</p>
-      <code>gdb / objdump / ndisasm / readelf / rabin2</code>
-    </div>
-    <div class="toolcard">
-      <h4><span class="chip t-RE">RE</span> Decompilers</h4>
-      <p>Ghidra (NSA) for full project RE; radare2/r2 for scriptable command-line analysis.</p>
-      <code>ghidra / r2 (radare2) / binary ninja (demo)</code>
-    </div>
-    <div class="toolcard">
-      <h4><span class="chip t-MA">MA</span> Static Analysis</h4>
-      <p>String extraction, obfuscated-string recovery, capability detection, fuzzy hashing.</p>
-      <code>strings / floss / capa / yara / ssdeep / ent</code>
-    </div>
-    <div class="toolcard">
-      <h4><span class="chip t-MA">MA</span> Dynamic Analysis</h4>
-      <p>Syscall tracing, library-call hooking, live filesystem events, network simulation.</p>
-      <code>strace / ltrace / frida / inotifywait / inetsim</code>
-    </div>
-    <div class="toolcard">
-      <h4><span class="chip t-MA">MA</span> Unpacking</h4>
-      <p>UPX decompression, entropy analysis, binary patching with radare2.</p>
-      <code>upx -d / ent / r2 -w / x64dbg + Scylla</code>
-    </div>
-    <div class="toolcard">
-      <h4><span class="chip t-DF">DF</span> Memory Forensics</h4>
-      <p>Volatility 3 for structured memory analysis; LiME/WinPmem for acquisition.</p>
-      <code>vol3 / LiME.ko / WinPmem / rekall</code>
-    </div>
-    <div class="toolcard">
-      <h4><span class="chip t-DF">DF</span> Network Forensics</h4>
-      <p>Packet capture, structured logging, IDS rules over recorded traffic.</p>
-      <code>tcpdump / tshark / zeek / suricata / wireshark</code>
-    </div>
-    <div class="toolcard">
-      <h4><span class="chip t-DF">DF</span> Artifact Parsing</h4>
-      <p>Windows artifact parsers for MFT, event logs, registry execution evidence.</p>
-      <code>MFTECmd / EvtxECmd / AppCompatCacheParser / plaso</code>
+  <!-- ===== MITRE ATT&CK COVERAGE ===== -->
+  <div class="section">
+    <div class="sec-h"><h2>MITRE ATT&amp;CK coverage</h2><a href="console.html">→ Full interactive grid</a></div>
+    <p style="color:var(--ash);font-size:13.5px;margin:0 0 18px;max-width:80ch">Each phase produces hands-on evidence of the techniques listed. 70+ techniques covered across 12 tactics. Phase 12 maps all findings to the ATT&amp;CK matrix and generates detection artifacts.</p>
+    <div class="attckg">
+      <div class="attckcell">
+        <h5>Initial Access / Execution</h5>
+        <ul>
+          <li><b>T1566.001</b> Phishing attachment (macro)</li>
+          <li><b>T1059.001</b> PowerShell download cradle</li>
+          <li><b>T1204.002</b> Malicious file user-execution</li>
+          <li><b>T1195.002</b> Software supply chain</li>
+        </ul>
+      </div>
+      <div class="attckcell">
+        <h5>Defense Evasion</h5>
+        <ul>
+          <li><b>T1027</b> Obfuscated files (UPX packing)</li>
+          <li><b>T1070.006</b> Timestomping ($SI/$FN mismatch)</li>
+          <li><b>T1070.001</b> Clear event logs (EventID 1102)</li>
+          <li><b>T1055.012</b> Process hollowing</li>
+          <li><b>T1014</b> Rootkit (LD_PRELOAD / DKOM)</li>
+        </ul>
+      </div>
+      <div class="attckcell">
+        <h5>Persistence</h5>
+        <ul>
+          <li><b>T1547.001</b> Registry Run key</li>
+          <li><b>T1543.003</b> Windows Service (EventID 7045)</li>
+          <li><b>T1053.005</b> Scheduled task creation</li>
+          <li><b>T1546.003</b> WMI event subscription</li>
+          <li><b>T1053.003</b> Crontab modification</li>
+        </ul>
+      </div>
+      <div class="attckcell">
+        <h5>Credential Access</h5>
+        <ul>
+          <li><b>T1003.001</b> LSASS memory dump</li>
+          <li><b>T1558.003</b> Kerberoasting</li>
+          <li><b>T1110</b> Brute force (SSH auth.log)</li>
+          <li><b>T1552.001</b> Credentials in files</li>
+        </ul>
+      </div>
+      <div class="attckcell">
+        <h5>Command &amp; Control</h5>
+        <ul>
+          <li><b>T1071.001</b> HTTPS C2 (JA3 fingerprint)</li>
+          <li><b>T1071.004</b> DNS tunneling / exfiltration</li>
+          <li><b>T1095</b> Custom binary C2 protocol</li>
+          <li><b>T1568.002</b> DGA beaconing</li>
+        </ul>
+      </div>
+      <div class="attckcell">
+        <h5>Impact</h5>
+        <ul>
+          <li><b>T1486</b> Data encrypted (LockBit/HERMES)</li>
+          <li><b>T1490</b> Shadow copy deletion</li>
+          <li><b>T1048</b> Exfiltration over DNS</li>
+          <li><b>T1567.002</b> Exfil to cloud storage</li>
+        </ul>
+      </div>
     </div>
   </div>
 
-  <!-- CERT ALIGNMENT -->
-  <div class="sec__h">certification alignment</div>
-  <p style="color:var(--ash);font-size:14px;margin:0 0 16px">BLACKVAULT's curriculum maps onto the competency domains tested by these certifications. It's not a prep course — it's the hands-on foundation that makes cert material click.</p>
-  <div class="certg">
-    <div class="certcard"><h4>GREM</h4><span>GIAC Reverse Engineering Malware — Phases 3–7, 10 directly align with this cert's malware analysis and RE domains.</span></div>
-    <div class="certcard"><h4>GCFE</h4><span>GIAC Certified Forensic Examiner — Phases 1, 8, 9, 11 cover the disk, memory, and network forensics core.</span></div>
-    <div class="certcard"><h4>GCFA</h4><span>GIAC Certified Forensic Analyst — Phase 12's full investigation reconstruction mirrors the capstone scenario structure.</span></div>
-    <div class="certcard"><h4>OSCP / OSED</h4><span>Phases 2, 3, 5, 7 build the assembly and RE foundation needed for exploit development and AV evasion content.</span></div>
-    <div class="certcard"><h4>CISA / CySA+</h4><span>Incident response workflow (Phases 8–12), log triage, and ATT&amp;CK mapping support threat-analyst roles.</span></div>
-    <div class="certcard"><h4>eJPT / PNPT</h4><span>Dynamic analysis and network forensics (Phases 6, 9) provide the packet-and-process intuition these practical exams test.</span></div>
+  <!-- ===== TOOL ARSENAL ===== -->
+  <div class="section">
+    <div class="sec-h"><h2>Tool arsenal</h2><a href="tools.html">→ Full reference</a></div>
+    <div class="toolg">
+      <div class="toolcard">
+        <h4><span class="chip t-DF">DF</span> Disk Forensics</h4>
+        <p>Sleuth Kit for partition/inode triage, photorec for carving, xxd for hex inspection.</p>
+        <code>mmls / fls / icat / istat / photorec / xxd</code>
+      </div>
+      <div class="toolcard">
+        <h4><span class="chip t-RE">RE</span> Disassembly &amp; Debug</h4>
+        <p>GDB for stepping; objdump for quick disassembly; radare2 for scripted analysis.</p>
+        <code>gdb / objdump / r2 (radare2) / readelf / rabin2</code>
+      </div>
+      <div class="toolcard">
+        <h4><span class="chip t-RE">RE</span> Decompilers</h4>
+        <p>Ghidra (NSA) for full project RE; r2 for command-line decompilation.</p>
+        <code>ghidra / r2 -A · pdc (pseudo-C) / binary ninja</code>
+      </div>
+      <div class="toolcard">
+        <h4><span class="chip t-MA">MA</span> Static Analysis</h4>
+        <p>String extraction, obfuscated-string recovery, capability detection, fuzzy hashing.</p>
+        <code>strings / floss / capa / yara / ssdeep / ent</code>
+      </div>
+      <div class="toolcard">
+        <h4><span class="chip t-MA">MA</span> Dynamic Analysis</h4>
+        <p>Syscall tracing, library hooking, live filesystem events, network simulation.</p>
+        <code>strace -f / ltrace / frida-trace / inotifywait</code>
+      </div>
+      <div class="toolcard">
+        <h4><span class="chip t-DF">DF</span> Memory Forensics</h4>
+        <p>Volatility 3 for structured memory analysis; WinPmem/LiME for acquisition.</p>
+        <code>vol3 windows.malfind · pslist · netscan · cmdline</code>
+      </div>
+      <div class="toolcard">
+        <h4><span class="chip t-DF">DF</span> Network Analysis</h4>
+        <p>Packet capture, Zeek structured logs, Suricata IDS rules over PCAPs.</p>
+        <code>tshark / zeek / suricata / tcpdump / ja3 / wireshark</code>
+      </div>
+      <div class="toolcard">
+        <h4><span class="chip t-DF">DF</span> Artifact Parsers</h4>
+        <p>Eric Zimmerman tools for Windows forensic artifacts: MFT, EVTX, Registry.</p>
+        <code>MFTECmd / EvtxECmd / AppCompatCacheParser / LECmd</code>
+      </div>
+      <div class="toolcard">
+        <h4><span class="chip t-MA">MA</span> Detection Rules</h4>
+        <p>Write and test Sigma/YARA/Suricata rules against curriculum artifacts.</p>
+        <code>sigma convert -t splunk detection-rules.yml
+yara -r rules.yar sample-dir/</code>
+      </div>
+    </div>
   </div>
 
-  <!-- QUICK START -->
-  <div class="sec__h">quick start</div>
-  <div class="setup">
-    <p style="color:var(--ash);margin:0 0 8px;font-size:14px">Everything runs in the browser or on a Linux machine with standard tools. No special setup required for the Study Console.</p>
-    <pre><span style="color:var(--volt)"># 1. clone the repo</span>
+  <!-- ===== QUICK START ===== -->
+  <div class="section">
+    <div class="sec-h"><h2>Quick start</h2></div>
+    <div class="setup">
+      <div class="setup-bar">analyst@range:~ — getting started</div>
+      <pre><span class="cmt"># 1. clone the repository</span>
 git clone https://github.com/akrist-rai/blackvault
 cd blackvault
 
-<span style="color:var(--volt)"># 2. open the console in a browser</span>
-open index.html    # then click Enter Console
+<span class="cmt"># 2. open in browser (no server needed)</span>
+open index.html        # then click ▶ Enter Console
 
-<span style="color:var(--volt)"># 3. install tool prerequisites (Linux/macOS)</span>
-sudo apt install sleuthkit gdb radare2 binutils upx-ucl tcpdump \
-     volatility3 strace ltrace hashcat john binwalk foremost
+<span class="cmt"># 3. install tool prerequisites (Debian/Ubuntu)</span>
+sudo apt install sleuthkit gdb radare2 binutils upx-ucl \
+     tcpdump wireshark-common strace ltrace hashcat john \
+     binwalk foremost volatility3 zeek suricata yara
 
-<span style="color:var(--volt)"># 4. build the crackmes</span>
+<span class="cmt"># 4. build the crackme artifacts</span>
 cd range/crackmes && make && cd ../..
 
-<span style="color:var(--volt)"># 5. verify the artifacts</span>
+<span class="cmt"># 5. verify artifact integrity</span>
 sha256sum range/disk/disk.img range/network/capture.pcap \
           range/memory/memory-sample.raw</pre>
-  </div>
-
-  <!-- RESOURCES -->
-  <div class="sec__h">recommended resources</div>
-  <div class="resg">
-    <div class="rescard">
-      <h4>REVERSE ENGINEERING</h4>
-      <ul>
-        <li><b>The Art of Assembly Language</b><i>Randall Hyde · free online</i></li>
-        <li><b>Hacking: The Art of Exploitation</b><i>Jon Erickson · No Starch Press</i></li>
-        <li><b>Practical Binary Analysis</b><i>Dennis Andriesse · No Starch Press</i></li>
-        <li><b>Radare2 Book</b><i>rada.re/n/radare2book.pdf · free</i></li>
-        <li><b>OpenSecurityTraining2</b><i>x86-64 OS Internals (free course)</i></li>
-      </ul>
-    </div>
-    <div class="rescard">
-      <h4>MALWARE ANALYSIS</h4>
-      <ul>
-        <li><b>Practical Malware Analysis</b><i>Sikorski &amp; Honig · No Starch Press</i></li>
-        <li><b>The Malware Analyst's Cookbook</b><i>Ligh, Adair, Hartstein, Richard</i></li>
-        <li><b>Malware Unicorn Workshops</b><i>malwareunicorn.org · free</i></li>
-        <li><b>ANY.RUN / VirusTotal</b><i>live sandbox + community sigs</i></li>
-        <li><b>vx-underground papers</b><i>vx-underground.org · research papers</i></li>
-      </ul>
-    </div>
-    <div class="rescard">
-      <h4>DIGITAL FORENSICS &amp; IR</h4>
-      <ul>
-        <li><b>The Art of Memory Forensics</b><i>Ligh, Case, Levy, Walters · Wiley</i></li>
-        <li><b>Windows Forensics Analysis</b><i>Harlan Carvey · Packt</i></li>
-        <li><b>13Cubed YouTube</b><i>forensics walkthroughs (free)</i></li>
-        <li><b>DFIR.training</b><i>resource list + CTF writeups</i></li>
-        <li><b>Eric Zimmerman Tools</b><i>ericzimmerman.github.io · free parsers</i></li>
-      </ul>
-    </div>
-    <div class="rescard">
-      <h4>THREAT INTEL &amp; ATT&amp;CK</h4>
-      <ul>
-        <li><b>MITRE ATT&amp;CK</b><i>attack.mitre.org · framework + groups</i></li>
-        <li><b>Sigma Rules</b><i>github.com/SigmaHQ/sigma</i></li>
-        <li><b>MISP Platform</b><i>misp-project.org · IOC sharing</i></li>
-        <li><b>Pyramid of Pain</b><i>David Bianco · original post (2013)</i></li>
-        <li><b>Threat Intel Reading List</b><i>apt.threattracking.com</i></li>
-      </ul>
-    </div>
-    <div class="rescard">
-      <h4>CTF PRACTICE</h4>
-      <ul>
-        <li><b>crackmes.one</b><i>RE challenges, rated by difficulty</i></li>
-        <li><b>HackTheBox</b><i>forensics + reversing challenges</i></li>
-        <li><b>CyberDefenders</b><i>DFIR blue-team labs</i></li>
-        <li><b>BlueTeamLabs.online</b><i>incident response scenarios</i></li>
-        <li><b>DFIR.science CTFs</b><i>forensics-focused competitions</i></li>
-      </ul>
-    </div>
-    <div class="rescard">
-      <h4>ONLINE TOOLS</h4>
-      <ul>
-        <li><b>CyberChef</b><i>gchq.github.io/CyberChef · encoding/crypto</i></li>
-        <li><b>dogbolt.org</b><i>multi-decompiler comparison</i></li>
-        <li><b>Hexed.it</b><i>in-browser hex editor</i></li>
-        <li><b>MalwareBazaar</b><i>abuse.ch · sample repository</i></li>
-        <li><b>PCAP Zoo</b><i>malware-traffic-analysis.net</i></li>
-      </ul>
     </div>
   </div>
 
-  <div class="callout blood" style="margin-top:28px">
-    <b>Defense-first disclaimer.</b> All artifacts in this repository are synthetic and purpose-built for education. The crackmes are original training programs; the pcap, disk image, memory sample, and log files are fabricated. No real malware is distributed here. The skills taught are the same ones defenders use to protect systems — the goal is understanding, not exploitation.
+  <!-- ===== CERT ALIGNMENT ===== -->
+  <div class="section">
+    <div class="sec-h"><h2>Certification alignment</h2></div>
+    <p style="color:var(--ash);font-size:13.5px;margin:0 0 18px;max-width:80ch">Not a prep course — the hands-on foundation that makes cert material click. BLACKVAULT's curriculum maps onto the competency domains tested by these certifications.</p>
+    <div class="certg">
+      <div class="certcard"><h4>GREM</h4><span>GIAC Reverse Engineering Malware — Phases 3–7, 10 directly cover malware analysis and RE domains</span></div>
+      <div class="certcard"><h4>GCFE</h4><span>GIAC Certified Forensic Examiner — Phases 1, 8, 9, 11 cover disk, memory, and network forensics core</span></div>
+      <div class="certcard"><h4>GCFA</h4><span>GIAC Certified Forensic Analyst — Phase 12's full reconstruction mirrors capstone scenario structure</span></div>
+      <div class="certcard"><h4>OSCP / OSED</h4><span>Phases 2, 3, 5, 7 build assembly and RE foundation for exploit dev and AV evasion content</span></div>
+      <div class="certcard"><h4>CISA / CySA+</h4><span>IR workflow (Phases 8–12), log triage, and ATT&amp;CK mapping support threat-analyst roles</span></div>
+      <div class="certcard"><h4>BTL1 / BTLO</h4><span>Blue Team Labs curriculum maps closely to Phases 1, 4, 8, 9, 11, 12 — same tooling and artifacts</span></div>
+    </div>
+  </div>
+
+  <!-- ===== RESOURCES ===== -->
+  <div class="section">
+    <div class="sec-h"><h2>Recommended resources</h2></div>
+    <div class="resg">
+      <div class="rescard">
+        <h4>Reverse Engineering</h4>
+        <ul>
+          <li><b>Practical Binary Analysis</b><i>Dennis Andriesse · No Starch Press</i></li>
+          <li><b>Hacking: The Art of Exploitation</b><i>Jon Erickson · No Starch Press</i></li>
+          <li><b>Radare2 Book</b><i>rada.re/n/radare2book.pdf · free PDF</i></li>
+          <li><b>OpenSecurityTraining2</b><i>x86-64 OS Internals course · free</i></li>
+        </ul>
+      </div>
+      <div class="rescard">
+        <h4>Malware Analysis</h4>
+        <ul>
+          <li><b>Practical Malware Analysis</b><i>Sikorski &amp; Honig · No Starch</i></li>
+          <li><b>Malware Unicorn Workshops</b><i>malwareunicorn.org · free labs</i></li>
+          <li><b>ANY.RUN Sandbox</b><i>Interactive malware sandbox · free tier</i></li>
+          <li><b>vx-underground</b><i>vx-underground.org · research papers</i></li>
+        </ul>
+      </div>
+      <div class="rescard">
+        <h4>Digital Forensics &amp; IR</h4>
+        <ul>
+          <li><b>The Art of Memory Forensics</b><i>Ligh, Case, Levy, Walters · Wiley</i></li>
+          <li><b>13Cubed YouTube</b><i>Forensics walkthroughs · free</i></li>
+          <li><b>Eric Zimmerman Tools</b><i>ericzimmerman.github.io · free parsers</i></li>
+          <li><b>DFIR.training</b><i>Resource list + CTF writeups</i></li>
+        </ul>
+      </div>
+      <div class="rescard">
+        <h4>Threat Intel &amp; ATT&amp;CK</h4>
+        <ul>
+          <li><b>MITRE ATT&amp;CK</b><i>attack.mitre.org · full framework</i></li>
+          <li><b>Sigma HQ</b><i>github.com/SigmaHQ/sigma</i></li>
+          <li><b>MISP Platform</b><i>misp-project.org · IOC sharing</i></li>
+          <li><b>Pyramid of Pain</b><i>David Bianco · IOC taxonomy</i></li>
+        </ul>
+      </div>
+      <div class="rescard">
+        <h4>CTF Practice</h4>
+        <ul>
+          <li><b>crackmes.one</b><i>RE challenges rated by difficulty</i></li>
+          <li><b>CyberDefenders</b><i>DFIR blue-team labs</i></li>
+          <li><b>BlueTeamLabs.online</b><i>IR scenarios, free tier</i></li>
+          <li><b>HackTheBox</b><i>Forensics + reversing challenges</i></li>
+        </ul>
+      </div>
+      <div class="rescard">
+        <h4>Online Tools</h4>
+        <ul>
+          <li><b>CyberChef</b><i>gchq.github.io/CyberChef</i></li>
+          <li><b>dogbolt.org</b><i>Multi-decompiler comparison</i></li>
+          <li><b>MalwareBazaar</b><i>abuse.ch · sample repository</i></li>
+          <li><b>Hexed.it</b><i>In-browser hex editor</i></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-blood">
+    <b>Defense-first disclaimer.</b> All artifacts in this repository are synthetic and purpose-built for education. Crackmes are original training programs; the pcap, disk image, memory sample, and log files are fabricated. No real malware is distributed here. The skills taught are the same ones defenders use to protect systems.
   </div>
 
   <div class="foot">
-    <span>BLACKVAULT // self-directed RE · MA · DFIR · <a href="console.html">console</a> · <a href="tools.html">tools</a> · <a href="intel.html">intel</a> · <a href="range/README.md">range</a></span>
-    <span>All artifacts synthetic &amp; defensive</span>
+    <span>BLACKVAULT // RE · MA · DFIR</span>
+    <div class="foot-links">
+      <a href="console.html">Console</a>
+      <a href="playbook.html">Playbooks</a>
+      <a href="challenge.html">CTF</a>
+      <a href="tools.html">Tools</a>
+      <a href="intel.html">Intel</a>
+    </div>
+    <span style="color:var(--dim)">All artifacts synthetic &amp; defensive</span>
   </div>
-</div>
+
+</div><!-- /wrap -->
 
 <script>
-document.querySelectorAll('code[data-copy],code').forEach(el=>{
-  el.addEventListener('click',()=>{
-    if(navigator.clipboard)navigator.clipboard.writeText(el.textContent).catch(()=>{});
-  });
+document.querySelectorAll('code').forEach(el=>{
   el.title='Click to copy';
+  el.addEventListener('click',()=>{
+    if(navigator.clipboard)navigator.clipboard.writeText(el.textContent.trim()).catch(()=>{});
+    el.style.borderColor='var(--volt)';
+    setTimeout(()=>el.style.borderColor='',800);
+  });
 });
 </script>
 </body>

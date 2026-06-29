@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLACKVAULT // CTF Challenges</title>
+<style>
+:root{
+  --void:#050706; --blood:#fb3640; --volt:#2de2e6; --amber:#f4b740; --bone:#e9e7dc; --ash:#878d85;
+  --panel:#0c1410; --panel2:#101a14; --line:#1e2b22;
+  --grot:'Space Grotesk',system-ui,sans-serif; --mono:'Space Mono',monospace;
+}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--void);color:var(--bone);font-family:var(--grot);min-height:100vh;line-height:1.5}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 28px,rgba(45,226,230,.018) 29px);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(90deg,rgba(45,226,230,.006) 0,rgba(45,226,230,.006) 1px,transparent 1px,transparent 60px);pointer-events:none;z-index:0}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(5,7,6,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+.topbar__in{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;height:56px;max-width:1440px;margin:0 auto}
+.brand{font-family:var(--grot);font-size:17px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--bone);text-decoration:none}
+.brand b{color:var(--blood)}
+.brand i{font-style:normal;color:var(--ash)}
+.score-display{display:flex;gap:24px;font-family:var(--mono);font-size:12px;color:var(--ash)}
+.score-display span{display:flex;flex-direction:column;align-items:center}
+.score-display b{color:var(--bone);font-size:18px;line-height:1.1}
+.score-display small{font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.nav-back{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--ash);text-decoration:none;border:1px solid var(--line);padding:6px 14px;transition:.15s}
+.nav-back:hover{color:var(--bone);border-color:var(--ash)}
+
+main{max-width:1200px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1}
+
+/* hero */
+.hero{margin-bottom:40px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--blood);margin-bottom:10px}
+.hero h1{font-family:var(--grot);font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:-.02em;line-height:1.1;margin-bottom:14px}
+.hero h1 b{color:var(--blood)}
+.hero p{font-size:16px;color:var(--ash);max-width:640px;line-height:1.65}
+
+/* filters */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:30px}
+.filt{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ash);background:transparent;border:1.5px solid var(--line);padding:7px 14px;cursor:pointer;transition:.15s}
+.filt:hover{color:var(--bone);border-color:var(--ash)}
+.filt[data-active="1"]{color:var(--void);background:var(--bone);border-color:var(--bone)}
+.filt[data-cat="RE"][data-active="1"]{background:var(--volt);border-color:var(--volt)}
+.filt[data-cat="DF"][data-active="1"]{background:var(--amber);border-color:var(--amber)}
+.filt[data-cat="MA"][data-active="1"]{background:var(--blood);border-color:var(--blood)}
+.filt[data-cat="CR"][data-active="1"]{background:#b794f6;border-color:#b794f6}
+.filt[data-cat="NW"][data-active="1"]{background:#57d977;border-color:#57d977;color:var(--void)}
+.sep{width:1px;background:var(--line);margin:0 4px}
+.filt[data-diff="Easy"][data-active="1"]{background:#57d977;border-color:#57d977;color:var(--void)}
+.filt[data-diff="Medium"][data-active="1"]{background:var(--amber);border-color:var(--amber);color:var(--void)}
+.filt[data-diff="Hard"][data-active="1"]{background:var(--blood);border-color:var(--blood)}
+.filt[data-diff="Expert"][data-active="1"]{background:#ff5da2;border-color:#ff5da2}
+
+/* challenge grid */
+.chgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.chcard{background:var(--panel2);border:1.5px solid var(--line);padding:20px;cursor:pointer;transition:.18s;position:relative;overflow:hidden}
+.chcard:hover{border-color:var(--ash);transform:translateY(-2px)}
+.chcard[data-solved="1"]{border-color:var(--amber)}
+.chcard[data-solved="1"]::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--amber)}
+.chcard__header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px}
+.chcard__cat{font-family:var(--mono);font-size:10px;letter-spacing:.14em;padding:3px 8px;border:1.5px solid}
+.chcard__cat.RE{color:var(--volt);border-color:var(--volt)}
+.chcard__cat.DF{color:var(--amber);border-color:var(--amber)}
+.chcard__cat.MA{color:var(--blood);border-color:var(--blood)}
+.chcard__cat.CR{color:#b794f6;border-color:#b794f6}
+.chcard__cat.NW{color:#57d977;border-color:#57d977}
+.chcard__diff{font-family:var(--mono);font-size:10px;letter-spacing:.08em}
+.diff-Easy{color:#57d977} .diff-Medium{color:var(--amber)} .diff-Hard{color:var(--blood)} .diff-Expert{color:#ff5da2}
+.chcard h3{font-family:var(--grot);font-size:16px;font-weight:600;margin-bottom:6px;letter-spacing:-.01em}
+.chcard p{font-size:13px;color:var(--ash);line-height:1.5;margin-bottom:12px}
+.chcard__pts{font-family:var(--mono);font-size:11px;color:var(--ash)}
+.chcard__pts b{color:var(--bone)}
+.chcard__solved{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.1em;margin-top:8px}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--panel);border:2px solid var(--line);max-width:640px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-top{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+.modal-top h2{font-family:var(--grot);font-size:19px;font-weight:700;letter-spacing:-.01em}
+.modal-close{font-family:var(--mono);font-size:18px;color:var(--ash);cursor:pointer;background:none;border:0;transition:.12s;padding:0 4px}
+.modal-close:hover{color:var(--bone)}
+.modal-body{padding:22px}
+.modal-meta{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;letter-spacing:.08em}
+.modal-meta span{padding:4px 10px;border:1.5px solid var(--line);color:var(--ash)}
+.modal-desc{font-size:14.5px;color:var(--ash);line-height:1.65;margin-bottom:20px}
+.modal-desc code{font-family:var(--mono);background:rgba(255,255,255,.06);padding:1px 6px;font-size:13px;color:var(--volt)}
+.modal-desc pre{font-family:var(--mono);font-size:12.5px;background:#04100c;border:1px solid var(--line);padding:14px;line-height:1.6;overflow-x:auto;margin:12px 0;color:#cfe9df;white-space:pre-wrap}
+.modal-desc b{color:var(--bone)}
+.flag-row{display:flex;gap:8px;margin-bottom:14px}
+.flag-input{flex:1;background:#04100c;border:1.5px solid var(--line);color:var(--bone);font-family:var(--mono);font-size:13px;padding:11px 14px;outline:0;transition:.15s}
+.flag-input:focus{border-color:var(--volt)}
+.flag-input.correct{border-color:var(--amber)}
+.flag-input.wrong{border-color:var(--blood)}
+.flag-btn{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--void);background:var(--volt);border:0;padding:0 20px;cursor:pointer;transition:.15s;white-space:nowrap}
+.flag-btn:hover{background:var(--bone)}
+.flag-result{font-family:var(--mono);font-size:13px;padding:6px 0;min-height:22px}
+.flag-result.ok{color:var(--amber)}
+.flag-result.no{color:var(--blood)}
+.hints-section{border-top:1px solid var(--line);padding-top:16px;margin-top:4px}
+.hints-h{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);margin-bottom:12px}
+.hint-item{background:var(--panel2);border:1px solid var(--line);margin-bottom:8px;overflow:hidden}
+.hint-toggle{width:100%;text-align:left;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--ash);background:none;border:0;cursor:pointer;display:flex;justify-content:space-between}
+.hint-toggle:hover{color:var(--bone)}
+.hint-body{padding:10px 14px;font-size:13px;color:#cfe9df;line-height:1.55;display:none;border-top:1px solid var(--line)}
+.hint-item[data-open="1"] .hint-body{display:block}
+.hint-item[data-open="1"] .hint-toggle{color:var(--bone)}
+.solved-banner{background:rgba(244,183,64,.1);border:1.5px solid var(--amber);padding:14px 18px;font-family:var(--mono);font-size:13px;color:var(--amber);letter-spacing:.05em;margin-bottom:16px}
+.solved-banner b{font-size:15px;display:block;margin-bottom:3px}
+
+/* points bar */
+.points-bar{background:var(--panel2);border:1px solid var(--line);padding:14px 20px;display:flex;gap:24px;margin-bottom:32px;flex-wrap:wrap}
+.pb-stat{text-align:center}
+.pb-n{font-family:var(--grot);font-size:32px;font-weight:700;line-height:1;color:var(--amber)}
+.pb-l{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);margin-top:3px}
+
+/* hidden */
+.hidden{display:none}
+footer{border-top:1px solid var(--line);margin-top:60px;padding:18px 24px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--ash);letter-spacing:.08em;position:relative;z-index:1}
+footer a{color:var(--volt);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar__in">
+    <a class="brand" href="index.html"><b>BLACK</b><i>VAULT</i></a>
+    <div id="topScore" class="score-display">
+      <span><b id="totalPts">0</b><small>Points</small></span>
+      <span><b id="solvedCount">0</b><small>Solved</small></span>
+    </div>
+    <a href="console.html" class="nav-back">← Console</a>
+  </div>
+</div>
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">Cyber Range · CTF Mode</div>
+    <h1>BLACKVAULT <b>Challenges</b></h1>
+    <p>Apply your knowledge. Each challenge maps directly to the 12-phase curriculum — concepts from the study console, tested under pressure. Solve challenges, earn points, build intuition.</p>
+  </div>
+
+  <div id="pointsBar" class="points-bar">
+    <div class="pb-stat"><div class="pb-n" id="pbPts">0</div><div class="pb-l">Total Points</div></div>
+    <div class="pb-stat"><div class="pb-n" id="pbSolved">0</div><div class="pb-l">Solved</div></div>
+    <div class="pb-stat"><div class="pb-n" id="pbTotal">0</div><div class="pb-l">Challenges</div></div>
+    <div class="pb-stat"><div class="pb-n" id="pbPct" style="color:var(--volt)">0%</div><div class="pb-l">Completion</div></div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="filt" data-cat="ALL" data-active="1">All</button>
+    <button class="filt" data-cat="RE">RE</button>
+    <button class="filt" data-cat="DF">Forensics</button>
+    <button class="filt" data-cat="MA">Malware</button>
+    <button class="filt" data-cat="CR">Crypto</button>
+    <button class="filt" data-cat="NW">Network</button>
+    <div class="sep"></div>
+    <button class="filt" data-diff="Easy">Easy</button>
+    <button class="filt" data-diff="Medium">Medium</button>
+    <button class="filt" data-diff="Hard">Hard</button>
+    <button class="filt" data-diff="Expert">Expert</button>
+  </div>
+
+  <div class="chgrid" id="grid"></div>
+</main>
+
+<div class="modal-bg hidden" id="modalBg">
+  <div class="modal" id="modal">
+    <div class="modal-top">
+      <h2 id="modalTitle"></h2>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<footer>
+  <a href="index.html">⌂ Home</a> · <a href="console.html">Study Console</a> · <a href="tools.html">Tools</a> · <a href="intel.html">Intel Hub</a>
+  · BLACKVAULT // all challenges are offline · no data leaves your browser
+</footer>
+
+<script>
+/* ============================================================ CHALLENGE DATA ============================================================ */
+const CHALLENGES = [
+
+/* ===== REVERSE ENGINEERING ===== */
+{id:'re01', cat:'RE', diff:'Easy', pts:50, phase:2,
+ title:'Assembly 101',
+ desc:`The following x86-64 function (AT&T syntax) is called with one integer argument. What value does it return when called with <code>x = 7</code>?
+<pre>my_func:
+  movl   %edi, %eax   ; eax = arg0
+  addl   $3,   %eax   ; eax += 3
+  imull  %eax, %eax   ; eax *= eax
+  ret</pre>
+Submit as <code>BV{N}</code> where N is the decimal return value.`,
+ flag:'BV{100}',
+ hints:['Work through each instruction in order.','After addl: eax = 7 + 3 = 10','imull %eax, %eax multiplies eax by itself.']},
+
+{id:'re02', cat:'RE', diff:'Easy', pts:50, phase:2,
+ title:'Stack Frame Anatomy',
+ desc:`A function prologue reads:
+<pre>push   rbp
+mov    rbp, rsp
+sub    rsp, 0x20</pre>
+How many bytes of local stack space does this function reserve?
+Submit as <code>BV{N}</code>.`,
+ flag:'BV{32}',
+ hints:['0x20 in decimal is...','hex to decimal: 0x20 = 2*16 + 0 = 32']},
+
+{id:'re03', cat:'RE', diff:'Medium', pts:100, phase:2,
+ title:'XOR Decoder',
+ desc:`A malware stub XOR-encodes its C2 URL with a single-byte key before storing it in .data.
+Key: <code>0x41</code>
+Ciphertext hex: <code>29 24 2D 2D 2E 1E 36 2E 33 2D 25 1E 39 2E 33</code>
+Decrypt it. Submit the decoded string wrapped as <code>BV{decoded_string}</code>.
+<b>Tip:</b> <code>python3 -c "print(bytes([b^0x41 for b in bytes.fromhex('29242d2d2e1e362e332d251e392e33')]).decode())"</code>`,
+ flag:'BV{hello_world_xor}',
+ hints:['XOR is its own inverse: decrypt = ciphertext XOR key','Run the Python one-liner in the description','Each byte XOR 0x41 gives a printable ASCII character']},
+
+{id:'re04', cat:'RE', diff:'Medium', pts:100, phase:5,
+ title:'Decompiler Reading',
+ desc:`Ghidra decompiles a stripped binary function to this pseudocode:
+<pre>undefined8 FUN_00401150(char *param_1) {
+  int iVar1;
+  iVar1 = strcmp(param_1, "s3cr3t_p4ss");
+  if (iVar1 == 0)
+    return 1;
+  return 0;
+}</pre>
+The binary prompts for a password. What is the correct password? Submit as <code>BV{the_password}</code>.`,
+ flag:'BV{s3cr3t_p4ss}',
+ hints:['strcmp returns 0 when both strings are equal','The function returns 1 (success) only when strcmp returns 0','The hardcoded string is the expected password']},
+
+{id:'re05', cat:'RE', diff:'Medium', pts:100, phase:5,
+ title:'Calling Convention',
+ desc:`In the System V AMD64 ABI (Linux x86-64), what are the first six integer/pointer argument registers IN ORDER?
+Submit as <code>BV{r1,r2,r3,r4,r5,r6}</code> using lowercase register names (e.g. <code>rdi,rsi,...</code>).`,
+ flag:'BV{rdi,rsi,rdx,rcx,r8,r9}',
+ hints:['This is the System V AMD64 ABI','Mnemonic: "Diane\'s Silk Dress Cost Real Nickel"','rdi, rsi, rdx, rcx, r8, r9']},
+
+{id:'re06', cat:'RE', diff:'Hard', pts:200, phase:5,
+ title:'P-code Trace',
+ desc:`A Ghidra decompiler snippet reads:
+<pre>ulong check(ulong x) {
+    x = x ^ 0xdeadbeef;
+    x = x >> 4;
+    return x & 0xff;
+}</pre>
+What does <code>check(0xdeadbeef)</code> return? Give the decimal value. Submit as <code>BV{N}</code>.`,
+ flag:'BV{0}',
+ hints:['0xdeadbeef ^ 0xdeadbeef = 0','0 >> 4 = 0','0 & 0xff = 0']},
+
+{id:'re07', cat:'RE', diff:'Hard', pts:200, phase:7,
+ title:'OEP Recovery Concept',
+ desc:`A packed binary's unpacker stub ends with the instruction:
+<pre>jmp    rax</pre>
+At runtime, <code>rax</code> holds <code>0x401000</code> just before this jump. What is this address called in the unpacking workflow, and what should an analyst do at this point?
+Submit as <code>BV{term}</code> where term is the two-word technical name (lowercase, underscore-separated).`,
+ flag:'BV{original_entry_point}',
+ hints:['This is the address where the real (unpacked) code begins executing','It stands for OEP','original entry point']},
+
+{id:'re08', cat:'RE', diff:'Expert', pts:400, phase:5,
+ title:'Struct Recovery',
+ desc:`Ghidra shows a function accessing <code>param_1</code> as follows:
+<pre>*(int *)(param_1 + 0)  = 0x42;
+*(char **)(param_1 + 8) = "hello";
+*(int *)(param_1 + 0x10) = 100;
+*(int *)(param_1 + 0x14) = 200;</pre>
+Assuming natural alignment on x64, what is the minimum size of this struct in bytes?
+Submit as <code>BV{N}</code>.`,
+ flag:'BV{24}',
+ hints:['Field at +0: int (4 bytes). Next aligned slot for a pointer (8 bytes) is at +8','Field at +8: char * (8 bytes, spans +8 to +15)','Fields at +0x10 (+16) and +0x14 (+20): two ints (4 bytes each). Struct ends at +0x18 = 24.']},
+
+/* ===== DIGITAL FORENSICS ===== */
+{id:'df01', cat:'DF', diff:'Easy', pts:50, phase:1,
+ title:'Magic Bytes',
+ desc:`A file with an unknown extension begins with these hex bytes:
+<pre>89 50 4E 47 0D 0A 1A 0A</pre>
+What file type is this? Submit as <code>BV{filetype}</code> (lowercase, no spaces).`,
+ flag:'BV{png}',
+ hints:['Magic bytes (file signatures) identify file types','Look up "89 50 4E 47" in a magic bytes reference','PNG: Portable Network Graphics']},
+
+{id:'df02', cat:'DF', diff:'Easy', pts:50, phase:1,
+ title:'MBR Partition Type',
+ desc:`A disk's MBR partition table shows partition type byte <code>0x07</code>. Which Windows filesystem does this indicate?
+Submit as <code>BV{filesystem}</code> (uppercase).`,
+ flag:'BV{NTFS}',
+ hints:['0x07 is a well-known partition type byte','It is the most common Windows filesystem','New Technology File System']},
+
+{id:'df03', cat:'DF', diff:'Medium', pts:100, phase:1,
+ title:'Order of Volatility',
+ desc:`Rank these artifact sources from MOST volatile to LEAST volatile:
+<b>A.</b> Hard drive image
+<b>B.</b> RAM dump
+<b>C.</b> Network traffic (live capture)
+<b>D.</b> CPU registers + cache
+
+Submit as <code>BV{order}</code> using the letters in correct order (e.g. <code>BV{DCBA}</code>).`,
+ flag:'BV{DBCA}',
+ hints:['Most volatile = disappears first when power is lost','CPU registers vanish the moment execution changes','RAM is next; live network capture is transient but can be buffered; disk is persistent']},
+
+{id:'df04', cat:'DF', diff:'Medium', pts:100, phase:1,
+ title:'Timestomping Tell',
+ desc:`An analyst examines a file's NTFS metadata and finds:
+<ul style="margin:10px 0 10px 18px;line-height:1.8">
+<li><b>$STANDARD_INFORMATION ($SI) Created:</b> 2023-01-15 09:00:00</li>
+<li><b>$FILE_NAME ($FN) Created:</b> 2024-08-03 14:22:11</li>
+</ul>
+What technique does this discrepancy indicate, and what ATT&CK technique ID covers it?
+Submit as <code>BV{technique_name}</code> (lowercase, underscores).`,
+ flag:'BV{timestomping}',
+ hints:['$SI is writable by user-mode tools; $FN is updated by the kernel on MFT operations','When $SI timestamp is EARLIER than $FN, the $SI timestamp was artificially set back','ATT&CK T1070.006 — Indicator Removal: Timestomp']},
+
+{id:'df05', cat:'DF', diff:'Medium', pts:100, phase:8,
+ title:'Volatility Command',
+ desc:`An analyst suspects a process is hiding from the EPROCESS linked list via DKOM. Which Volatility 3 command reveals processes that are visible in raw memory scan but absent from the active process list?
+Submit as <code>BV{command}</code> (plugin name only, e.g. <code>BV{windows.pslist.PsList}</code>).`,
+ flag:'BV{windows.psscan.PsScan}',
+ hints:['Scan raw memory for EPROCESS structures regardless of list linkage','The command starts with "windows."','psscan brute-forces physical memory for EPROCESS signatures, bypassing the list']},
+
+{id:'df06', cat:'DF', diff:'Hard', pts:200, phase:8,
+ title:'DKOM Explained',
+ desc:`Direct Kernel Object Manipulation (DKOM) hides a process by:
+<b>A.</b> Encrypting the EPROCESS structure
+<b>B.</b> Unlinking the EPROCESS from the PsActiveProcessHead doubly-linked list
+<b>C.</b> Setting the process priority to 0 so it never runs
+<b>D.</b> Deleting the process's page table entries
+
+Which answer is correct? Submit as <code>BV{letter}</code>.`,
+ flag:'BV{B}',
+ hints:['Rootkits manipulate data structures, not cryptography','The kernel maintains a linked list of running processes','Removing a node from the linked list hides it from tools that walk the list']},
+
+{id:'df07', cat:'DF', diff:'Hard', pts:200, phase:9,
+ title:'DNS Exfil Pattern',
+ desc:`A network analyst observes DNS queries where subdomains are 30–50 characters of random-looking hex, all targeting <code>exfil.evil.io</code>. Each query arrives every 2–5 seconds and carries no legitimate payload.
+What data exfiltration technique is in use? Submit as <code>BV{technique}</code> (lowercase, underscores, two words).`,
+ flag:'BV{dns_tunneling}',
+ hints:['Data is encoded into the subdomain label of DNS queries','No HTTP, no TCP — just DNS','DNS tunneling / DNS exfiltration']},
+
+{id:'df08', cat:'DF', diff:'Expert', pts:400, phase:12,
+ title:'Super-Timeline',
+ desc:`In a DFIR investigation, a "super-timeline" is created by correlating multiple artifact sources. Which Plaso tool ingests raw artifacts and produces a unified CSV/JSON timeline?
+Submit as <code>BV{toolname}</code> (the CLI binary name, no path).`,
+ flag:'BV{log2timeline.py}',
+ hints:['Plaso is a timeline framework','The main ingest tool is named after what it does: logs to timeline','log2timeline.py creates the Plaso storage file; psort then filters it']},
+
+/* ===== MALWARE ANALYSIS ===== */
+{id:'ma01', cat:'MA', diff:'Easy', pts:50, phase:4,
+ title:'Packed Binary Tell',
+ desc:`A PE binary has:
+<ul style="margin:10px 0 10px 18px;line-height:1.8">
+<li>Import table: <code>LoadLibraryA</code>, <code>GetProcAddress</code> (only two imports)</li>
+<li>.text section entropy: <code>7.84 bits/byte</code></li>
+</ul>
+What is the most likely explanation? Submit as <code>BV{answer}</code> (two words, lowercase, underscore).`,
+ flag:'BV{packed_binary}',
+ hints:['Normal .text sections have entropy 5.5–6.5','Only two imports = all real imports resolved at runtime','A packer compressed/encrypted the real code and added a small stub']},
+
+{id:'ma02', cat:'MA', diff:'Easy', pts:50, phase:4,
+ title:'Import Capability',
+ desc:`A Windows PE imports <code>VirtualAllocEx</code>, <code>WriteProcessMemory</code>, and <code>CreateRemoteThread</code>. What is the primary malware capability these three imports together indicate?
+Submit as <code>BV{capability}</code> (two words, lowercase, underscore).`,
+ flag:'BV{process_injection}',
+ hints:['VirtualAllocEx allocates memory in another process','WriteProcessMemory writes code/data to another process','CreateRemoteThread executes code in another process']},
+
+{id:'ma03', cat:'MA', diff:'Medium', pts:100, phase:4,
+ title:'YARA Condition',
+ desc:`You want a YARA rule that matches a PE with fewer than 5 imports AND a .text section entropy above 7.0.
+Which YARA condition clause achieves this? (Choose the correct answer.)
+<b>A.</b> <code>pe.number_of_imports &lt; 5 and pe.sections[0].entropy &gt; 7.0</code>
+<b>B.</b> <code>imports("kernel32.dll", "LoadLibraryA") and filesize &lt; 100KB</code>
+<b>C.</b> <code>pe.imphash() == "abc123" or pe.number_of_sections &gt; 10</code>
+<b>D.</b> <code>all of them</code>
+
+Submit as <code>BV{letter}</code>.`,
+ flag:'BV{A}',
+ hints:['You need both conditions to be true simultaneously','pe.number_of_imports and pe.sections[].entropy are valid YARA PE module fields','A uses "and" — both conditions must be true']},
+
+{id:'ma04', cat:'MA', diff:'Medium', pts:100, phase:6,
+ title:'API Trace',
+ desc:`ltrace on a Linux malware binary shows:
+<pre>socket(AF_INET, SOCK_STREAM, 0) = 3
+connect(3, {AF_INET, 4444, 1.2.3.4}, 16) = 0
+dup2(3, 0)
+dup2(3, 1)
+dup2(3, 2)
+execve("/bin/sh", ["/bin/sh"], NULL)</pre>
+What common post-exploitation technique does this implement?
+Submit as <code>BV{technique}</code> (two words, lowercase, underscore).`,
+ flag:'BV{reverse_shell}',
+ hints:['The binary connects outbound to 1.2.3.4:4444','dup2 redirects stdin/stdout/stderr to the socket','execve spawns a shell — now interactive over the network connection']},
+
+{id:'ma05', cat:'MA', diff:'Hard', pts:200, phase:7,
+ title:'Packer Fingerprinting',
+ desc:`A binary shows these characteristics:
+<ul style="margin:10px 0 10px 18px;line-height:1.8">
+<li>Section named <code>UPX0</code> with <code>VirtualSize = 0x18000</code>, <code>SizeOfRawData = 0</code></li>
+<li>Section named <code>UPX1</code> with high entropy</li>
+<li>Entry point lands in <code>UPX1</code></li>
+</ul>
+What packer was used, and what does <code>SizeOfRawData = 0</code> for UPX0 indicate?
+Submit as <code>BV{packer_implication}</code> (two words, lowercase, underscore).`,
+ flag:'BV{upx_decompression_target}',
+ hints:['Section names are explicit','SizeOfRawData = 0 means the section has no on-disk content — it is empty on disk','UPX decompresses into UPX0 at runtime — it is the target of the in-memory decompression']},
+
+{id:'ma06', cat:'MA', diff:'Hard', pts:200, phase:11,
+ title:'SSDT Hook',
+ desc:`A rootkit patches the System Service Descriptor Table (SSDT) so that calls to <code>NtQuerySystemInformation</code> are redirected to a malicious handler. What does this allow the rootkit to do?
+<b>A.</b> Encrypt all disk I/O transparently
+<b>B.</b> Hide processes from any tool that uses the NtQuerySystemInformation API
+<b>C.</b> Gain ring-0 privileges from ring-3
+<b>D.</b> Intercept all network packets before the TCP/IP stack
+
+Submit as <code>BV{letter}</code>.`,
+ flag:'BV{B}',
+ hints:['NtQuerySystemInformation with SystemProcessInformation returns the process list','Process Explorer and Task Manager both call this API','The malicious handler can filter out its own process from the returned list']},
+
+{id:'ma07', cat:'MA', diff:'Expert', pts:400, phase:11,
+ title:'Driver Object Forensics',
+ desc:`In a Volatility memory dump, a suspicious kernel driver has its <code>DriverObject.DriverUnload</code> pointer set to <code>NULL</code>. What does this mean for an analyst trying to unload it?
+Submit as <code>BV{implication}</code> (three words, lowercase, underscore).`,
+ flag:'BV{cannot_be_unloaded}',
+ hints:['DriverUnload is a callback pointer called when a driver is unloaded via sc stop or DeviceIoControl','NULL means no unload routine is registered','The OS will refuse to unload a driver with NULL DriverUnload']},
+
+/* ===== CRYPTOGRAPHY / ENCODING ===== */
+{id:'cr01', cat:'CR', diff:'Easy', pts:50, phase:4,
+ title:'Base64 Is Not Encryption',
+ desc:`Decode this Base64 string:
+<code>QlZ7YmFzZTY0X2lzX2VuY29kaW5nX25vdF9lbmNyeXB0aW9ufQ==</code>
+Submit the decoded value exactly as it appears.`,
+ flag:'BV{base64_is_encoding_not_encryption}',
+ hints:['python3 -c "import base64; print(base64.b64decode(\'QlZ7...\').decode())"','CyberChef: From Base64','The result includes the BV{} wrapper already']},
+
+{id:'cr02', cat:'CR', diff:'Easy', pts:50, phase:10,
+ title:'Caesar Cipher',
+ desc:`A threat actor uses ROT13 to obfuscate their C2 command:
+<code>purpx_va</code>
+What is the decoded command? Submit as <code>BV{command}</code>.`,
+ flag:'BV{check_in}',
+ hints:['ROT13 shifts each letter by 13 positions','Apply ROT13 to each letter','p→c, u→h, r→e, p→c, x→k, _→_, v→i, a→n']},
+
+{id:'cr03', cat:'CR', diff:'Medium', pts:100, phase:10,
+ title:'Encoding vs Encryption',
+ desc:`Match each scheme to the correct category:
+<b>1.</b> Base64 &nbsp; <b>2.</b> AES-256 &nbsp; <b>3.</b> ROT13 &nbsp; <b>4.</b> SHA-256
+Categories: <b>E</b>=Encoding, <b>X</b>=Encryption, <b>H</b>=Hashing
+Submit as <code>BV{ABCD}</code> using the category letters for items 1–4.`,
+ flag:'BV{EXEH}',
+ hints:['Encoding is reversible without a key','Encryption requires a key to decrypt','Hashing is one-way — you cannot reverse SHA-256 to get the original input']},
+
+{id:'cr04', cat:'CR', diff:'Medium', pts:100, phase:10,
+ title:'JA3 Fingerprint',
+ desc:`A network analyst observes repeated TLS ClientHello packets with JA3 hash <code>e7d705a3286e19ea42f587b344ee6865</code>. This JA3 hash is publicly associated with a specific offensive framework. The analyst should:
+<b>A.</b> Ignore it — JA3 hashes are not reliable indicators
+<b>B.</b> Look up the hash in a JA3 threat intelligence database and cross-reference with beacon timing
+<b>C.</b> Block all TLS traffic from this host immediately
+<b>D.</b> Decrypt the TLS session to confirm
+
+Submit as <code>BV{letter}</code>.`,
+ flag:'BV{B}',
+ hints:['JA3 hashes are published by threat intel for known tools (Cobalt Strike, Metasploit, etc.)','Blocking without confirming may cause false positives','Correlating JA3 + beacon timing is the correct characterization step']},
+
+{id:'cr05', cat:'CR', diff:'Hard', pts:200, phase:10,
+ title:'Protocol Reconstruction',
+ desc:`A pcap shows a custom binary protocol. Each frame has:
+<pre>Offset  Size  Field
+0x00    2     Magic (0xBEEF)
+0x02    1     Command byte
+0x03    2     Payload length (big-endian)
+0x05    N     Payload (N = payload length)</pre>
+A captured frame hex dump (first 8 bytes):
+<code>BE EF 03 00 04 41 42 43 44</code>
+What is the command byte value (decimal), and what is the payload as ASCII?
+Submit as <code>BV{cmd:payload}</code>.`,
+ flag:'BV{3:ABCD}',
+ hints:['Offset 0x00-0x01: magic = 0xBEEF (match)','Offset 0x02: command byte = 0x03 = 3 (decimal)','Offset 0x03-0x04: payload length = 0x0004 = 4 bytes. Offset 0x05-0x08: 41 42 43 44 = "ABCD"']},
+
+/* ===== NETWORK FORENSICS ===== */
+{id:'nw01', cat:'NW', diff:'Easy', pts:50, phase:9,
+ title:'TCP Handshake',
+ desc:`In a TCP three-way handshake, what are the three flags used IN ORDER?
+Submit as <code>BV{F1,F2,F3}</code> using uppercase flag abbreviations (e.g. SYN, ACK, FIN).`,
+ flag:'BV{SYN,SYN-ACK,ACK}',
+ hints:['Client initiates','Server responds','Client acknowledges']},
+
+{id:'nw02', cat:'NW', diff:'Easy', pts:50, phase:9,
+ title:'Well-Known Ports',
+ desc:`Match these services to their default ports:
+<b>A.</b> HTTPS &nbsp; <b>B.</b> DNS &nbsp; <b>C.</b> SMB &nbsp; <b>D.</b> RDP
+Options: 53, 443, 445, 3389
+Submit as <code>BV{A_B_C_D}</code> (the port numbers).`,
+ flag:'BV{443_53_445_3389}',
+ hints:['HTTPS uses TLS over port 443','DNS uses UDP/TCP 53','SMB (Windows file sharing): 445. RDP: 3389']},
+
+{id:'nw03', cat:'NW', diff:'Medium', pts:100, phase:9,
+ title:'Beacon Analysis',
+ desc:`An analyst captures 10 C2 beacon intervals (in seconds):
+<code>60, 62, 58, 61, 59, 61, 60, 63, 57, 61</code>
+The mean is 60.2s. The standard deviation is ~1.8s (≈3% jitter).
+Is this consistent with: <b>A</b>) Human-driven communication, <b>B</b>) Automated C2 beacon with jitter, <b>C</b>) Normal web browsing traffic?
+Submit as <code>BV{letter}</code>.`,
+ flag:'BV{B}',
+ hints:['Human communication is irregular and bursty','Web browsing has no fixed interval','Consistent ~60s interval with small jitter = beaconing']},
+
+{id:'nw04', cat:'NW', diff:'Medium', pts:100, phase:9,
+ title:'Wireshark Filter',
+ desc:`Write a Wireshark display filter that shows only DNS queries (not responses) from host <code>192.168.1.50</code>.
+Submit as <code>BV{filter}</code> (exact filter string).`,
+ flag:'BV{ip.src==192.168.1.50 && dns.flags.response==0}',
+ hints:['ip.src filters by source IP','dns.flags.response == 0 means it is a query (not response)','Combine with && (logical AND)']},
+
+{id:'nw05', cat:'NW', diff:'Hard', pts:200, phase:9,
+ title:'DGA Detection',
+ desc:`A DGA (Domain Generation Algorithm) produces domains that are:
+<b>A.</b> Short, dictionary-word based, static
+<b>B.</b> Long, random-looking, generated from a seed (date/time)
+<b>C.</b> IPv6 addresses disguised as domain names
+<b>D.</b> Reverse DNS lookups of C2 IPs
+
+Which best describes DGA? Submit as <code>BV{letter}</code>.`,
+ flag:'BV{B}',
+ hints:['DGA generates many candidate domains; only the one the attacker also generated is live','Detection is hard because the next domain is unpredictable without knowing the algorithm','Threat intel teams reverse-engineer the DGA to predict and sinkhole future domains']},
+
+{id:'nw06', cat:'NW', diff:'Hard', pts:200, phase:9,
+ title:'Suricata Rule',
+ desc:`Write the Suricata rule <b>alert</b> line that fires on any TCP traffic to destination port 4444 with content "cmd.exe". Use alert action, tcp protocol, any source.
+Submit as <code>BV{rule_start}</code> — just the first line of the rule (the options line is not needed, just the header).`,
+ flag:'BV{alert tcp any any -> any 4444 (msg:"Suspicious cmd.exe to port 4444")}',
+ hints:['Suricata rule format: action proto src_ip src_port -> dst_ip dst_port (options)','alert tcp any any -> any 4444','The msg option is the only required option; content:"cmd.exe" would be in the options too']},
+
+{id:'nw07', cat:'NW', diff:'Expert', pts:400, phase:9,
+ title:'Network IOC Provenance',
+ desc:`An analyst extracts an IP address from a malware C2 connection. Which of the following represents the HIGHEST confidence provenance for this IOC?
+<b>A.</b> Seen in a tweet from a threat researcher with no sample attached
+<b>B.</b> Listed in an open-source feed with no associated hash
+<b>C.</b> Extracted from a controlled sandbox run of a verified malware sample with matching PCAP
+<b>D.</b> Reported by an anonymous tip on a threat intel forum
+
+Submit as <code>BV{letter}</code>.`,
+ flag:'BV{C}',
+ hints:['Provenance = how was this IOC derived and verified?','Option C has a chain: sample → sandbox → PCAP → IP extraction, all verifiable','Tweets and anonymous tips are lowest provenance']},
+
+];
+
+/* ============================================================ STATE ============================================================ */
+const store=(()=>{let ok=false;try{const k='__bvc';localStorage.setItem(k,'1');localStorage.removeItem(k);ok=true;}catch(e){ok=false;}
+  return{get(k){try{return ok?localStorage.getItem(k):null;}catch(e){return null;}},
+    set(k,v){try{ok?localStorage.setItem(k,v):undefined;}catch(e){}}};})();
+let CS={};
+try{CS=JSON.parse(store.get('bvctf')||'{}');}catch(e){CS={};}
+function saveCS(){store.set('bvctf',JSON.stringify(CS));}
+
+let filterCat='ALL', filterDiff='ALL';
+
+/* ============================================================ SCORING ============================================================ */
+function totalPts(){return Object.keys(CS).reduce((a,id)=>{const ch=CHALLENGES.find(c=>c.id===id);return a+(ch&&CS[id]?ch.pts:0);},0);}
+function solvedCount(){return Object.keys(CS).filter(id=>CS[id]).length;}
+function updateScore(){
+ const pts=totalPts(),solved=solvedCount(),total=CHALLENGES.length;
+ document.getElementById('totalPts').textContent=pts;
+ document.getElementById('solvedCount').textContent=solved;
+ document.getElementById('pbPts').textContent=pts;
+ document.getElementById('pbSolved').textContent=solved;
+ document.getElementById('pbTotal').textContent=total;
+ document.getElementById('pbPct').textContent=Math.round(solved/total*100)+'%';
+}
+
+/* ============================================================ RENDER GRID ============================================================ */
+function renderGrid(){
+ const grid=document.getElementById('grid');
+ const vis=CHALLENGES.filter(c=>(filterCat==='ALL'||c.cat===filterCat)&&(filterDiff==='ALL'||c.diff===filterDiff));
+ grid.innerHTML=vis.map(c=>`
+  <div class="chcard" data-id="${c.id}" data-solved="${CS[c.id]?1:0}">
+    <div class="chcard__header">
+      <span class="chcard__cat ${c.cat}">${c.cat}</span>
+      <span class="chcard__diff diff-${c.diff}">${c.diff}</span>
+    </div>
+    <h3>${escH(c.title)}</h3>
+    <p>${c.phase?'Phase '+c.phase+' · ':''}</p>
+    <div class="chcard__pts"><b>${c.pts}</b> pts</div>
+    ${CS[c.id]?'<div class="chcard__solved">★ SOLVED</div>':''}
+  </div>`).join('');
+}
+
+/* ============================================================ MODAL ============================================================ */
+let openId=null;
+function openModal(id){
+ const c=CHALLENGES.find(x=>x.id===id);if(!c)return;
+ openId=id;
+ document.getElementById('modalTitle').textContent=c.title;
+ const solved=CS[id];
+ document.getElementById('modalBody').innerHTML=`
+  ${solved?`<div class="solved-banner"><b>★ SOLVED</b>You've already cracked this one. Points: ${c.pts}. Keep going!</div>`:''}
+  <div class="modal-meta">
+    <span>${c.cat}</span><span class="diff-${c.diff}">${c.diff}</span><span>${c.pts} pts</span>${c.phase?`<span>Phase ${c.phase}</span>`:''}
+  </div>
+  <div class="modal-desc">${c.desc}</div>
+  <div class="flag-row">
+    <input class="flag-input" id="flagIn" type="text" placeholder="BV{your_answer}" ${solved?'disabled':''} spellcheck="false" autocomplete="off">
+    <button class="flag-btn" id="flagBtn" ${solved?'disabled':''}>Submit</button>
+  </div>
+  <div class="flag-result" id="flagResult">${solved?'<span style="color:var(--amber)">Already solved.</span>':''}</div>
+  <div class="hints-section">
+    <div class="hints-h">Hints (${c.hints.length})</div>
+    ${c.hints.map((h,i)=>`
+    <div class="hint-item" id="hint${i}">
+      <button class="hint-toggle" data-hint="${i}">Hint ${i+1} <span>▼</span></button>
+      <div class="hint-body">${escH(h)}</div>
+    </div>`).join('')}
+  </div>`;
+ document.getElementById('modalBg').classList.remove('hidden');
+ if(!solved){
+  const inp=document.getElementById('flagIn');
+  inp.focus();
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkFlag();});
+  document.getElementById('flagBtn').addEventListener('click',checkFlag);
+ }
+}
+function closeModal(){document.getElementById('modalBg').classList.add('hidden');openId=null;}
+function checkFlag(){
+ const c=CHALLENGES.find(x=>x.id===openId);if(!c)return;
+ const inp=document.getElementById('flagIn');
+ const val=(inp.value||'').trim();
+ const res=document.getElementById('flagResult');
+ if(val===c.flag){
+  inp.classList.remove('wrong');inp.classList.add('correct');
+  res.className='flag-result ok';res.textContent='Correct! +'+c.pts+' points. Flag accepted.';
+  CS[openId]=true;saveCS();updateScore();renderGrid();
+  // show confetti-style feedback
+  setTimeout(()=>{closeModal();},1800);
+ } else {
+  inp.classList.remove('correct');inp.classList.add('wrong');
+  res.className='flag-result no';res.textContent='Incorrect flag. Check format: BV{...}';
+ }
+}
+function escH(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* ============================================================ EVENTS ============================================================ */
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target===document.getElementById('modalBg'))closeModal();});
+document.getElementById('modalClose').addEventListener('click',closeModal);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+document.getElementById('filters').addEventListener('click',e=>{
+ const b=e.target.closest('.filt');if(!b)return;
+ if(b.dataset.cat){
+  filterCat=b.dataset.cat;filterDiff='ALL';
+  document.querySelectorAll('.filt[data-cat]').forEach(x=>x.dataset.active=x===b?'1':'0');
+  document.querySelectorAll('.filt[data-diff]').forEach(x=>x.dataset.active='0');
+ } else if(b.dataset.diff){
+  const same=b.dataset.active==='1';
+  filterDiff=same?'ALL':b.dataset.diff;
+  document.querySelectorAll('.filt[data-diff]').forEach(x=>x.dataset.active='0');
+  if(!same)b.dataset.active='1';
+ }
+ renderGrid();
+});
+document.getElementById('grid').addEventListener('click',e=>{
+ const card=e.target.closest('.chcard');if(card)openModal(card.dataset.id);
+});
+document.getElementById('modalBody').addEventListener('click',e=>{
+ const ht=e.target.closest('.hint-toggle');
+ if(ht){const i=ht.dataset.hint;const item=document.getElementById('hint'+i);item.dataset.open=item.dataset.open==='1'?'0':'1';}
+});
+
+/* ============================================================ INIT ============================================================ */
+updateScore();renderGrid();
+</script>
+</body>
+</html>
