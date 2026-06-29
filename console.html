@@ -1888,7 +1888,8 @@ function viewLab(id){
  </div>
  <div class="objbox"><h4>Objectives</h4><div id="objlist">${objRows(id)}</div></div>`;
  const V={mem:labMem,re:labRE,pcap:labPcap,log:labLog,crypto:labCrypto,web:labWeb,pe:labPE,stego:labStego,pwn:labPwn,privesc:labPrivesc,hash:labHash,email:labEmail,intel:labIntel,
-  disk:labDisk,asm:labAsm,binfmt:labBinfmt,static:labStatic,ghidra:labGhidra,dynamic:labDynamic,unpack:labUnpack,memory:labMemory,network:labNetwork,protocol:labProtocol,rootkit:labRootkit,capstone:labCapstone};
+  disk:labDisk,asm:labAsm,binfmt:labBinfmt,static:labStatic,ghidra:labGhidra,dynamic:labDynamic,unpack:labUnpack,memory:labMemory,network:labNetwork,protocol:labProtocol,rootkit:labRootkit,capstone:labCapstone,
+  yara:labYara,timeline:labTimeline,threat_hunt:labThreatHunt,crypt_re:labCryptRe};
  return head+(V[id]?V[id]():'');
 }
 
@@ -2670,6 +2671,12 @@ LAB.disk=null; LAB.asmReg=null; LAB.asmPc=0; LAB.binTab='elf'; LAB.dynFilter='';
 LAB.mfOut=[]; LAB.netJa3=false; LAB.rkTab='reg'; LAB.protoKey=''; LAB.capStage=0; LAB.ghTab='code';
 
 LABS.push(
+ {id:'yara',       track:'MA',  name:'YARA Rule Writing',          tool:'yara / string hunting',    blurb:'Write and test a YARA rule against an Emotet sample. Identify unique strings, anchor on the PE header, and validate zero false positives on clean binaries.'},
+ {id:'timeline',   track:'DF',  name:'Super-timeline Construction', tool:'log2timeline / plaso',     blurb:'Build a forensic super-timeline from a disk image: run plaso, filter to the attacker window, correlate sshd/web/kernel events, and export a timeline CSV.'},
+ {id:'threat_hunt',track:'DF',  name:'Threat Hunting',             tool:'EDR hunt console',         blurb:'Hunt by hypothesis: identify beaconing processes by connection frequency, detect LSASS access, find living-off-the-land binaries, and trace anomalous parent-child chains.'},
+ {id:'crypt_re',   track:'RE',  name:'Crypto ID in Malware RE',    tool:'disassembler / entropy',   blurb:'Identify encryption routines without labels: find high-entropy sections, spot AES S-box constants in disassembly, locate the key schedule, and recognise the RC4 KSA loop.'},
+);
+LABS.push(
  {id:'disk',    track:'DF',  group:'chapter',phase:1, name:'Disk & File Systems', tool:'MBR · partitions · carving',     blurb:'Parse a raw 512-byte boot sector by hand: partition table, FS type, start LBA, the 55AA signature — then carve a file by magic bytes.'},
  {id:'asm',     track:'RE',  group:'chapter',phase:2, name:'x86 / x64 Assembly',  tool:'register tracer',               blurb:'Single-step a short x64 routine, watch the registers change, and work out what it returns — plus the calling convention.'},
  {id:'binfmt',  track:'RE',  group:'chapter',phase:3, name:'PE & ELF Formats',    tool:'header anatomy',                blurb:'Decode ELF and PE headers field by field: magic, class, entry point, sections vs segments, GOT/PLT.'},
@@ -2683,6 +2690,12 @@ LABS.push(
  {id:'rootkit', track:'MA',  group:'chapter',phase:11,name:'Rootkits & Artifacts', tool:'registry · MFT · evtx · hooks', blurb:'Hunt persistence in a Run key, catch timestomping via $SI/$FN mismatch, find a 7045 service install, and spot an SSDT hook.'},
  {id:'capstone',track:'DF',  group:'chapter',phase:12,name:'Full Investigation',  tool:'end-to-end reconstruction',    blurb:'Chain it all: phishing → execution → C2 → impact. Make the call at each stage to reconstruct the whole intrusion.'},
 );
+Object.assign(LABOBJ,{
+ yara:[{k:'strings',t:'Run strings and identify unique candidates'},{k:'entropy',t:'Confirm no high-entropy packing'},{k:'imports',t:'Identify the suspicious import library'},{k:'pe_header',t:'Confirm PE (MZ) magic is present'},{k:'rule',t:'Write a YARA rule with zero false positives'},{k:'test',t:'Test the rule — fires on emotet_sample.bin only'}],
+ timeline:[{k:'run',t:'Run log2timeline against the disk image'},{k:'filter',t:'Filter the timeline to attacker activity'},{k:'first_action',t:'Identify the first attacker action by timestamp'},{k:'correlate',t:'Correlate sshd + web + kernel events'},{k:'csv',t:'Export the timeline as CSV'}],
+ threat_hunt:[{k:'beaconing',t:'Identify the beaconing process by connection frequency'},{k:'lsass_access',t:'Find the process performing LSASS credential access'},{k:'lotl',t:'Detect living-off-the-land binary execution'},{k:'process_tree',t:'Trace the anomalous parent-child process chain'}],
+ crypt_re:[{k:'entropy',t:'Identify high-entropy sections indicating encryption'},{k:'sbox',t:'Locate and identify the AES S-box constants'},{k:'keysched',t:'Identify the AES-128 key schedule routine'},{k:'rc4',t:'Recognise the RC4 KSA initialisation loop'}],
+});
 Object.assign(LABOBJ,{
  disk:[{k:'sig',t:'Find the boot signature'},{k:'fstype',t:'Identify partition 1 file system'},{k:'lba',t:'Read partition 1 start LBA'},{k:'carve',t:'Identify the carved file by its magic'}],
  asm:[{k:'ret',t:'Compute what the routine returns'},{k:'argreg',t:'Name the 1st integer-argument register'},{k:'retreg',t:'Name the return-value register'}],
@@ -3016,6 +3029,310 @@ function labCapstone(){const i=LAB.capStage;
  <div class="hintbox"><b>Capstone:</b> this is the whole track fused — disk/format/asm skills read the artifacts, static/dynamic/memory/network skills produce the findings, and you narrate the kill chain end to end.</div>`;
 }
 
+/* ---- 13 · YARA RULE WRITING ---- */
+LAB.yaraOut=[]; LAB.yaraRule=''; LAB.yaraTab='strings';
+const YARA_SAMPLE={
+ name:'emotet_sample.bin',
+ sections:[['.text','0x1000','0x1a00',6.2],['.rdata','0x600','0x600',4.9],['.data','0x200','0x200',3.1],['.rsrc','0x400','0x400',4.4]],
+ strings:['MZ','This program cannot be run in DOS mode','wininet.dll','InternetOpenA','InternetConnectA','HttpSendRequestA',
+          'POST /gate.php HTTP/1.1','api.cdn-update.net','SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run',
+          'Emotet_MUTEX_01','%TEMP%\\wermgr.exe','BV{yara_hunter}'],
+ entropy:{'.text':6.2,'.rdata':4.9,'.data':3.1,'.rsrc':4.4},
+ pe:true,
+ md5:'d4e8a7c1f2b39d056e7a0f4c8b2913e5',
+};
+const YARA_CLEAN=['notepad.exe','calc.exe','chrome.exe','explorer.exe'];
+function yaraBanner(){return [
+ '<span class="dim">YARA lab — write a rule that fires on emotet_sample.bin and nothing else.</span>',
+ '<span class="dim">Commands: strings · entropy · imports · pe · test · clear · help</span>',''];}
+function yaraPaint(){const el=document.getElementById('yara_out');if(el){el.innerHTML=LAB.yaraOut.join('\n');el.scrollTop=el.scrollHeight;}}
+function yaraRun(line){
+ const out=LAB.yaraOut; out.push('<span class="pmt">yara$&gt;</span> '+esc(line));
+ const parts=line.trim().split(/\s+/); const cmd=(parts[0]||'').toLowerCase(); const arg=parts.slice(1).join(' ');
+ const P_=v=>out.push(v);
+ if(cmd===''){}
+ else if(cmd==='help'){['strings · entropy · imports · pe · test &lt;rulename&gt; · clear'].forEach(P_);}
+ else if(cmd==='strings'){P_('<span class="dim">$ strings '+YARA_SAMPLE.name+'</span>');YARA_SAMPLE.strings.slice(0,-1).forEach(s=>P_('  '+esc(s)));P_('<span class="dim">(last string redacted — in the binary)</span>');setObj('yara','strings');}
+ else if(cmd==='entropy'){P_('<span class="dim">$ python3 entropy.py '+YARA_SAMPLE.name+'</span>');YARA_SAMPLE.sections.forEach(s=>P_('  '+s[0].padEnd(8)+' entropy: '+s[3].toFixed(2)+(s[3]>7.0?'  <span class="tag-bad">packed/encrypted</span>':'')));P_('<span class="dim">No section above 7.0 → not packed. High-entropy rule might work for other samples.</span>');setObj('yara','entropy');}
+ else if(cmd==='imports'){P_('<span class="dim">$ python3 pe_imports.py '+YARA_SAMPLE.name+'</span>');['wininet.dll!InternetOpenA','wininet.dll!InternetConnectA','wininet.dll!HttpSendRequestA','kernel32.dll!CreateFileW','advapi32.dll!RegSetValueExA'].forEach(s=>P_('  <span class="'+(s.includes('wininet')?'hl':'dim')+'">'+esc(s)+'</span>'));setObj('yara','imports');}
+ else if(cmd==='pe'){P_('<span class="dim">$ python3 pe_header.py '+YARA_SAMPLE.name+'</span>');['Magic: MZ / PE signature: 50 45 00 00','Machine: 0x014c (i386)','Sections: 4','TimeDateStamp: 0x60a3c2e1','PE imports wininet.dll → network-capable dropper'].forEach(P_);setObj('yara','pe_header');}
+ else if(cmd==='test'){
+  const rule=document.getElementById('yara_rule');const txt=(rule?rule.value:'').trim();
+  if(!txt){P_('<span class="err">write a rule in the editor below before testing.</span>');out.push('');yaraPaint();return;}
+  const hasStr=/(api\.cdn-update\.net|Emotet_MUTEX_01|gate\.php|wermgr)/.test(txt);
+  const hasPE=/uint16\(0\)\s*==\s*0x5a4d|pe\./.test(txt);
+  const hasMagic=/\$.*=\s*["'].*["']/.test(txt)||/\$[a-z0-9_]+/.test(txt);
+  if(!hasMagic){P_('<span class="err">your rule has no string definitions ($ vars). Add at least one $string = "..."</span>');}
+  else if(!hasStr&&!hasPE){P_('<span class="err">'+YARA_CLEAN.map(n=>esc(n)+': no match').join('\\n  ')+'</span>\n<span class="err">'+esc(YARA_SAMPLE.name)+': no match (rule too generic or wrong strings)</span>');}
+  else{P_('<span class="dim">Testing against sample set...</span>');
+   YARA_CLEAN.forEach(n=>P_('  '+esc(n)+': <span class="dim">no match</span>'));
+   P_('  <span class="hl">range/samples/emotet_sample.bin: BLACKVAULT_Emotet_Loader</span>');
+   P_('<span class="hl">[+] 1 match · 0 false positives. Rule is clean.</span>');
+   setObj('yara','rule');setObj('yara','test');}
+ }
+ else if(cmd==='clear'){LAB.yaraOut=yaraBanner();yaraPaint();return;}
+ else{P_('<span class="err">unknown command: '+esc(cmd)+' — type help</span>');}
+ out.push('');yaraPaint();
+}
+function labYara(){
+ if(!LAB.yaraOut.length)LAB.yaraOut=yaraBanner();
+ const chips=['strings','entropy','imports','pe','test MyRule'];
+ const tmpl=`rule BLACKVAULT_Emotet_Loader
+{
+    meta:
+        author = "analyst"
+        description = "Emotet dropper"
+    strings:
+        $c2  = "api.cdn-update.net"
+        $mtx = "Emotet_MUTEX_01"
+        $ua  = "POST /gate.php HTTP/1.1"
+    condition:
+        uint16(0) == 0x5a4d and
+        any of ($c2, $mtx, $ua)
+}`;
+ return `
+ <div class="term">
+   <div class="term__out" id="yara_out">${LAB.yaraOut.join('\n')}</div>
+   <div class="term__in"><span>yara$&gt;</span><input id="yaracmd" autocomplete="off" spellcheck="false" placeholder="strings · entropy · imports · pe · test MyRule…"></div>
+ </div>
+ <div class="qchips">${chips.map(c=>`<button data-yaraq="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+ <div class="objbox" style="margin-top:14px">
+   <h4>YARA Rule Editor</h4>
+   <p style="color:var(--ash);font-size:13.5px;margin:0 0 8px">Write your rule below, then run <code>test MyRule</code> in the terminal. A correct rule fires only on the Emotet sample.</p>
+   <textarea id="yara_rule" autocomplete="off" spellcheck="false" rows="14" style="width:100%;background:var(--pit);color:var(--bone);font-family:var(--mono);font-size:13px;padding:12px;border:1px solid var(--rim);border-radius:4px;resize:vertical">${esc(tmpl)}</textarea>
+ </div>
+ <div class="hintbox"><b>YARA fundamentals:</b> A rule fires if its <code>condition</code> evaluates true against the file bytes. <code>uint16(0) == 0x5a4d</code> anchors on the MZ PE header — add unique strings like the C2 domain or mutex name. Avoid generic strings (DLL names, common API calls) that match thousands of clean files. Run <code>strings</code> and <code>imports</code> first to discover candidates.</div>`;
+}
+
+/* ---- 14 · SUPER-TIMELINE CONSTRUCTION ---- */
+LAB.tlOut=[]; LAB.tlFilter=''; LAB.tlCsvShown=false;
+const TL_EVENTS=[
+ {ts:'2026-06-28T03:02:11',src:'apache2',type:'access',msg:'GET /index.php 200 — normal visitor 203.0.113.9'},
+ {ts:'2026-06-28T03:11:44',src:'sshd',type:'auth',msg:'Failed password for invalid user oracle from 45.133.1.88'},
+ {ts:'2026-06-28T03:12:09',src:'sshd',type:'auth',msg:'Accepted password for admin from 45.133.1.88 — BRUTE FORCE SUCCESS',key:true},
+ {ts:'2026-06-28T03:12:09',src:'pam',type:'session',msg:'session opened for user admin (uid=1000)'},
+ {ts:'2026-06-28T03:12:15',src:'sshd',type:'exec',msg:'admin ran: id; whoami; uname -a',key:true},
+ {ts:'2026-06-28T03:13:01',src:'kernel',type:'fs',msg:'inode 48291 created: /tmp/.payload'},
+ {ts:'2026-06-28T03:13:02',src:'kernel',type:'exec',msg:'execve /tmp/.payload — dropper executed',key:true},
+ {ts:'2026-06-28T03:13:05',src:'kernel',type:'net',msg:'connect() → 185.220.101.47:443 from pid 9124'},
+ {ts:'2026-06-28T03:14:01',src:'apache2',type:'access',msg:'GET /admin/ 200 — same attacker IP'},
+ {ts:'2026-06-28T03:14:55',src:'apache2',type:'access',msg:'POST /admin/upload.php 200 — file upload'},
+ {ts:'2026-06-28T03:15:02',src:'apache2',type:'access',msg:'GET /uploads/av4t4r.php?cmd=id 200 — webshell active',key:true},
+ {ts:'2026-06-28T04:22:11',src:'kernel',type:'fs',msg:'CryptEncrypt loop over /home/**/*.docx — 217 files'},
+ {ts:'2026-06-28T04:22:44',src:'kernel',type:'fs',msg:'CreateFile READ_ME.vault.txt — ransom note dropped',key:true},
+];
+function tlBanner(){return [
+ '<span class="dim">log2timeline/plaso — super-timeline construction lab</span>',
+ '<span class="dim">Commands: run · filter &lt;term&gt; · window &lt;start&gt; &lt;end&gt; · csv · correlate · clear · help</span>',''];}
+function tlPaint(){const el=document.getElementById('tl_out');if(el){el.innerHTML=LAB.tlOut.join('\n');el.scrollTop=el.scrollHeight;}}
+function tlRun(line){
+ const out=LAB.tlOut; out.push('<span class="pmt">plaso$&gt;</span> '+esc(line));
+ const parts=line.trim().split(/\s+/); const cmd=(parts[0]||'').toLowerCase();
+ const P_=v=>out.push(v);
+ if(cmd===''){}
+ else if(cmd==='help'){['  run              — process disk image, build plaso storage','  filter &lt;term&gt;    — grep the timeline (e.g. filter sshd)','  window &lt;HH:MM&gt; &lt;HH:MM&gt; — narrow time window (e.g. window 03:11 03:14)','  csv               — export timeline as CSV','  correlate         — cross-correlate sshd vs web vs kernel events'].forEach(P_);}
+ else if(cmd==='run'){
+  P_('<span class="dim">$ log2timeline.py --parsers=linux,apache --storage-file=disk.plaso /dev/sda1</span>');
+  P_('Processing image... 4.2 GB in 00:02:41');P_('Parsers used: auth, syslog, apache_access, bash_history, crontab');
+  P_('Events generated: <span class="hl">91,247</span>   Unique timestamps: 88,103');
+  P_('<span class="hl">[+] storage file disk.plaso ready — use filter / window / csv to analyse</span>');
+  setObj('timeline','run');
+ }
+ else if(cmd==='filter'){
+  const term=parts.slice(1).join(' ').toLowerCase();
+  if(!term){P_('<span class="err">usage: filter &lt;term&gt;  (e.g. filter sshd, filter 45.133, filter execve)</span>');out.push('');tlPaint();return;}
+  const matched=TL_EVENTS.filter(e=>e.msg.toLowerCase().includes(term)||e.src.toLowerCase().includes(term)||e.type.toLowerCase().includes(term));
+  if(!matched.length){P_('<span class="dim">(no events match "'+esc(term)+'")</span>');}
+  else{P_('<span class="dim">timestamp                    source      type        event</span>');matched.forEach(e=>P_((e.key?'<span class="hl">':'')+e.ts+'  '+e.src.padEnd(11)+e.type.padEnd(12)+esc(e.msg)+(e.key?'</span>':'')));}
+  if(term.includes('sshd')||term.includes('45.133'))setObj('timeline','filter');
+ }
+ else if(cmd==='window'){
+  const [,s,en]=parts; if(!s||!en){P_('<span class="err">usage: window HH:MM HH:MM</span>');out.push('');tlPaint();return;}
+  const inWin=e=>{ const hm=e.ts.slice(11,16); return hm>=s&&hm<=en; };
+  const matched=TL_EVENTS.filter(inWin);
+  P_('<span class="dim">timestamp                    source      type        event</span>');
+  matched.forEach(e=>P_((e.key?'<span class="hl">':'')+e.ts+'  '+e.src.padEnd(11)+e.type.padEnd(12)+esc(e.msg)+(e.key?'</span>':'')));
+  if(matched.some(e=>e.ts.includes('03:12:09')&&e.src==='sshd'))setObj('timeline','first_action');
+ }
+ else if(cmd==='correlate'){
+  P_('<span class="dim">Cross-correlating sshd + apache2 + kernel events for 45.133.1.88 activity window:</span>');
+  ['03:11:44  [sshd]    brute force begins','03:12:09  [sshd]    <span class="hl">Accepted password for admin</span>  ← FIRST ATTACKER ACTION','03:12:15  [sshd]    id; whoami executed','03:13:02  [kernel]  <span class="hl">dropper executed /tmp/.payload</span>','03:13:05  [kernel]  outbound C2 connect → 185.220.101.47:443','03:14:55  [apache2] file upload via POST','03:15:02  [apache2] webshell /uploads/av4t4r.php activated'].forEach(P_);
+  setObj('timeline','correlate');
+ }
+ else if(cmd==='csv'){
+  P_('<span class="dim">datetime,source,event_type,description,notes</span>');
+  TL_EVENTS.slice(0,6).forEach(e=>P_(e.ts+','+e.src+','+e.type+',"'+esc(e.msg)+'",'+(e.key?'KEY EVENT':'')));
+  P_('...<span class="dim">('+TL_EVENTS.length+' rows total — export complete)</span>');
+  setObj('timeline','csv');
+ }
+ else if(cmd==='clear'){LAB.tlOut=tlBanner();tlPaint();return;}
+ else{P_('<span class="err">unknown: '+esc(parts[0])+' — type help</span>');}
+ out.push('');tlPaint();
+}
+function labTimeline(){
+ if(!LAB.tlOut.length)LAB.tlOut=tlBanner();
+ const chips=['run','filter sshd','filter 45.133.1.88','window 03:11 03:15','correlate','csv'];
+ return `
+ <div class="term">
+   <div class="term__out" id="tl_out">${LAB.tlOut.join('\n')}</div>
+   <div class="term__in"><span>plaso$&gt;</span><input id="tlcmd" autocomplete="off" spellcheck="false" placeholder="run · filter · window · correlate · csv…"></div>
+ </div>
+ <div class="qchips">${chips.map(c=>`<button data-tlq="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+ <div class="objbox" style="margin-top:16px"><h4>Submit findings</h4>
+   <div class="findform">
+     <div><label>Attacker first action timestamp</label><input id="tl_first" autocomplete="off" placeholder="YYYY-MM-DDTHH:MM:SS"></div>
+     <div><label>First action (brief)</label><input id="tl_action" autocomplete="off" placeholder="e.g. SSH login accepted"></div>
+   </div>
+   <div style="margin-top:10px"><button class="btn" data-tlcheck="1">Check findings</button></div>
+ </div>
+ <div class="hintbox"><b>Super-timeline workflow:</b> <code>log2timeline</code> ingests a disk image and writes a plaso storage file containing every timestamped event from every parser (logs, MFT, browser history, shell history, EVTX). <code>psort</code> / <code>psteal</code> then filter, correlate, and export. The power is cross-source ordering — you can see the exact second a web shell was activated versus when a persistence key was written.</div>`;
+}
+function tlCheck(){
+ const first=gv('tl_first').trim(),act=gv('tl_action').trim().toLowerCase();
+ if(/03:12:09/.test(first)||/accepted|login|ssh/.test(act))setObj('timeline','first_action');
+ else if(first||act)toast('use correlate or window 03:11 03:14 to find the first accepted SSH login');
+}
+
+/* ---- 15 · THREAT HUNTING ---- */
+LAB.thOut=[]; LAB.thTab='procs';
+const TH={
+ procs:[
+  {pid:4,ppid:0,name:'System',conn:0,path:''},
+  {pid:812,ppid:680,name:'svchost.exe',conn:0,path:'C:\\Windows\\System32\\svchost.exe'},
+  {pid:1044,ppid:812,name:'WmiPrvSE.exe',conn:0,path:'C:\\Windows\\System32\\wbem\\WmiPrvSE.exe'},
+  {pid:2904,ppid:2880,name:'explorer.exe',conn:1,path:'C:\\Windows\\explorer.exe'},
+  {pid:3880,ppid:2904,name:'powershell.exe',conn:3,path:'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe',beacon:true},
+  {pid:4012,ppid:3880,name:'cmd.exe',conn:0,path:'C:\\Windows\\System32\\cmd.exe',lotl:true},
+  {pid:4120,ppid:4012,name:'net.exe',conn:0,path:'C:\\Windows\\System32\\net.exe',lotl:true},
+  {pid:5200,ppid:4012,name:'whoami.exe',conn:0,path:'C:\\Windows\\System32\\whoami.exe',lotl:true},
+  {pid:6100,ppid:2904,name:'rundll32.exe',conn:1,path:'C:\\Windows\\System32\\rundll32.exe',lsass:true},
+  {pid:7800,ppid:6100,name:'lsass.exe',conn:0,path:'C:\\Windows\\System32\\lsass.exe'},
+ ],
+ conns:[
+  {pid:3880,local:'10.0.2.15:49801',remote:'185.220.101.47:443',state:'ESTABLISHED',times:'t=0,61,119,181,242'},
+  {pid:3880,local:'10.0.2.15:49802',remote:'185.220.101.47:443',state:'ESTABLISHED',times:'t=1,62,120,182,243'},
+  {pid:3880,local:'10.0.2.15:49820',remote:'8.8.8.8:53',state:'ESTABLISHED',times:'one-off'},
+  {pid:2904,local:'10.0.2.15:49799',remote:'142.250.72.196:443',state:'ESTABLISHED',times:'irregular (browsing)'},
+  {pid:6100,local:'10.0.2.15:49831',remote:'185.220.101.47:443',state:'ESTABLISHED',times:'one-off after lsass access'},
+ ],
+};
+function thBanner(){return [
+ '<span class="dim">EDR Threat Hunt console — hunt by hypothesis, not alert.</span>',
+ '<span class="dim">Commands: pslist · conns · beacon &lt;pid&gt; · lsass · lotl · tree &lt;pid&gt; · clear · help</span>',''];}
+function thPaint(){const el=document.getElementById('th_out');if(el){el.innerHTML=LAB.thOut.join('\n');el.scrollTop=el.scrollHeight;}}
+function thRun(line){
+ const out=LAB.thOut;out.push('<span class="pmt">hunt$&gt;</span> '+esc(line));
+ const parts=line.trim().split(/\s+/);const cmd=(parts[0]||'').toLowerCase();const arg=parts.slice(1).join(' ');
+ const P_=v=>out.push(v);
+ if(cmd===''){}
+ else if(cmd==='help'){['  pslist               — full process list with connection count','  conns                — network connections with timing metadata','  beacon &lt;pid&gt;         — analyze connection intervals for pid','  lsass               — find processes that accessed LSASS','  lotl                — find living-off-the-land binaries (suspicious parents)','  tree &lt;pid&gt;          — show process ancestry'].forEach(P_);}
+ else if(cmd==='pslist'){P_('<span class="dim">PID    PPID   Name              Conns  Path</span>');TH.procs.forEach(p=>P_((p.beacon||p.lotl||p.lsass?'<span class="hl">':'')+String(p.pid).padEnd(7)+String(p.ppid).padEnd(7)+p.name.padEnd(18)+String(p.conn).padEnd(7)+esc(p.path)+(p.beacon||p.lotl||p.lsass?'</span>':'')));}
+ else if(cmd==='conns'){P_('<span class="dim">PID    Local                 Remote                State          Timing</span>');TH.conns.forEach(c=>P_((c.times&&c.times.includes('t=')&&!c.times.includes('irregular')?'<span class="hl">':'')+String(c.pid).padEnd(7)+c.local.padEnd(22)+c.remote.padEnd(22)+c.state.padEnd(15)+esc(c.times)+(c.times&&c.times.includes('t=')&&!c.times.includes('irregular')?'</span>':'')));setObj('threat_hunt','beaconing');}
+ else if(cmd==='beacon'){const pid=parseInt(arg)||0;const hits=TH.conns.filter(c=>c.pid===pid&&c.times&&c.times.includes('t='));if(!hits.length){P_('<span class="err">no periodic connections for pid '+pid+'. Try: beacon 3880</span>');}else{P_('<span class="dim">Inter-arrival analysis for pid '+pid+':</span>');hits.forEach(c=>{const ts=c.times.replace('t=','').split(',').map(Number);const deltas=ts.slice(1).map((t,i)=>t-ts[i]);P_('  remote: '+c.remote);P_('  intervals: '+deltas.join('s, ')+'s   avg: '+(deltas.reduce((a,b)=>a+b,0)/deltas.length).toFixed(1)+'s  jitter: &lt;5%');});P_('<span class="hl">[+] near-constant ~60s intervals = automated beacon → C2 process identified: pid '+pid+'</span>');setObj('threat_hunt','beaconing');}}
+ else if(cmd==='lsass'){P_('<span class="dim">Scanning for OpenProcess / ReadProcessMemory targeting lsass.exe (pid 7800)...</span>');P_('  <span class="hl">pid 6100  rundll32.exe  parent: explorer.exe (2904)  PROCESS_VM_READ access to lsass → credential dump</span>');P_('  <span class="dim">pid 4     System        normal kernel access</span>');setObj('threat_hunt','lsass_access');}
+ else if(cmd==='lotl'){P_('<span class="dim">LotL detection: system binaries with anomalous parent chains...</span>');TH.procs.filter(p=>p.lotl).forEach(p=>{const par=TH.procs.find(x=>x.pid===p.ppid);P_('  <span class="hl">'+esc(p.name)+'  (pid '+p.pid+') parent: '+(par?esc(par.name):'?')+'  ('+esc(par?par.path:'')+')</span>');});P_('<span class="dim">net.exe and whoami.exe spawned by cmd.exe by powershell → living off the land</span>');setObj('threat_hunt','lotl');}
+ else if(cmd==='tree'){const pid=parseInt(arg)||2904;const byPpid={};TH.procs.forEach(p=>{(byPpid[p.ppid]=byPpid[p.ppid]||[]).push(p);});function rec(id,d){(byPpid[id]||[]).forEach(p=>{P_((' '.repeat(d*3)+'└─ ').padEnd(0)+(p.beacon||p.lotl||p.lsass?'<span class="hl">':'')+p.name+' ['+p.pid+']'+(p.beacon||p.lotl||p.lsass?'</span>':''));rec(p.pid,d+1);});}const root=TH.procs.find(p=>p.pid===pid);if(root){P_(root.name+' ['+root.pid+']');rec(pid,1);}else P_('<span class="err">pid '+pid+' not found</span>');setObj('threat_hunt','process_tree');}
+ else if(cmd==='clear'){LAB.thOut=thBanner();thPaint();return;}
+ else{P_('<span class="err">unknown: '+esc(parts[0])+' — type help</span>');}
+ out.push('');thPaint();
+}
+function labThreatHunt(){
+ if(!LAB.thOut.length)LAB.thOut=thBanner();
+ const chips=['pslist','conns','beacon 3880','lsass','lotl','tree 2904'];
+ return `
+ <div class="term">
+   <div class="term__out" id="th_out">${LAB.thOut.join('\n')}</div>
+   <div class="term__in"><span>hunt$&gt;</span><input id="thcmd" autocomplete="off" spellcheck="false" placeholder="pslist · conns · beacon 3880 · lsass · lotl · tree…"></div>
+ </div>
+ <div class="qchips">${chips.map(c=>`<button data-thq="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+ <div class="objbox" style="margin-top:16px"><h4>Submit findings</h4>
+   <div class="findform">
+     <div><label>Beaconing process (PID)</label><input id="th_bpid" autocomplete="off" placeholder="pid number"></div>
+     <div><label>Credential theft target</label><input id="th_lsass" autocomplete="off" placeholder="process name"></div>
+   </div>
+   <div style="margin-top:10px"><button class="btn" data-thcheck="1">Check findings</button></div>
+ </div>
+ <div class="hintbox"><b>Threat hunting mindset:</b> you are not responding to an alert — you are testing a hypothesis. Hypothesis 1: a process is beaconing on a fixed interval (check <code>conns</code> timing). Hypothesis 2: something read LSASS credentials (check <code>lsass</code> access list). Hypothesis 3: a native binary was weaponised (check <code>lotl</code> parent chains). Absence of evidence is evidence — if no hits, the host is likely clean for that TTP.</div>`;
+}
+function thCheck(){
+ const bpid=gv('th_bpid').trim(),lsa=gv('th_lsass').trim().toLowerCase();
+ let any=false;
+ if(bpid==='3880'){setObj('threat_hunt','beaconing');any=true;} else if(bpid)toast('run beacon &lt;pid&gt; or conns to find the periodic connection');
+ if(/lsass/.test(lsa)){setObj('threat_hunt','lsass_access');any=true;} else if(lsa)toast('which process is being accessed for credential dumping?');
+ if(any)toast('findings logged');
+}
+
+/* ---- 16 · CRYPTO ID IN MALWARE RE ---- */
+LAB.crOut=[]; LAB.crTab='entropy';
+const CR={
+ sections:[['header','0x0000','0x0200',3.1],['code','0x1000','0x3800',6.4],['.enc_data','0x5000','0x1800',7.82],['.rdata','0x7000','0x0600',4.7]],
+ aes_sbox_snippet:`; AES SubBytes — S-box lookup table (partial, offset 0x403000)
+0x403000  63 7c 77 7b f2 6b 6f c5  c?}{ k o.
+0x403008  30 01 67 2b fe d7 ab 76  0.g+...v
+0x403010  ca 82 c9 7d fa 59 47 f0  ...}.YG.
+; — 256-byte substitution table starting at 0x63 identifies AES S-box ←`,
+ key_schedule:`; Key schedule / key expansion (FUN_004011a0)
+0x4011a0  push rbp
+0x4011a4  sub  rsp, 0x120         ; 288 bytes = 11 round keys × 16 bytes
+0x4011a8  mov  [rbp-0x10], rdi   ; &key_input
+0x4011b0  call 0x401090           ; SubWord (S-box lookup on key words)
+0x4011b5  xor  eax, [rip+0x403180] ; Rcon[i] XOR
+0x4011bb  ; loop 10 times → AES-128 key expansion`,
+ rc4_init:`; RC4 KSA — Key Scheduling Algorithm (FUN_00401300)
+0x401300  xor  ecx, ecx          ; i = 0
+0x401303  .init_loop:
+0x401303  mov  [rdi+rcx], ecx   ; S[i] = i   (S-box init 0..255)
+0x401306  inc  ecx
+0x401307  cmp  ecx, 256
+0x40130a  jl   .init_loop
+0x40130c  xor  ecx, ecx          ; j = 0
+0x40130f  .ksa_loop:
+0x40130f  add  cl, [rdi+rcx]    ; j = (j + S[i] + key[i%len]) % 256
+0x401312  add  cl, [rsi+rcx]    ; key[i % keylen]
+0x401315  xchg [rdi+rcx], cl   ; swap S[i], S[j]
+0x401318  inc  ecx
+0x401319  cmp  ecx, 256 ; jl .ksa_loop`,
+ pseudo_aes:`<span class="kw">void</span> aes_encrypt(<span class="kw">uint8_t</span> *data, <span class="kw">uint8_t</span> *key) {
+    <span class="kw">uint8_t</span> round_keys[176];     <span class="cm">/* 11 × 16 bytes */</span>
+    key_expansion(key, round_keys);
+    add_round_key(data, round_keys, 0);
+    <span class="kw">for</span> (<span class="kw">int</span> r = 1; r &lt; 10; r++) {
+        sub_bytes(data);          <span class="cm">/* S-box lookup */</span>
+        shift_rows(data);
+        mix_columns(data);
+        add_round_key(data, round_keys, r);
+    }
+    sub_bytes(data); shift_rows(data);
+    add_round_key(data, round_keys, 10);
+}`,
+};
+function crBanner(){return [
+ '<span class="dim">Crypto-ID lab — identify encryption in disassembly without labels.</span>',
+ '<span class="dim">Tabs: entropy · sbox · keysched · rc4 · decompiler</span>',''];}
+function labCryptRe(){const tab=LAB.crTab;
+ const tabs=[['entropy','entropy scan'],['sbox','S-box search'],['keysched','key schedule'],['rc4','RC4 KSA'],['decompiler','decompiler']];
+ let body='';
+ if(tab==='entropy'){body=`<p class="lede" style="margin-top:0">Start with entropy. Sections above ~7.0 contain compressed or encrypted data.</p>
+  <table class="kv"><tr><th>section</th><th>vaddr</th><th>size</th><th>entropy</th><th></th></tr>
+  ${CR.sections.map(s=>`<tr><td>${s[0]}</td><td>${s[1]}</td><td>${s[2]}</td><td>${s[3].toFixed(2)}</td><td>${s[3]>7.0?'<span class="tag-bad">encrypted/compressed</span>':''}</td></tr>`).join('')}</table>
+  <div style="margin-top:12px"><button class="btn" data-crobj="entropy">Mark objective ✓</button></div>`;}
+ else if(tab==='sbox'){body=`<p class="lede" style="margin-top:0">Search for the AES S-box: a 256-byte table beginning with <code>0x63</code> at a 256-byte aligned offset.</p>
+  <div class="pcode">${esc(CR.aes_sbox_snippet)}</div>
+  <div style="margin-top:12px"><button class="btn" data-crobj="sbox">Identify as AES S-box ✓</button></div>`;}
+ else if(tab==='keysched'){body=`<p class="lede" style="margin-top:0">The key expansion allocates exactly 176 bytes (11 × 16) and calls SubWord ten times using the same S-box — this is AES-128 key schedule.</p>
+  <div class="pcode">${esc(CR.key_schedule)}</div>
+  <div style="margin-top:12px"><button class="btn" data-crobj="keysched">Identify key schedule ✓</button></div>`;}
+ else if(tab==='rc4'){body=`<p class="lede" style="margin-top:0">The second crypto routine initialises S[i]=i for 256 iterations then swaps based on the key — that is the RC4 Key Scheduling Algorithm (KSA).</p>
+  <div class="pcode">${esc(CR.rc4_init)}</div>
+  <div style="margin-top:12px"><button class="btn" data-crobj="rc4">Identify as RC4 KSA ✓</button></div>`;}
+ else{body=`<p class="lede" style="margin-top:0">Decompiler output confirms AES block cipher with a key expansion pre-pass.</p>
+  <div class="repane"><h5>decompiler — FUN_00401000</h5><div class="pcode">${CR.pseudo_aes}</div></div>`;}
+ return `<div class="logtabs">${tabs.map(t=>`<button data-crtab="${t[0]}" aria-current="${tab===t[0]}">${t[1]}</button>`).join('')}</div>
+ ${body}
+ <div class="hintbox"><b>Crypto recognition shortcuts:</b> (1) Entropy scan — sections &gt;7.0 hide ciphertext. (2) S-box constants — search for the 256-byte AES S-box starting <code>63 7c 77 7b</code> (or RC4's sequential init). (3) Key schedule — AES-128 allocates 176 bytes and loops 10 rounds; RC4 KSA initialises a 256-byte permutation. In Ghidra, search for <code>63 7c 77 7b</code> in Memory → instantly flags AES. For RC4, the double-loop with XOR+swap on a 256-element array is unmistakable.</div>`;
+}
+function crObj(k){setObj('crypt_re',k);toast('objective: '+k+' confirmed');}
+
 /* ---- grouped Range hub + init hooks + events ---- */
 function viewRange(){
  if(state.lab)return viewLab(state.lab);
@@ -3034,6 +3351,9 @@ Object.assign(LABINIT,{
  asm: ()=>{ if(!LAB.asmReg)asmReset(); asmPaint(); },
  unpack: ()=>unpPaint(),
  dynamic: ()=>dynPaint(),
+ yara: ()=>{ if(!LAB.yaraOut.length)LAB.yaraOut=yaraBanner(); yaraPaint(); const e=document.getElementById('yaracmd'); if(e)e.focus(); },
+ timeline: ()=>{ if(!LAB.tlOut.length)LAB.tlOut=tlBanner(); tlPaint(); const e=document.getElementById('tlcmd'); if(e)e.focus(); },
+ threat_hunt: ()=>{ if(!LAB.thOut.length)LAB.thOut=thBanner(); thPaint(); const e=document.getElementById('thcmd'); if(e)e.focus(); },
 });
 document.addEventListener('click',e=>{
  const t=e.target,c=s=>t.closest(s);let el;
@@ -3065,8 +3385,20 @@ document.addEventListener('click',e=>{
  if(el=c('[data-rkcheck]')){rkCheck();return;}
  if(el=c('[data-capsubmit]')){capSubmit();return;}
  if(el=c('[data-capreset]')){LAB.capStage=0;render();return;}
+ if(el=c('[data-yaraq]')){yaraRun(el.dataset.yaraq);const i=document.getElementById('yaracmd');if(i){i.value='';i.focus();}return;}
+ if(el=c('[data-tlq]')){tlRun(el.dataset.tlq);const i=document.getElementById('tlcmd');if(i){i.value='';i.focus();}return;}
+ if(el=c('[data-tlcheck]')){tlCheck();return;}
+ if(el=c('[data-thq]')){thRun(el.dataset.thq);const i=document.getElementById('thcmd');if(i){i.value='';i.focus();}return;}
+ if(el=c('[data-thcheck]')){thCheck();return;}
+ if(el=c('[data-crtab]')){LAB.crTab=el.dataset.crtab;render();return;}
+ if(el=c('[data-crobj]')){crObj(el.dataset.crobj);return;}
 });
-document.addEventListener('keydown',e=>{ if(e.key!=='Enter')return; if(e.target.id==='mfcmd'){const v=e.target.value;e.target.value='';mfRun(v);e.target.focus();e.preventDefault();} });
+document.addEventListener('keydown',e=>{ if(e.key!=='Enter')return;
+ if(e.target.id==='mfcmd'){const v=e.target.value;e.target.value='';mfRun(v);e.target.focus();e.preventDefault();}
+ else if(e.target.id==='yaracmd'){const v=e.target.value;e.target.value='';yaraRun(v);e.target.focus();e.preventDefault();}
+ else if(e.target.id==='tlcmd'){const v=e.target.value;e.target.value='';tlRun(v);e.target.focus();e.preventDefault();}
+ else if(e.target.id==='thcmd'){const v=e.target.value;e.target.value='';thRun(v);e.target.focus();e.preventDefault();}
+});
 document.addEventListener('input',e=>{ if(e.target.id==='dynfilter'){LAB.dynFilter=e.target.value;dynPaint();} });
 
 /* ============================================================ RENDER + ROUTER ============================================================ */
