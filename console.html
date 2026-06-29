@@ -3,16 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>BLACKVAULT // Security Study Console</title>
+<title>BLACKVAULT // Security Training Range</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
-  --void:#050706; --panel:#0b0f0d; --panel2:#101512; --bone:#e9e7dc; --ash:#878d85;
-  --blood:#fb3640; --volt:#2de2e6; --amber:#f4b740; --line:rgba(233,231,220,.13);
+  /* backgrounds */
+  --void:#060908; --panel:#0C1410; --panel2:#111C16; --panel3:#172218;
+  /* borders */
+  --line:#1C2C22; --line2:#243828;
+  /* text */
+  --bone:#D0E4D8; --ash:#6A8C72; --dim:#374D3C;
+  /* accents */
+  --blood:#E53540; --volt:#00C8A0; --amber:#D99820; --blue:#3CB8E0;
+  /* legacy compat */
+  --panel-old:#0b0f0d;
+  /* fonts */
   --grot:'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;
   --mono:'Space Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  /* layout */
+  --sb:220px; --th:48px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -30,21 +41,66 @@ body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:9;
 a{color:inherit}
 ::selection{background:var(--blood); color:var(--void)}
 
-.topbar{position:sticky; top:0; z-index:20; background:rgba(5,7,6,.92); backdrop-filter:blur(6px); border-bottom:2px solid var(--bone);}
-.topbar__in{max-width:1180px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:18px; flex-wrap:wrap}
-.brand{display:flex; align-items:baseline; gap:10px; cursor:pointer; user-select:none}
-.brand b{font-weight:700; letter-spacing:-.02em; font-size:20px}
-.brand b i{color:var(--blood); font-style:normal}
-.brand span{font-family:var(--mono); font-size:10px; letter-spacing:.32em; color:var(--ash); text-transform:uppercase}
-.nav{display:flex; gap:6px; flex-wrap:wrap; margin-left:auto}
-.nav button{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ash); background:transparent; border:1.5px solid transparent; padding:7px 11px; cursor:pointer; transition:.12s;}
-.nav button:hover{color:var(--bone); border-color:var(--line)}
-.nav button[aria-current="true"]{color:var(--void); background:var(--bone); border-color:var(--bone)}
-.meter{display:flex; align-items:center; gap:9px; font-family:var(--mono); font-size:10px; color:var(--ash); letter-spacing:.1em}
-.meter__bar{width:90px; height:8px; border:1.5px solid var(--bone); position:relative}
-.meter__fill{position:absolute; inset:0; width:0%; background:var(--blood); transition:width .5s}
-
-main{max-width:1180px; margin:0 auto; padding:32px 20px 90px}
+/* ===== SIDEBAR SHELL ===== */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:var(--sb);background:var(--panel);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0;z-index:30}
+.sb-brand{padding:22px 18px 16px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none}
+.sb-logo{font-family:var(--grot);font-weight:700;font-size:17px;letter-spacing:-.02em;color:var(--bone);line-height:1}
+.sb-logo em{color:var(--blood);font-style:normal}
+.sb-sub{font-family:var(--mono);font-size:9px;letter-spacing:.26em;color:var(--ash);margin-top:5px;text-transform:uppercase}
+.sb-meter{padding:13px 18px;border-bottom:1px solid var(--line)}
+.sb-meter-bar{height:3px;background:var(--line2);margin-bottom:6px;position:relative}
+.sb-meter-fill{position:absolute;inset:0;width:0%;background:var(--volt);transition:width .5s}
+.sb-meter-label{font-family:var(--mono);font-size:10px;color:var(--ash);letter-spacing:.1em}
+.sb-meter-label strong{color:var(--bone);font-weight:400}
+.sb-nav{flex:1;padding:6px 0}
+.sb-group{padding:2px 0 6px}
+.sb-group-lbl{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--dim);
+  padding:9px 18px 3px;text-transform:uppercase}
+.sb-nav button{display:block;width:100%;text-align:left;font-family:var(--mono);font-size:11.5px;
+  letter-spacing:.04em;color:var(--ash);background:transparent;border:0;border-left:2px solid transparent;
+  padding:8px 18px;cursor:pointer;transition:.1s}
+.sb-nav button:hover{color:var(--bone);background:rgba(255,255,255,.03)}
+.sb-nav button[aria-current="true"]{color:var(--volt);border-left-color:var(--volt);background:rgba(0,200,160,.06)}
+.sb-sep{height:1px;background:var(--line);margin:6px 14px}
+.sb-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:9px}
+.sb-foot a{font-family:var(--mono);font-size:10px;color:var(--ash);text-decoration:none;letter-spacing:.08em;transition:.1s}
+.sb-foot a:hover{color:var(--volt)}
+.sb-foot-badges{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.06em}
+/* ===== MAIN CONTENT AREA ===== */
+.main-wrap{flex:1;min-width:0;display:flex;flex-direction:column}
+.topstrip{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:10px 28px;background:rgba(6,9,8,.9);border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:20;backdrop-filter:blur(4px)}
+.strip-crumb{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--ash);text-transform:uppercase}
+.strip-badges{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.06em}
+main{padding:30px 28px 80px;flex:1}
+/* ===== DASHBOARD ===== */
+.dash-hero{margin-bottom:32px}
+.dash-tagline{font-family:var(--mono);font-size:11px;letter-spacing:.28em;color:var(--volt);text-transform:uppercase;margin-bottom:10px}
+.dash-h1{font-size:clamp(26px,4vw,38px);font-weight:700;letter-spacing:-.03em;line-height:1.05;margin:0 0 8px}
+.dash-sub{color:var(--ash);font-size:14.5px;max-width:70ch;line-height:1.55}
+.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:24px 0 32px}
+.ds-card{background:var(--panel);border:1px solid var(--line);padding:16px 18px;position:relative;overflow:hidden}
+.ds-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ds-accent,var(--ash))}
+.ds-card__n{font-family:var(--grot);font-size:32px;font-weight:700;color:var(--ds-accent,var(--bone));line-height:1}
+.ds-card__l{font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;color:var(--ash);text-transform:uppercase;margin-top:5px}
+.dash-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.da-card{background:var(--panel);border:1px solid var(--line);padding:18px 20px}
+.da-card__h{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:var(--ash);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.da-card__h::after{content:"";flex:1;height:1px;background:var(--line)}
+.ds-phase{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.ds-phase:last-child{border-bottom:0}
+.ds-phase__n{font-family:var(--mono);font-size:9px;color:var(--ash);min-width:28px}
+.ds-phase__t{font-size:12.5px;color:var(--bone);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-phase__pct{font-family:var(--mono);font-size:9.5px;color:var(--volt);min-width:32px;text-align:right}
+.df-item{padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.df-item:last-child{border-bottom:0}
+.df-item__tag{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--blood);text-transform:uppercase;margin-bottom:2px}
+.df-item__txt{color:var(--ash);line-height:1.4}
+.df-item__txt b{color:var(--bone);font-weight:500}
+.dash-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
 .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--volt)}
 .h1{font-size:clamp(28px,5vw,46px); font-weight:700; letter-spacing:-.03em; line-height:1.02; margin:8px 0 0}
 .lede{color:var(--ash); max-width:64ch; margin:14px 0 0}
@@ -200,16 +256,21 @@ main{max-width:1180px; margin:0 auto; padding:32px 20px 90px}
 .fb--bad{border-color:var(--blood)} .fb--bad b{color:var(--blood)}
 .fb b{font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; display:block; margin-bottom:3px}
 
-footer{max-width:1180px; margin:0 auto; padding:26px 20px 40px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:var(--ash); display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap}
+footer{display:none}
 .toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0; background:var(--bone); color:var(--void); font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:9px 16px; border:2px solid var(--void); z-index:50; transition:.25s; pointer-events:none}
 .toast[data-show="1"]{opacity:1; transform:translateX(-50%) translateY(0)}
 
+@media(max-width:920px){
+  :root{--sb:0px}
+  .sidebar{display:none}
+  .topstrip{padding:10px 16px}
+  main{padding:22px 16px 70px}
+}
 @media(max-width:780px){
   .spine{grid-template-columns:1fr 1fr}
-  .nav{width:100%; order:3; overflow-x:auto; padding-bottom:2px; flex-wrap:nowrap}
-  .meter{order:2; margin-left:auto}
+  .dash-cols{grid-template-columns:1fr}
 }
-@media(max-width:520px){ .spine{grid-template-columns:1fr} .flashcard{height:264px} }
+@media(max-width:520px){ .spine{grid-template-columns:1fr} .flashcard{height:264px} .dash-stats{grid-template-columns:1fr 1fr} }
 @media(prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} body::after{display:none} }
 
 /* ===== RANGE / interactive labs ===== */
@@ -369,35 +430,63 @@ footer{max-width:1180px; margin:0 auto; padding:26px 20px 40px; border-top:1px s
 </style>
 </head>
 <body>
-<div class="topbar">
-  <div class="topbar__in">
-    <div class="brand" data-go="map"><b>BLACK<i>VAULT</i></b><span>Study Console · 12 Phases</span></div>
-    <div class="meter" title="Overall mastery">
-      <span>MASTERY</span><div class="meter__bar"><div class="meter__fill" id="meterFill"></div></div><span id="meterPct">0%</span>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sb-brand" data-go="dashboard">
+      <div class="sb-logo">BLACK<em>VAULT</em></div>
+      <div class="sb-sub">Security Training Range</div>
     </div>
-    <nav class="nav" id="nav">
-      <button data-go="map">Map</button>
-      <button data-go="study">Study</button>
-      <button data-go="drill">Drill</button>
-      <button data-go="quiz">Quiz</button>
-      <button data-go="review">Review</button>
-      <button data-go="exam">Exam</button>
-      <button data-go="threads">Threads</button>
-      <button data-go="arsenal">Arsenal</button>
-      <button data-go="case">Case</button>
-      <button data-go="attack">ATT&CK</button>
-      <button data-go="badges">Badges</button>
-      <button data-go="range" style="color:var(--volt)">⚡ Range</button>
+    <div class="sb-meter">
+      <div class="sb-meter-bar"><div class="sb-meter-fill" id="meterFill"></div></div>
+      <div class="sb-meter-label"><strong id="meterPct">0%</strong> MASTERY</div>
+    </div>
+    <nav class="sb-nav" id="nav">
+      <div class="sb-group">
+        <div class="sb-group-lbl">HOME</div>
+        <button data-go="dashboard">⌂ Dashboard</button>
+        <button data-go="map">⊞ Phase Map</button>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-group">
+        <div class="sb-group-lbl">LEARN</div>
+        <button data-go="study">▣ Study</button>
+        <button data-go="drill">⟳ Drill</button>
+        <button data-go="quiz">✓ Quiz</button>
+        <button data-go="review">⚠ Review</button>
+        <button data-go="exam">⊡ Exam</button>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-group">
+        <div class="sb-group-lbl">REFERENCE</div>
+        <button data-go="threads">◈ Threads</button>
+        <button data-go="arsenal"># Arsenal</button>
+        <button data-go="attack">⊙ ATT&amp;CK</button>
+      </div>
+      <div class="sb-sep"></div>
+      <div class="sb-group">
+        <div class="sb-group-lbl">OPS</div>
+        <button data-go="case">⊡ Cases</button>
+        <button data-go="range" style="color:var(--volt)">⚡ Range</button>
+        <button data-go="badges">★ Badges</button>
+      </div>
     </nav>
+    <div class="sb-foot">
+      <div class="sb-foot-badges" id="footbadges"></div>
+      <a href="index.html">⌂ Home</a>
+      <a href="challenge.html" style="color:var(--blood)">⚡ CTF Challenges</a>
+      <a href="playbook.html" style="color:var(--amber)">⚡ Playbooks</a>
+      <a href="tools.html">⚙ Tools</a>
+      <a href="intel.html">◈ Intel</a>
+    </div>
+  </aside>
+  <div class="main-wrap">
+    <div class="topstrip">
+      <div class="strip-crumb" id="stripCrumb">BLACKVAULT CONSOLE</div>
+      <div class="strip-badges" id="stripRight"></div>
+    </div>
+    <main id="app"></main>
   </div>
 </div>
-
-<main id="app"></main>
-
-<footer>
-  <span><a href="index.html" style="color:var(--volt);text-decoration:none">⌂ Home</a> · <a href="challenge.html" style="color:var(--blood);text-decoration:none">⚡ CTF Challenges</a> · <a href="tools.html" style="color:var(--amber);text-decoration:none">Tools</a> · <a href="intel.html" style="color:var(--ash);text-decoration:none">Intel</a> · artifacts in <a href="range/README.md" style="color:var(--volt);text-decoration:none">range/</a></span>
-  <span id="footstat">progress saved locally · <span id="footbadges" style="color:var(--amber)"></span></span>
-</footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1153,7 +1242,7 @@ function save(){store.set('blackvault',JSON.stringify(P));renderMeter();checkBad
 P.learned=P.learned||{}; P.quiz=P.quiz||{}; P.cards=P.cards||{}; P.quizPick=P.quizPick||{}; P.labs=P.labs||{};
 P.badges=P.badges||{}; P.notes=P.notes||{}; P.casesWon=P.casesWon||[];
 
-const state={mode:'map',phase:0,deck:'all',cardIdx:0,flip:false,quizPhase:null,search:'',
+const state={mode:'dashboard',phase:0,deck:'all',cardIdx:0,flip:false,quizPhase:null,search:'',
   caseId:'ransomware',caseNode:'start',caseGood:0,caseBad:0,caseFb:null,
   examSet:null,examPicks:{},examSubmitted:false,
   lab:null, reLvl:0, shortcutsOpen:false};
@@ -1278,7 +1367,9 @@ function checkBadges(){
 }
 function updateFootBadges(){
  const el=document.getElementById('footbadges');
- if(el){const n=Object.keys(P.badges||{}).length;el.textContent=n?n+'/'+BADGES.length+' badges':'';}
+ if(el){const n=Object.keys(P.badges||{}).length;el.textContent=n?'★ '+n+'/'+BADGES.length+' badges':'';}
+ const sr=document.getElementById('stripRight');
+ if(sr){const v=overall();sr.textContent=v>0?v+'% mastery':'';}
 }
 
 /* ============================================================ HELPERS ============================================================ */
@@ -1294,9 +1385,85 @@ function phaseMastery(p){
   const tot=cTot+qTot, done=cDone+qDone; return tot?Math.round(done/tot*100):0;
 }
 function overall(){const a=PHASES.map(phaseMastery);return Math.round(a.reduce((x,y)=>x+y,0)/PHASES.length);}
-function renderMeter(){const v=overall();$('#meterFill').style.width=v+'%';$('#meterPct').textContent=v+'%';}
+function renderMeter(){const v=overall();const f=$('#meterFill');const p=$('#meterPct');if(f)f.style.width=v+'%';if(p)p.textContent=v+'%';}
+function stripCrumb(label){const el=$('#stripCrumb');if(el)el.textContent=label;}
 
 /* ============================================================ VIEWS ============================================================ */
+function viewDashboard(){
+  const v=overall();
+  const earned=Object.keys(P.badges||{}).length;
+  const casesW=(P.casesWon||[]).length;
+  const labsC=Object.keys(P.labs||{}).filter(id=>labComplete(id)).length;
+  const recentPhases=PHASES.slice().sort((a,b)=>phaseMastery(b)-phaseMastery(a)).slice(0,6);
+  const weakPhases=PHASES.slice().sort((a,b)=>phaseMastery(a)-phaseMastery(b)).slice(0,4);
+  const FEED=[
+    {tag:'ACTIVE THREAT',txt:'<b>LockBit 3.0</b> continues targeting VMware ESXi hosts — ESXi-specific encryptor bypasses traditional AV by targeting VM storage directly. Key IOC: intermittent beacon to <code style="font-size:11px;color:var(--volt)">185.220.x.x/24</code> over port 443.'},
+    {tag:'TTP SPOTLIGHT',txt:'<b>Cobalt Strike</b> malleable C2 profiles increasingly use HTTPS with legitimate TLS certificates (Let\'s Encrypt) and mimic CDN traffic patterns. Detection: JA3 fingerprinting on the TLS ClientHello.'},
+    {tag:'TECHNIQUE',txt:'<b>TA0010 Exfil via DNS</b> — threat actors encoding 32-byte chunks of data as base32 subdomains, querying attacker-controlled authoritative servers. Max payload rate ~1KB/min but bypasses most proxy controls.'},
+    {tag:'MALWARE FAMILY',txt:'<b>Emotet / TA542</b> resurged Q4 with OneNote-lure delivery replacing macro-enabled Office docs post-VBA-lockdown. Drops Qakbot or IcedID as second stage. Look for OneNote spawning cmd.exe.'},
+    {tag:'FORENSIC ARTIFACT',txt:'Prefetch files (<code style="font-size:11px;color:var(--volt)">C:\\Windows\\Prefetch\\*.pf</code>) retain 8 seconds of the last 8 runs. Attackers using <b>PECmd</b> to delete these as anti-forensics — bulk-deletion of .pf files is itself a high-confidence IOC.'},
+    {tag:'MEMORY',txt:'<b>Process hollowing</b> (T1055.012) still prevalent in commodity loaders. In Volatility3: <code style="font-size:11px;color:var(--volt)">windows.malfind</code> flags VAD regions with PAGE_EXECUTE_READWRITE that contain PE headers — that\'s your injected payload.'},
+  ];
+  const QUICK=[
+    {label:'Continue Study',sub:'Phase '+(state.phase+1)+' · '+PHASES[state.phase].title,go:'study',col:'var(--volt)'},
+    {label:'Flashcard Drill',sub:PHASES.reduce((a,p)=>a+p.cards.length,0)+' cards total · '+Object.values(P.cards||{}).filter(Boolean).length+' known',go:'drill',col:'var(--amber)'},
+    {label:'Run a Case',sub:'4 scenarios · '+casesW+' cleared',go:'case',col:'var(--blood)'},
+    {label:'Open Range',sub:'Interactive labs · hands-on terminal',go:'range',col:'var(--blue)'},
+  ];
+  return `
+  <div class="dash-hero">
+    <div class="dash-tagline">BLACKVAULT // Security Training Range</div>
+    <h1 class="dash-h1">Your adversary trained today.<br>Did you?</h1>
+    <p class="dash-sub">Twelve phases from raw disk bytes to a full incident reconstruction. Real malware families. Real tools. Real decisions under pressure.</p>
+  </div>
+  <div class="dash-stats">
+    <div class="ds-card" style="--ds-accent:var(--volt)">
+      <div class="ds-card__n">${v}%</div>
+      <div class="ds-card__l">Overall Mastery</div>
+    </div>
+    <div class="ds-card" style="--ds-accent:var(--amber)">
+      <div class="ds-card__n">${earned}</div>
+      <div class="ds-card__l">Badges Earned</div>
+    </div>
+    <div class="ds-card" style="--ds-accent:var(--blood)">
+      <div class="ds-card__n">${casesW}</div>
+      <div class="ds-card__l">Cases Solved</div>
+    </div>
+    <div class="ds-card" style="--ds-accent:var(--blue)">
+      <div class="ds-card__n">${labsC}</div>
+      <div class="ds-card__l">Labs Cleared</div>
+    </div>
+  </div>
+  <div class="dash-cta">
+    ${QUICK.map(q=>`<button class="btn btn--ghost" data-go="${q.go}" style="border-color:${q.col};box-shadow:4px 4px 0 ${q.col}40;font-size:11px;padding:9px 16px">
+      <span style="color:${q.col};display:block;font-size:10px;margin-bottom:2px">${q.label}</span>
+      <span style="color:var(--ash);text-transform:none;letter-spacing:0;font-size:11.5px;font-family:var(--grot)">${q.sub}</span>
+    </button>`).join('')}
+  </div>
+  <div class="dash-cols" style="margin-top:28px">
+    <div class="da-card">
+      <div class="da-card__h">Phase Progress</div>
+      ${recentPhases.map(p=>{const m=phaseMastery(p);return`<div class="ds-phase">
+        <span class="ds-phase__n">P${String(p.n).padStart(2,'0')}</span>
+        <span class="ds-phase__t">${esc(p.title)}</span>
+        <span class="ds-phase__pct" style="color:${m===100?'var(--amber)':m>50?'var(--volt)':'var(--ash)'}">${m}%</span>
+      </div>`}).join('')}
+    </div>
+    <div class="da-card">
+      <div class="da-card__h">Focus These Next</div>
+      ${weakPhases.map(p=>{const m=phaseMastery(p);return`<div class="ds-phase">
+        <span class="ds-phase__n" style="color:var(--blood)">P${String(p.n).padStart(2,'0')}</span>
+        <span class="ds-phase__t">${esc(p.title)}</span>
+        <button class="nodelab" data-phase="${p.n-1}" style="font-size:9px;padding:3px 8px;margin-left:auto">Study ▸</button>
+      </div>`}).join('')}
+    </div>
+  </div>
+  <div class="da-card" style="margin-bottom:0">
+    <div class="da-card__h">Threat Intel Feed <span style="color:var(--ash);font-family:var(--grot);letter-spacing:0;text-transform:none;font-size:12px">— real-world context for your training</span></div>
+    ${FEED.map(f=>`<div class="df-item"><div class="df-item__tag">${f.tag}</div><div class="df-item__txt">${f.txt}</div></div>`).join('')}
+  </div>`;
+}
+
 function viewMap(){
   return `
   <div class="maphead">
@@ -2903,9 +3070,11 @@ document.addEventListener('keydown',e=>{ if(e.key!=='Enter')return; if(e.target.
 document.addEventListener('input',e=>{ if(e.target.id==='dynfilter'){LAB.dynFilter=e.target.value;dynPaint();} });
 
 /* ============================================================ RENDER + ROUTER ============================================================ */
+const MODE_LABELS={dashboard:'DASHBOARD',map:'PHASE MAP',study:'STUDY',drill:'FLASHCARDS',quiz:'QUIZ',review:'REVIEW',exam:'EXAM',arsenal:'ARSENAL',threads:'THREADS',case:'CASE FILES',attack:'ATT&CK MATRIX',badges:'BADGES',range:'RANGE'};
 function render(){
   const m=state.mode;let html='';
-  if(m==='map')html=viewMap();
+  if(m==='dashboard')html=viewDashboard();
+  else if(m==='map')html=viewMap();
   else if(m==='study')html=viewStudy();
   else if(m==='drill')html=viewDrill();
   else if(m==='quiz')html=viewQuiz();
@@ -2919,6 +3088,7 @@ function render(){
   else if(m==='range')html=viewRange();
   app().innerHTML=html;
   document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current', b.dataset.go===m?'true':'false'));
+  const crumb=$('#stripCrumb');if(crumb)crumb.textContent=MODE_LABELS[m]||m.toUpperCase();
   if(m==='arsenal'){const s=$('#searchBox');if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
   if(m==='range'&&state.lab&&typeof LABINIT==='object'&&LABINIT[state.lab])LABINIT[state.lab]();
   window.scrollTo(0,0);
@@ -3025,13 +3195,13 @@ function showShortcuts(){
    el.innerHTML=`<div class="shortcuts-box">
     <h2>Keyboard Shortcuts</h2>
     <table>
-     <tr><td>? </td><td>Toggle this panel</td></tr>
+     <tr><td>?</td><td>Toggle this panel</td></tr>
      <tr><td>Esc</td><td>Close this panel</td></tr>
      <tr><td>Space</td><td>Flip flashcard (Drill mode)</td></tr>
-     <tr><td>←  →</td><td>Previous / Next flashcard</td></tr>
-     <tr><td>K</td><td>Mark flashcard as Known / Unknown</td></tr>
+     <tr><td>←  →</td><td>Previous / Next card</td></tr>
+     <tr><td>K</td><td>Mark card as Known / Unknown</td></tr>
     </table>
-    <p style="margin-top:16px;font-size:12px;color:var(--ash)">Navigate with the top bar. Click any Phase node on the Map to jump straight to Study. Use <b style="color:var(--bone)">Export Progress</b> on the Map page to save a JSON report.</p>
+    <p style="margin-top:16px;font-size:12px;color:var(--ash)">Navigate using the <b style="color:var(--bone)">sidebar</b>. Click any Phase node on the Map to jump to Study. Use <b style="color:var(--bone)">Export Progress</b> on the Map to save a JSON report. <a href="playbook.html" style="color:var(--amber)">IR Playbooks ↗</a></p>
     <button class="shortcuts-close" id="shortcutsCloseBtn">Close  [Esc]</button>
    </div>`;
    document.body.appendChild(el);
