@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="BLACKVAULT Tool Arsenal — comprehensive reference for RE, DFIR, and malware analysis tools with commands, flags, and real-world usage examples.">
+<title>BLACKVAULT // Tool Arsenal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#050706;--panel:#0b0f0d;--panel2:#101512;--bone:#e9e7dc;--ash:#878d85;
+  --blood:#fb3640;--volt:#2de2e6;--amber:#f4b740;--lime:#57d977;
+  --line:rgba(233,231,220,.13);
+  --grot:'Space Grotesk',-apple-system,sans-serif;
+  --mono:'Space Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--void);color:var(--bone);font-family:var(--grot);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  background-image:linear-gradient(rgba(45,226,230,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(45,226,230,.025) 1px,transparent 1px);
+  background-size:44px 44px;min-height:100vh;}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);opacity:.35;mix-blend-mode:multiply;}
+a{color:inherit;text-decoration:none}::selection{background:var(--blood);color:var(--void)}
+.wrap{max-width:1160px;margin:0 auto;padding:0 22px 90px}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(5,7,6,.95);backdrop-filter:blur(8px);border-bottom:2px solid var(--bone);}
+.topbar__in{max-width:1160px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand b{font-weight:700;letter-spacing:-.02em;font-size:20px}.brand b i{color:var(--blood);font-style:normal}
+.brand span{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--ash);text-transform:uppercase}
+.topnav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);padding:7px 11px;border:1.5px solid transparent;transition:.12s}
+.topnav a:hover{color:var(--bone);border-color:var(--line)}
+.topnav a.active{color:var(--volt);border-color:var(--volt)}
+.topnav a.cta{color:var(--void);background:var(--bone);border-color:var(--bone)}
+
+.hero{padding:42px 0 28px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--volt);margin-bottom:8px}
+.h1{font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:-.03em;line-height:1.05;margin:0 0 14px}
+.lede{color:var(--ash);font-size:15px;max-width:68ch;margin:0 0 20px}
+
+.sec__h{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ash);border-bottom:1px solid var(--line);padding-bottom:8px;margin:44px 0 18px;display:flex;align-items:center;gap:12px}
+.sec__h::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec__h .badge{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:2px 7px;border:1.5px solid;text-transform:uppercase}
+
+.chip{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:2px 6px;border:1.5px solid;text-transform:uppercase;display:inline-block}
+.t-DF{color:var(--amber);border-color:var(--amber)}.t-RE{color:var(--volt);border-color:var(--volt)}.t-MA{color:var(--blood);border-color:var(--blood)}
+
+.search{width:100%;font-family:var(--mono);font-size:14px;background:var(--panel);color:var(--bone);border:2px solid var(--bone);padding:12px 14px;margin-bottom:6px;outline:0}
+.search:focus{border-color:var(--volt);box-shadow:4px 4px 0 var(--volt)}
+.search-hint{font-family:var(--mono);font-size:11px;color:var(--ash);margin-bottom:22px;letter-spacing:.04em}
+
+.toolg{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.tool{border:2px solid var(--line);background:var(--panel);padding:18px 20px;transition:.12s}
+.tool:hover{border-color:var(--volt)}
+.tool h3{margin:0 0 4px;font-size:17px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tool .subtitle{font-family:var(--mono);font-size:11px;color:var(--ash);margin-bottom:10px;letter-spacing:.04em}
+.tool p{color:var(--ash);font-size:14px;margin:0 0 12px;line-height:1.6}
+.cmdlist{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}
+.cmdlist li{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px dashed var(--line)}
+.cmdlist li:first-child{border-top:0}
+.cmdlist code{font-family:var(--mono);font-size:12px;color:var(--volt);background:var(--panel2);border:1px solid var(--line);padding:2px 7px;cursor:pointer;flex:none;max-width:52%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmdlist code:hover{border-color:var(--volt)}
+.cmdlist span{color:var(--ash);font-size:13px;line-height:1.4}
+.tip{border-left:3px solid var(--amber);background:rgba(244,183,64,.07);padding:8px 12px;margin-top:10px;font-size:13px;color:var(--ash)}
+.tip b{color:var(--amber);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.install{font-family:var(--mono);font-size:11px;color:var(--ash);background:var(--panel2);border:1px solid var(--line);padding:4px 8px;margin-top:8px;display:inline-block}
+.install b{color:var(--lime)}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.tbl th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ash);text-transform:uppercase;border-bottom:1.5px solid var(--line);padding:8px 10px}
+.tbl td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top;color:var(--ash)}
+.tbl td:first-child{font-family:var(--mono);color:var(--volt);white-space:nowrap}
+.tbl td b{color:var(--bone)}
+
+.foot{margin-top:60px;border-top:1px solid var(--line);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--ash);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.foot a{color:var(--volt)}
+@media(max-width:700px){.toolg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar__in">
+    <div class="brand"><b>BLACK<i>VAULT</i></b><span>Tool Arsenal</span></div>
+    <nav class="topnav">
+      <a href="index.html">Home</a>
+      <a href="console.html">Console</a>
+      <a class="active" href="tools.html">Tools</a>
+      <a href="intel.html">Intel</a>
+      <a href="range/README.md">Range</a>
+      <a class="cta" href="console.html">▶ Console</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="hero">
+  <div class="eyebrow">Reference · Commands · Flags</div>
+  <h1 class="h1">Tool Arsenal</h1>
+  <p class="lede">Every tool used across the 12-phase curriculum, with key flags, real commands, and when to reach for each. Click any command to copy it.</p>
+</div>
+
+<input type="search" class="search" id="toolSearch" placeholder="Search tools, commands, or descriptions…" autocomplete="off" spellcheck="false">
+<div class="search-hint" id="searchHint">Showing all tools — type to filter</div>
+
+<!-- DISK FORENSICS -->
+<div class="sec__h">Disk &amp; File System Forensics <span class="badge t-DF">DF</span></div>
+<div class="toolg" id="toolGrid">
+
+<div class="tool" data-tags="disk sleuthkit forensics mmls fls icat istat partition">
+  <h3>Sleuth Kit (TSK) <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">mmls · fls · icat · istat · blkstat</div>
+  <p>The standard open-source disk forensics library. Navigate partition tables, list files by inode, extract file contents by address — all without mounting the volume.</p>
+  <ul class="cmdlist">
+    <li><code>mmls disk.img</code><span>display partition layout (offsets in sectors)</span></li>
+    <li><code>fls -o 2048 disk.img</code><span>list all files at partition offset 2048</span></li>
+    <li><code>fls -r -m / disk.img</code><span>recursive listing for timeline body</span></li>
+    <li><code>icat -o 2048 disk.img 14</code><span>extract file by inode number</span></li>
+    <li><code>istat -o 2048 disk.img 14</code><span>inode metadata (timestamps, blocks)</span></li>
+    <li><code>blkstat disk.img 4096</code><span>block allocation status</span></li>
+  </ul>
+  <div class="tip"><b>Field tip:</b> Always use the sector offset from <code>mmls</code> with every subsequent command — wrong offset = wrong filesystem.</div>
+  <span class="install"><b>apt:</b> sleuthkit</span>
+</div>
+
+<div class="tool" data-tags="xxd hex hexdump binwalk carving magic bytes">
+  <h3>xxd / hexdump <span class="chip t-RE">RE</span> <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">hex inspection · magic bytes</div>
+  <p>The analyst's first look at any unknown file. Identify format by magic bytes before running any tool — ELF (7F 45 4C 46), PE (4D 5A), ZIP (50 4B), PNG (89 50 4E 47).</p>
+  <ul class="cmdlist">
+    <li><code>xxd file | head -4</code><span>first 64 bytes in hex + ASCII</span></li>
+    <li><code>xxd -l 512 disk.img</code><span>first 512 bytes (MBR region)</span></li>
+    <li><code>xxd -s 0x100 -l 64 f</code><span>64 bytes from offset 0x100</span></li>
+    <li><code>hexdump -C file | less</code><span>paged hex dump with ASCII sidebar</span></li>
+  </ul>
+  <div class="tip"><b>Field tip:</b> <code>xxd file | grep -i "4d 5a"</code> locates embedded PE headers in a binary blob — useful for carving from memory dumps.</div>
+  <span class="install"><b>apt:</b> xxd (bundled with vim-common)</span>
+</div>
+
+<div class="tool" data-tags="photorec foremost scalpel carving file recovery unallocated">
+  <h3>photorec / foremost <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">signature-based file carving</div>
+  <p>Recover files from unallocated space and raw images using header/footer signatures — no file system required. photorec is fast but extracts without original filenames; foremost preserves more metadata.</p>
+  <ul class="cmdlist">
+    <li><code>photorec disk.img</code><span>interactive carving wizard</span></li>
+    <li><code>foremost -i disk.img -o out/</code><span>carve to output directory</span></li>
+    <li><code>scalpel -b -o out/ disk.img</code><span>header/footer carving w/ config</span></li>
+  </ul>
+  <div class="tip"><b>Field tip:</b> Run on a copy or acquired image, never the original. Unallocated space is the target — allocated files are easier to recover via inode.</div>
+  <span class="install"><b>apt:</b> testdisk (photorec) foremost scalpel</span>
+</div>
+
+<div class="tool" data-tags="fdisk parted disk partition table MBR GPT">
+  <h3>fdisk / gdisk <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">partition table inspection</div>
+  <p>Quick partition table inspection on disk images or live devices. Use <code>-l</code> for listing only — don't modify a forensic image.</p>
+  <ul class="cmdlist">
+    <li><code>fdisk -l disk.img</code><span>MBR partition table listing</span></li>
+    <li><code>gdisk -l disk.img</code><span>GPT partition inspection</span></li>
+    <li><code>parted disk.img print</code><span>format-agnostic partition view</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> fdisk gdisk parted</span>
+</div>
+
+<!-- ASSEMBLY / DEBUGGING -->
+<div class="sec__h" style="grid-column:1/-1;margin-top:0">Assembly &amp; Debugging <span class="badge t-RE">RE</span></div>
+
+<div class="tool" data-tags="gdb debugger breakpoint step register assembly x86 x64">
+  <h3>gdb <span class="chip t-RE">RE</span></h3>
+  <div class="subtitle">GNU Debugger · single-step · inspect state</div>
+  <p>The foundation of Linux debugging. Set breakpoints, single-step through instructions, inspect registers and memory. pwndbg and peda plugins improve the default UI significantly.</p>
+  <ul class="cmdlist">
+    <li><code>gdb -q ./binary</code><span>quiet mode (no banner)</span></li>
+    <li><code>break main</code><span>set software breakpoint at main</span></li>
+    <li><code>hbreak *0xADDR</code><span>hardware breakpoint (no 0xCC patch)</span></li>
+    <li><code>run arg1 arg2</code><span>start with arguments</span></li>
+    <li><code>stepi</code><span>step one machine instruction (into calls)</span></li>
+    <li><code>nexti</code><span>step over (skip call body)</span></li>
+    <li><code>info registers</code><span>dump all register values</span></li>
+    <li><code>x/20i $rip</code><span>display next 20 instructions</span></li>
+    <li><code>x/32xb $rsp</code><span>32 bytes of stack in hex</span></li>
+    <li><code>p/x $rax</code><span>print rax in hex</span></li>
+    <li><code>disas /r func</code><span>disassemble function with raw bytes</span></li>
+    <li><code>dump memory f.bin $s $e</code><span>dump memory range to file</span></li>
+  </ul>
+  <div class="tip"><b>OEP hunting:</b> use <code>hbreak</code> (hardware breakpoint) to catch execution of freshly-written memory — software breakpoints patch 0xCC which anti-tamper code can detect.</div>
+  <span class="install"><b>apt:</b> gdb · pip: pwndbg</span>
+</div>
+
+<div class="tool" data-tags="objdump disassemble binary ELF sections symbols">
+  <h3>objdump <span class="chip t-RE">RE</span></h3>
+  <div class="subtitle">disassembly · section headers · symbols</div>
+  <p>Quick command-line disassembly and binary inspection. Prefer Intel syntax. Pair with <code>grep</code> to find specific instructions or addresses in large binaries.</p>
+  <ul class="cmdlist">
+    <li><code>objdump -d -M intel bin</code><span>disassemble .text in Intel syntax</span></li>
+    <li><code>objdump -j .text -d bin</code><span>only the .text section</span></li>
+    <li><code>objdump -h bin</code><span>section headers + sizes</span></li>
+    <li><code>objdump -t bin</code><span>symbol table</span></li>
+    <li><code>objdump -R bin</code><span>dynamic relocation entries</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> binutils</span>
+</div>
+
+<div class="tool" data-tags="readelf ELF sections segments imports symbols dynamic">
+  <h3>readelf <span class="chip t-RE">RE</span></h3>
+  <div class="subtitle">ELF header · segments · dynamic symbols</div>
+  <p>Comprehensive ELF inspection — header, program headers (segments), section headers, dynamic section, symbol tables. The primary tool for understanding ELF structure before running Ghidra.</p>
+  <ul class="cmdlist">
+    <li><code>readelf -h bin</code><span>ELF header (arch, entry, type)</span></li>
+    <li><code>readelf -l bin</code><span>program headers (segments)</span></li>
+    <li><code>readelf -S bin</code><span>section headers</span></li>
+    <li><code>readelf -d bin</code><span>dynamic section (NEEDED libraries)</span></li>
+    <li><code>readelf -s bin</code><span>symbol tables</span></li>
+    <li><code>readelf -a bin</code><span>everything (very verbose)</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> binutils</span>
+</div>
+
+<div class="tool" data-tags="ndisasm nasm shellcode raw bytes flat disassembly">
+  <h3>ndisasm <span class="chip t-RE">RE</span></h3>
+  <div class="subtitle">raw byte disassembly — no ELF wrapper needed</div>
+  <p>Disassemble raw bytes (shellcode, firmware blobs) without ELF/PE headers. Essential for analyzing memory-dumped shellcode or extracted payloads.</p>
+  <ul class="cmdlist">
+    <li><code>ndisasm -b64 shellcode.bin</code><span>64-bit flat disassembly</span></li>
+    <li><code>ndisasm -b32 -o 0x400000 f</code><span>32-bit at custom base address</span></li>
+  </ul>
+  <div class="tip"><b>Inline disassembly:</b> pipe hex from <code>xxd</code> or use <code>echo -ne '\x48\x31\xc0' | ndisasm -b64 -</code> to disassemble individual instruction bytes.</div>
+  <span class="install"><b>apt:</b> nasm</span>
+</div>
+
+<!-- DECOMPILERS -->
+<div class="sec__h" style="grid-column:1/-1;margin-top:0">Decompilers &amp; Binary Analysis <span class="badge t-RE">RE</span></div>
+
+<div class="tool" data-tags="ghidra decompiler NSA xrefs struct types P-code analysis">
+  <h3>Ghidra <span class="chip t-RE">RE</span></h3>
+  <div class="subtitle">NSA · free · full decompiler + type recovery</div>
+  <p>The most capable free RE platform. Import a binary, run auto-analysis, then use the decompiler + listing view to reverse engineer functions. Define structs and prototypes to improve pseudocode quality iteratively.</p>
+  <ul class="cmdlist">
+    <li><code>ghidraRun</code><span>launch GUI (GHIDRA_HOME/support/)</span></li>
+    <li><code>analyzeHeadless proj X -import bin</code><span>non-GUI scripted analysis</span></li>
+    <li><code>analyzeHeadless proj X -postScript script.py</code><span>run a post-analysis script</span></li>
+  </ul>
+  <div class="tip"><b>Workflow:</b> (1) right-click function → Edit Function Signature. (2) retype parameters. (3) re-decompile — the pseudocode updates everywhere. (4) use xrefs (Ctrl+Shift+F) to jump to all callers. Repeat until logic reads clearly.</div>
+  <span class="install"><b>Download:</b> github.com/NationalSecurityAgency/ghidra</span>
+</div>
+
+<div class="tool" data-tags="radare2 r2 disassembly analysis decompiler scripting patch">
+  <h3>radare2 (r2) <span class="chip t-RE">RE</span></h3>
+  <div class="subtitle">command-line RE powerhouse · scriptable · patcher</div>
+  <p>Full RE suite in the terminal: disassembly, analysis, pseudo-decompilation (pdc), binary patching, and scripting via r2pipe. Steep learning curve; extremely powerful for automation and quick triage.</p>
+  <ul class="cmdlist">
+    <li><code>r2 -A binary</code><span>open + full auto-analysis</span></li>
+    <li><code>s main</code><span>seek to main function</span></li>
+    <li><code>pdf @ main</code><span>print disassembly of function</span></li>
+    <li><code>pdc</code><span>pseudo-decompiler output</span></li>
+    <li><code>afl</code><span>list all analyzed functions</span></li>
+    <li><code>iz</code><span>list strings in binary</span></li>
+    <li><code>ii</code><span>imports (IAT/GOT)</span></li>
+    <li><code>r2 -w bin</code><span>open in write mode (for patching)</span></li>
+    <li><code>wa nop</code><span>write NOP at current seek position</span></li>
+    <li><code>px 32 @ 0x401000</code><span>print 32 hex bytes at address</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> radare2 · or: r2env from github</span>
+</div>
+
+<div class="tool" data-tags="rabin2 binary info imports exports sections hash PE ELF">
+  <h3>rabin2 <span class="chip t-RE">RE</span></h3>
+  <div class="subtitle">binary metadata extraction (part of radare2)</div>
+  <p>Quick binary identity and structure extraction without opening a full RE session. Part of the radare2 suite but usable standalone for rapid triage.</p>
+  <ul class="cmdlist">
+    <li><code>rabin2 -I binary</code><span>binary identity (arch, bits, type, OS)</span></li>
+    <li><code>rabin2 -i binary</code><span>imports (functions binary calls)</span></li>
+    <li><code>rabin2 -e binary</code><span>exports / symbols</span></li>
+    <li><code>rabin2 -S binary</code><span>sections with sizes and entropy</span></li>
+    <li><code>rabin2 -z binary</code><span>strings in data sections</span></li>
+    <li><code>rabin2 -H binary</code><span>header info (PE or ELF)</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> radare2</span>
+</div>
+
+<!-- STATIC ANALYSIS -->
+<div class="sec__h" style="grid-column:1/-1;margin-top:0">Static Malware Analysis <span class="badge t-MA">MA</span></div>
+
+<div class="tool" data-tags="strings unicode ascii malware IOC URLs IPs">
+  <h3>strings <span class="chip t-MA">MA</span></h3>
+  <div class="subtitle">printable-string extraction — always first</div>
+  <p>The cheapest, fastest static signal. Always run before anything else. URLs, IPs, registry paths, mutex names, error messages, and hardcoded passwords all appear here — until the sample is packed.</p>
+  <ul class="cmdlist">
+    <li><code>strings -a sample</code><span>ASCII strings (entire file)</span></li>
+    <li><code>strings -a -el sample</code><span>16-bit little-endian Unicode too</span></li>
+    <li><code>strings -n 8 sample</code><span>minimum length 8 (fewer noise hits)</span></li>
+    <li><code>strings sample | grep -Ei 'http|cmd|temp|run'</code><span>filter for high-value patterns</span></li>
+  </ul>
+  <div class="tip"><b>Empty output?</b> The binary is packed or obfuscated. Escalate to FLOSS, then dynamic analysis. Absence of strings is itself a packing indicator.</div>
+  <span class="install"><b>apt:</b> binutils</span>
+</div>
+
+<div class="tool" data-tags="FLOSS strings deobfuscation stack strings obfuscated encoded">
+  <h3>FLOSS <span class="chip t-MA">MA</span></h3>
+  <div class="subtitle">FLARE Obfuscated String Solver · recovers hidden strings</div>
+  <p>Finds strings that <code>strings</code> misses: stack-built strings, decoded strings, and encoding routines. The critical next step when plain strings returns nothing useful.</p>
+  <ul class="cmdlist">
+    <li><code>floss sample.exe</code><span>extract all string types</span></li>
+    <li><code>floss --no-static sample.exe</code><span>skip plain strings, focus on obfuscated</span></li>
+    <li><code>floss -j out.json sample.exe</code><span>JSON output for automation</span></li>
+  </ul>
+  <span class="install"><b>pip:</b> flare-floss · or: github.com/mandiant/flare-floss</span>
+</div>
+
+<div class="tool" data-tags="yara rules signatures detection hunting malware family">
+  <h3>YARA <span class="chip t-MA">MA</span></h3>
+  <div class="subtitle">pattern-matching rule engine for malware signatures</div>
+  <p>Write rules that match on strings, byte patterns, and boolean conditions. The analyst's signature workhorse for detection, hunting, and family classification. Rules compose with logical operators for precision.</p>
+  <ul class="cmdlist">
+    <li><code>yara rules.yar sample</code><span>run one ruleset against one file</span></li>
+    <li><code>yara -r rules.yar /samples/</code><span>recursive scan of directory</span></li>
+    <li><code>yara -s rules.yar sample</code><span>show matching strings</span></li>
+    <li><code>yarac rules.yar rules.yarc</code><span>compile for faster scanning</span></li>
+  </ul>
+  <div class="tip"><b>Rule structure:</b> <code>rule name { strings: $s = "malware" condition: $s }</code> — start simple and layer: add byte patterns, PE magic, and entropy conditions.</div>
+  <span class="install"><b>apt:</b> yara · pip: yara-python</span>
+</div>
+
+<div class="tool" data-tags="capa capability ATT&CK MBC detection malware behavior">
+  <h3>capa <span class="chip t-MA">MA</span></h3>
+  <div class="subtitle">FLARE Labs · capability detection mapped to ATT&amp;CK</div>
+  <p>Infers named capabilities from code and API patterns, then maps them to MITRE ATT&amp;CK and MBC without executing the sample. Produces a behavioral preview from static analysis alone.</p>
+  <ul class="cmdlist">
+    <li><code>capa sample.exe</code><span>full capability report</span></li>
+    <li><code>capa -j sample.exe</code><span>JSON output for automation</span></li>
+    <li><code>capa -v sample.exe</code><span>verbose — shows matching addresses</span></li>
+  </ul>
+  <span class="install"><b>pip:</b> flare-capa · or github releases</span>
+</div>
+
+<div class="tool" data-tags="ssdeep fuzzy hash similarity clustering family imphash">
+  <h3>ssdeep / imphash <span class="chip t-MA">MA</span></h3>
+  <div class="subtitle">fuzzy + import hashing for sample clustering</div>
+  <p>Cluster related samples without exact hash matching. ssdeep (CTPH) survives minor byte changes; imphash fingerprints the import table to identify same-toolchain builds even after repacking.</p>
+  <ul class="cmdlist">
+    <li><code>ssdeep -b sample.exe</code><span>compute fuzzy hash</span></li>
+    <li><code>ssdeep -m known.ssdeep sample.exe</code><span>compare against reference set</span></li>
+    <li><code>python3 -c "import pefile; pe=pefile.PE('s.exe'); print(pe.get_imphash())"</code><span>compute imphash</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> ssdeep · pip: pefile</span>
+</div>
+
+<!-- DYNAMIC ANALYSIS -->
+<div class="sec__h" style="grid-column:1/-1;margin-top:0">Dynamic Analysis &amp; Instrumentation <span class="badge t-MA">MA</span></div>
+
+<div class="tool" data-tags="strace syscall kernel trace file network process execve">
+  <h3>strace <span class="chip t-MA">MA</span></h3>
+  <div class="subtitle">system call tracer — the un-lieable boundary</div>
+  <p>Every file open, network connection, process spawn, and persistence write crosses the kernel boundary as a syscall. Obfuscation hides code, not syscalls — strace is the ultimate truth at that boundary.</p>
+  <ul class="cmdlist">
+    <li><code>strace ./sample</code><span>trace all syscalls</span></li>
+    <li><code>strace -e trace=file ./sample</code><span>file-related syscalls only</span></li>
+    <li><code>strace -e trace=network ./sample</code><span>network syscalls only</span></li>
+    <li><code>strace -f ./sample</code><span>follow forked/exec'd children</span></li>
+    <li><code>strace -o run.log -f ./sample</code><span>write to file (often large)</span></li>
+    <li><code>strace -p PID</code><span>attach to running process</span></li>
+  </ul>
+  <div class="tip"><b>Statically-linked sample:</b> ltrace is blind (no PLT); strace still sees all syscalls. Always prefer strace as your primary dynamic tool.</div>
+  <span class="install"><b>apt:</b> strace</span>
+</div>
+
+<div class="tool" data-tags="ltrace library call trace libc PLT dynamic linking">
+  <h3>ltrace <span class="chip t-MA">MA</span></h3>
+  <div class="subtitle">library call tracer — hooks PLT/GOT stubs</div>
+  <p>Traces calls to dynamic library functions (libc, libssl, etc.) and their arguments. Useful for dynamically-linked samples; blind for statically-linked ones (no PLT to hook).</p>
+  <ul class="cmdlist">
+    <li><code>ltrace ./sample</code><span>trace all library calls</span></li>
+    <li><code>ltrace -e strcmp ./sample</code><span>trace only strcmp calls</span></li>
+    <li><code>ltrace -l libssl.so ./sample</code><span>trace a specific library</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> ltrace</span>
+</div>
+
+<div class="tool" data-tags="frida hook instrument JavaScript inject API dynamic analysis">
+  <h3>Frida <span class="chip t-MA">MA</span> <span class="chip t-RE">RE</span></h3>
+  <div class="subtitle">dynamic instrumentation — hook any function at runtime</div>
+  <p>Inject JavaScript into a running process to hook functions, read/write memory, and observe arguments. The key tool for hooking the encrypt-before-send routine in Protocol RE (Phase 10) to recover keys and plaintext without breaking the cipher.</p>
+  <ul class="cmdlist">
+    <li><code>frida -l hook.js -f ./sample</code><span>spawn process and load script</span></li>
+    <li><code>frida -l hook.js -p PID</code><span>attach to running process</span></li>
+    <li><code>frida-trace -i "send" -p PID</code><span>auto-hook send() with arg logging</span></li>
+    <li><code>frida-ps -a</code><span>list running apps + PIDs</span></li>
+  </ul>
+  <div class="tip"><b>Hook template:</b> <code>Interceptor.attach(ptr('0xADDR'), { onEnter(args) { console.log(args[0].readByteArray(32)); } });</code> — adjust the address from your Ghidra/radare2 analysis.</div>
+  <span class="install"><b>pip:</b> frida frida-tools</span>
+</div>
+
+<div class="tool" data-tags="inotifywait inotify file system events monitor live bait">
+  <h3>inotifywait <span class="chip t-MA">MA</span></h3>
+  <div class="subtitle">live filesystem event monitoring</div>
+  <p>Watch exactly what files a sample creates, modifies, or deletes as it runs. Set up a bait directory and monitor it during detonation — no before/after snapshot diff needed.</p>
+  <ul class="cmdlist">
+    <li><code>inotifywait -mr ~/bait -e modify,create,delete</code><span>recursive monitoring of bait dir</span></li>
+    <li><code>inotifywait -m /etc /tmp -e create</code><span>watch persistence/staging paths</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> inotify-tools</span>
+</div>
+
+<!-- UNPACKING -->
+<div class="sec__h" style="grid-column:1/-1;margin-top:0">Unpacking &amp; Packing Detection <span class="badge t-MA">MA</span></div>
+
+<div class="tool" data-tags="upx unpack pack entropy packer detection section">
+  <h3>UPX <span class="chip t-MA">MA</span></h3>
+  <div class="subtitle">Ultimate Packer for eXecutables · common on malware</div>
+  <p>The most common malware packer. Fortunately, trivially reversible with <code>upx -d</code>. Recognizable by UPX0/UPX1 section names and near-8.0 entropy. Many families strip section names but keep the structure.</p>
+  <ul class="cmdlist">
+    <li><code>upx -d packed.exe -o out.exe</code><span>unpack (if headers intact)</span></li>
+    <li><code>upx --info packed.exe</code><span>detect and show packer info</span></li>
+    <li><code>upx -l packed.exe</code><span>list compressed sections</span></li>
+  </ul>
+  <div class="tip"><b>Stripped headers?</b> Many samples overwrite "UPX0" in the section names. The structure remains the same — unpack manually by finding the tail jump and dumping at OEP.</div>
+  <span class="install"><b>apt:</b> upx-ucl</span>
+</div>
+
+<div class="tool" data-tags="ent entropy bits per byte compression encryption packing detection">
+  <h3>ent <span class="chip t-MA">MA</span></h3>
+  <div class="subtitle">entropy measurement — packing/encryption indicator</div>
+  <p>Measure bits-per-byte entropy of a file or section. Near 8.0 = compressed or encrypted. Combine with a small import table to flag packing. High entropy alone is not proof of malice.</p>
+  <ul class="cmdlist">
+    <li><code>ent sample.exe</code><span>full file entropy (bits/byte)</span></li>
+    <li><code>dd if=sample.exe bs=512 count=1 | ent</code><span>entropy of first 512 bytes</span></li>
+  </ul>
+  <div class="tip"><b>Baseline:</b> a typical unpacked ELF text section is ~5.5–6.5 bits/byte. A packed section is 7.8–8.0. A random-looking section in an otherwise normal binary is suspicious.</div>
+  <span class="install"><b>apt:</b> ent</span>
+</div>
+
+<!-- MEMORY FORENSICS -->
+<div class="sec__h" style="grid-column:1/-1;margin-top:0">Memory Forensics <span class="badge t-DF">DF</span></div>
+
+<div class="tool" data-tags="volatility vol3 memory forensics EPROCESS pslist psscan malfind netscan">
+  <h3>Volatility 3 <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">memory image analysis framework</div>
+  <p>The standard memory forensics framework. Walk EPROCESS lists, find injected shellcode via VAD analysis, recover network connections from socket structures, dump process images, and extract credentials — all from a frozen memory image.</p>
+  <ul class="cmdlist">
+    <li><code>vol -f mem.raw windows.info</code><span>identify OS / build (get symbols first)</span></li>
+    <li><code>vol -f mem.raw windows.pslist</code><span>active process list (EPROCESS links)</span></li>
+    <li><code>vol -f mem.raw windows.psscan</code><span>pool-scan — catches DKOM-hidden processes</span></li>
+    <li><code>vol -f mem.raw windows.pstree</code><span>process tree with parent PIDs</span></li>
+    <li><code>vol -f mem.raw windows.malfind</code><span>private RX/RWX regions (injected code)</span></li>
+    <li><code>vol -f mem.raw windows.netscan</code><span>TCP/UDP connections + owning PIDs</span></li>
+    <li><code>vol -f mem.raw windows.cmdline</code><span>full command lines per process</span></li>
+    <li><code>vol -f mem.raw windows.dlllist --pid 1234</code><span>loaded modules for a process</span></li>
+    <li><code>vol -f mem.raw windows.hashdump</code><span>extract NT password hashes</span></li>
+    <li><code>vol -f mem.raw windows.procdump --pid 1234 --dump-dir out/</code><span>dump process image to disk</span></li>
+  </ul>
+  <div class="tip"><b>Cross-view:</b> Always run both <code>pslist</code> AND <code>psscan</code>. Anything in psscan but not pslist = DKOM-hidden process. This single check catches most kernel-level stealth.</div>
+  <span class="install"><b>pip:</b> volatility3 · or: github.com/volatilityfoundation/volatility3</span>
+</div>
+
+<!-- NETWORK FORENSICS -->
+<div class="sec__h" style="grid-column:1/-1;margin-top:0">Network Forensics <span class="badge t-DF">DF</span></div>
+
+<div class="tool" data-tags="tcpdump pcap capture filter network traffic DNS HTTP TLS">
+  <h3>tcpdump <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">packet capture · command-line · first-look analysis</div>
+  <p>The command-line packet capture and inspection tool. Capture to pcap files for later Wireshark analysis, or apply BPF filters to inspect traffic in real time. Fast, scriptable, runs on any Linux server.</p>
+  <ul class="cmdlist">
+    <li><code>tcpdump -i eth0 -w capture.pcap</code><span>capture all traffic to file</span></li>
+    <li><code>tcpdump -nr capture.pcap</code><span>read a pcap (no DNS lookup, no promiscuous)</span></li>
+    <li><code>tcpdump -nr cap.pcap 'tcp and dst port 443'</code><span>BPF filter: HTTPS only</span></li>
+    <li><code>tcpdump -nr cap.pcap 'host 185.220.101.47'</code><span>filter by host</span></li>
+    <li><code>tcpdump -nr cap.pcap -c 20</code><span>first 20 packets only</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> tcpdump</span>
+</div>
+
+<div class="tool" data-tags="tshark wireshark pcap filter extract statistics conversation">
+  <h3>tshark / Wireshark <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">pcap analysis · protocol dissection · file carving</div>
+  <p>Full protocol-aware packet inspection. Start with Statistics → Conversations to get a top-down view, then drill into individual streams. Export Objects carves transferred files (PE binaries, scripts). Never scroll packet-by-packet for a large capture.</p>
+  <ul class="cmdlist">
+    <li><code>tshark -r cap.pcap -q -z conv,ip</code><span>IP conversation summary</span></li>
+    <li><code>tshark -r cap.pcap -Y "http.request"</code><span>filter for HTTP requests</span></li>
+    <li><code>tshark -r cap.pcap -Y "dns" -T fields -e dns.qry.name</code><span>extract all DNS queries</span></li>
+    <li><code>tshark -r cap.pcap --export-objects http,out/</code><span>carve HTTP transferred files</span></li>
+    <li><code>tshark -r cap.pcap -z io,stat,60</code><span>traffic volume per 60-second interval</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> tshark wireshark</span>
+</div>
+
+<div class="tool" data-tags="zeek bro network log structured conn dns ssl http files">
+  <h3>Zeek (Bro) <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">structured network logs — triage at scale</div>
+  <p>Zeek turns a pcap into typed logs (conn.log, dns.log, ssl.log, http.log, files.log) that you query like a database. For large captures, Zeek is how you answer "which internal hosts talked to new domains" without scrolling 2 GB of packets.</p>
+  <ul class="cmdlist">
+    <li><code>zeek -r capture.pcap</code><span>generate all log files in current dir</span></li>
+    <li><code>cat conn.log | zeek-cut id.orig_h id.resp_h</code><span>pull source/dest pairs</span></li>
+    <li><code>cat dns.log | zeek-cut query answers</code><span>DNS queries + responses</span></li>
+    <li><code>cat ssl.log | zeek-cut ja3 server_name</code><span>JA3 + SNI per TLS session</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> zeek · or: zeek.org</span>
+</div>
+
+<div class="tool" data-tags="suricata IDS IPS signatures rules alerts pcap threat detection">
+  <h3>Suricata <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">IDS/IPS · run signature rules over a pcap</div>
+  <p>Run community or custom rules against a recorded pcap to rapidly surface known-bad IOCs. Works offline — point it at a pcap with a ruleset and get alerts in seconds.</p>
+  <ul class="cmdlist">
+    <li><code>suricata -r capture.pcap -S rules.rules -l logs/</code><span>run against pcap, log to dir</span></li>
+    <li><code>suricata-update</code><span>update Emerging Threats rulesets</span></li>
+    <li><code>cat logs/fast.log</code><span>quick alert summary</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> suricata</span>
+</div>
+
+<!-- HASH CRACKING -->
+<div class="sec__h" style="grid-column:1/-1;margin-top:0">Hash Cracking &amp; Cryptanalysis <span class="badge t-DF">DF</span></div>
+
+<div class="tool" data-tags="hashcat crack hash MD5 SHA1 SHA256 NTLM password wordlist">
+  <h3>hashcat <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">GPU-accelerated hash cracking</div>
+  <p>The fastest CPU/GPU hash cracker. Supports 300+ hash modes. Use dictionary attacks first (common passwords), then rule-based mutations, then brute force for short hashes.</p>
+  <ul class="cmdlist">
+    <li><code>hashcat -m 0 hash.txt wordlist.txt</code><span>MD5 dictionary attack</span></li>
+    <li><code>hashcat -m 1000 hash.txt wordlist.txt</code><span>NTLM dictionary attack</span></li>
+    <li><code>hashcat -m 0 hash.txt -a 3 ?l?l?l?l</code><span>MD5 brute force (4 lowercase)</span></li>
+    <li><code>hashcat -m 0 hash.txt wordlist.txt -r rules/best64.rule</code><span>dictionary + mutations</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> hashcat</span>
+</div>
+
+<div class="tool" data-tags="john john the ripper hash crack password bruteforce">
+  <h3>John the Ripper <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">CPU-based password / hash cracker</div>
+  <p>Supports a wide range of hash and file formats (zip, PDF, RAR, KeePass, SSH keys). The <code>--format</code> flag is critical — wrong format = no cracks.</p>
+  <ul class="cmdlist">
+    <li><code>john --format=md5crypt hash.txt</code><span>crack with auto wordlist</span></li>
+    <li><code>john hash.txt --wordlist=words.txt</code><span>dictionary attack</span></li>
+    <li><code>john hash.txt --show</code><span>display cracked passwords</span></li>
+    <li><code>zip2john archive.zip > hash.txt</code><span>extract ZIP hash for cracking</span></li>
+  </ul>
+  <span class="install"><b>apt:</b> john</span>
+</div>
+
+<!-- WINDOWS ARTIFACT PARSERS -->
+<div class="sec__h" style="grid-column:1/-1;margin-top:0">Windows Artifact Parsers (Eric Zimmerman Tools) <span class="badge t-DF">DF</span></div>
+
+<div class="tool" data-tags="MFT NTFS timestamps MFTECmd parsed timeline forensics">
+  <h3>MFTECmd <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">NTFS $MFT parser — timestamps + SI/FN comparison</div>
+  <p>Parse the NTFS $MFT to a CSV timeline. Crucially, exports both $STANDARD_INFORMATION and $FILE_NAME timestamps so you can detect timestomping — where $SI is edited but $FN (kernel-maintained) still shows the real time.</p>
+  <ul class="cmdlist">
+    <li><code>MFTECmd -f '$MFT' --csv out/</code><span>parse to CSV timeline</span></li>
+    <li><code>MFTECmd -f '$MFT' --csv out/ --csvf mft.csv</code><span>named output file</span></li>
+  </ul>
+  <div class="tip"><b>Timestomping tell:</b> $SI Created newer than $FN Created, and $SI timestamps are suspiciously round numbers (00:00:00 exactly). The kernel sets $FN; user-mode tools can only set $SI.</div>
+  <span class="install"><b>Download:</b> ericzimmerman.github.io/#!index.md</span>
+</div>
+
+<div class="tool" data-tags="EvtxECmd event log EVTX parser Windows 4688 7045 1102 4624">
+  <h3>EvtxECmd <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">Windows Event Log (EVTX) parser</div>
+  <p>Parse EVTX files to structured CSV/JSON for timeline analysis. Key Event IDs: 4624 (logon), 4688 (process creation), 7045 (service install), 1102 (log cleared), 4104 (PowerShell scriptblock).</p>
+  <ul class="cmdlist">
+    <li><code>EvtxECmd -d C:\evtx --csv out/</code><span>parse all logs in directory</span></li>
+    <li><code>EvtxECmd -f Security.evtx --csv out/</code><span>one log file</span></li>
+  </ul>
+  <span class="install"><b>Download:</b> ericzimmerman.github.io</span>
+</div>
+
+<div class="tool" data-tags="AppCompatCache ShimCache AmCache execution evidence deleted file">
+  <h3>AppCompatCacheParser / AmcacheParser <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">execution evidence surviving file deletion</div>
+  <p>ShimCache (AppCompatCache) and AmCache record binary presence and execution evidence even after the file is deleted. Critical for proving a malicious binary ran when the attacker has cleaned up.</p>
+  <ul class="cmdlist">
+    <li><code>AppCompatCacheParser -f SYSTEM --csv out/</code><span>parse ShimCache from SYSTEM hive</span></li>
+    <li><code>AmcacheParser -f Amcache.hve --csv out/</code><span>parse AmCache</span></li>
+  </ul>
+  <span class="install"><b>Download:</b> ericzimmerman.github.io</span>
+</div>
+
+<div class="tool" data-tags="plaso log2timeline super-timeline all sources merge forensics">
+  <h3>plaso / log2timeline <span class="chip t-DF">DF</span></h3>
+  <div class="subtitle">super-timeline — merge all artifact sources</div>
+  <p>Ingest a disk image (or directory of artifacts) and produce a single merged timeline spanning MFT, event logs, registry, browser history, shellbags, prefetch, and more. The capstone Phase 12 tool.</p>
+  <ul class="cmdlist">
+    <li><code>log2timeline.py out.plaso image.dd</code><span>ingest image → timeline store</span></li>
+    <li><code>psort.py -o l2tcsv out.plaso -w timeline.csv</code><span>filter / export to CSV</span></li>
+    <li><code>psort.py out.plaso "timestamp &gt; '2026-06-01'"</code><span>filter by date range</span></li>
+  </ul>
+  <span class="install"><b>pip:</b> plaso · or: github.com/log2timeline/plaso</span>
+</div>
+
+</div><!-- #toolGrid -->
+
+<!-- FLAGS / CHEATSHEET TABLE -->
+<div class="sec__h">Common flags cheat-sheet</div>
+<table class="tbl">
+<tr><th>Tool</th><th>Flag</th><th>Meaning</th><th>When to use</th></tr>
+<tr><td>strace</td><td><code>-f</code></td><td>Follow forks / exec</td><td>Any sample that spawns child processes</td></tr>
+<tr><td>strace</td><td><code>-o file</code></td><td>Write trace to file</td><td>Long runs — console output scrolls too fast</td></tr>
+<tr><td>strace</td><td><code>-e trace=network</code></td><td>Network syscalls only</td><td>Quick C2 check without filesystem noise</td></tr>
+<tr><td>gdb</td><td><code>hbreak</code></td><td>Hardware breakpoint</td><td>OEP hunting — avoids 0xCC anti-tamper detection</td></tr>
+<tr><td>gdb</td><td><code>starti</code></td><td>Break at first instruction</td><td>Catching early anti-analysis checks</td></tr>
+<tr><td>objdump</td><td><code>-M intel</code></td><td>Intel syntax</td><td>Always — AT&amp;T syntax src/dst order is reversed</td></tr>
+<tr><td>readelf</td><td><code>-l</code></td><td>Program headers (segments)</td><td>Loader analysis — segments matter, not sections</td></tr>
+<tr><td>vol3</td><td><code>windows.malfind</code></td><td>Private RX/RWX regions</td><td>Finding injected shellcode / hollowed sections</td></tr>
+<tr><td>vol3</td><td><code>windows.psscan</code></td><td>Pool-tag scan for processes</td><td>Always cross-view with pslist to catch DKOM</td></tr>
+<tr><td>tcpdump</td><td><code>-n</code></td><td>No DNS resolution</td><td>Faster reads, prevents accidental lookups</td></tr>
+<tr><td>tshark</td><td><code>-z conv,ip</code></td><td>IP conversation summary</td><td>First look at any pcap — don't scroll packets</td></tr>
+<tr><td>strings</td><td><code>-el</code></td><td>16-bit Unicode</td><td>Windows PE malware — many strings are UTF-16</td></tr>
+<tr><td>r2</td><td><code>-A</code></td><td>Full auto-analysis</td><td>Always open with -A for full xref/call graph</td></tr>
+<tr><td>r2</td><td><code>-w</code></td><td>Write mode</td><td>Binary patching (NOP out checks)</td></tr>
+</table>
+
+<div class="foot">
+  <span><a href="index.html">⌂ Home</a> · <a href="console.html">Console</a> · <a href="intel.html">Intel</a> · BLACKVAULT Tool Arsenal</span>
+  <span>Click any command to copy</span>
+</div>
+</div>
+
+<script>
+const search=document.getElementById('toolSearch');
+const hint=document.getElementById('searchHint');
+const tools=document.querySelectorAll('.tool');
+search.addEventListener('input',()=>{
+  const q=search.value.trim().toLowerCase();
+  let shown=0;
+  tools.forEach(t=>{
+    const tags=(t.dataset.tags||'').toLowerCase();
+    const text=t.textContent.toLowerCase();
+    const match=!q||tags.includes(q)||text.includes(q);
+    t.style.display=match?'':'none';
+    if(match)shown++;
+  });
+  hint.textContent=q?`Showing ${shown} tools matching "${search.value}"`:'Showing all tools — type to filter';
+});
+document.querySelectorAll('code').forEach(el=>{
+  el.addEventListener('click',()=>{
+    if(navigator.clipboard)navigator.clipboard.writeText(el.textContent.trim()).catch(()=>{});
+    const orig=el.style.color;el.style.color='var(--amber)';setTimeout(()=>el.style.color=orig,600);
+  });
+  el.title='Click to copy';
+});
+</script>
+</body>
+</html>
