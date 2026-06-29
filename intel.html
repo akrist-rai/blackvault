@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="BLACKVAULT Intel — MITRE ATT&CK framework mapping, threat actor profiles, IOC taxonomy, and detection engineering reference for cybersecurity analysts.">
+<title>BLACKVAULT // Threat Intelligence &amp; ATT&amp;CK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#050706;--panel:#0b0f0d;--panel2:#101512;--bone:#e9e7dc;--ash:#878d85;
+  --blood:#fb3640;--volt:#2de2e6;--amber:#f4b740;--lime:#57d977;--purple:#b794f6;
+  --line:rgba(233,231,220,.13);
+  --grot:'Space Grotesk',-apple-system,sans-serif;
+  --mono:'Space Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--void);color:var(--bone);font-family:var(--grot);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+  background-image:linear-gradient(rgba(45,226,230,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(45,226,230,.025) 1px,transparent 1px);
+  background-size:44px 44px;min-height:100vh;}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);opacity:.35;mix-blend-mode:multiply;}
+a{color:inherit;text-decoration:none}::selection{background:var(--blood);color:var(--void)}
+.wrap{max-width:1160px;margin:0 auto;padding:0 22px 90px}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(5,7,6,.95);backdrop-filter:blur(8px);border-bottom:2px solid var(--bone);}
+.topbar__in{max-width:1160px;margin:0 auto;padding:14px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand b{font-weight:700;letter-spacing:-.02em;font-size:20px}.brand b i{color:var(--blood);font-style:normal}
+.brand span{font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:var(--ash);text-transform:uppercase}
+.topnav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.topnav a{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);padding:7px 11px;border:1.5px solid transparent;transition:.12s}
+.topnav a:hover{color:var(--bone);border-color:var(--line)}
+.topnav a.active{color:var(--amber);border-color:var(--amber)}
+.topnav a.cta{color:var(--void);background:var(--bone);border-color:var(--bone)}
+
+.hero{padding:42px 0 28px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+.h1{font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:-.03em;line-height:1.05;margin:0 0 14px}
+.lede{color:var(--ash);font-size:15px;max-width:68ch;margin:0 0 20px}
+
+.sec__h{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ash);border-bottom:1px solid var(--line);padding-bottom:8px;margin:44px 0 18px;display:flex;align-items:center;gap:12px}
+.sec__h::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.chip{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:2px 6px;border:1.5px solid;text-transform:uppercase;display:inline-block}
+.t-DF{color:var(--amber);border-color:var(--amber)}.t-RE{color:var(--volt);border-color:var(--volt)}.t-MA{color:var(--blood);border-color:var(--blood)}
+
+/* ATT&CK MATRIX */
+.matrix{display:grid;grid-template-columns:repeat(11,1fr);gap:4px;margin-top:4px;overflow-x:auto}
+.tactic{min-width:90px}
+.tactic-h{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;background:var(--blood);color:var(--void);padding:5px 7px;text-align:center;border:1.5px solid var(--blood)}
+.tech{background:var(--panel);border:1px solid var(--line);padding:5px 7px;font-family:var(--mono);font-size:10px;color:var(--ash);cursor:pointer;transition:.1s;margin-top:2px;position:relative}
+.tech:hover{border-color:var(--volt);color:var(--bone)}
+.tech.covered{background:rgba(251,54,64,.12);border-color:var(--blood);color:var(--bone)}
+.tech.covered::after{content:"★";position:absolute;top:2px;right:4px;font-size:8px;color:var(--blood)}
+.tech .tid{display:block;font-size:9px;color:var(--ash);margin-bottom:1px}
+.tech .tname{font-size:10px}
+
+/* CALLOUT / TOOLTIP */
+.callout{border-left:4px solid var(--amber);background:rgba(244,183,64,.07);padding:12px 16px;margin:16px 0;font-size:14px;color:var(--ash)}
+.callout b{color:var(--amber)}
+.callout.blood{border-left-color:var(--blood);background:rgba(251,54,64,.06)}.callout.blood b{color:var(--blood)}
+.callout.volt{border-left-color:var(--volt);background:rgba(45,226,230,.05)}.callout.volt b{color:var(--volt)}
+
+/* KILL CHAIN DIAGRAM */
+.kc{display:grid;grid-template-columns:repeat(9,1fr);gap:0}
+.kcstep{border:2px solid var(--line);background:var(--panel);padding:12px 8px;text-align:center;position:relative}
+.kcstep:not(:last-child)::after{content:"→";position:absolute;right:-14px;top:50%;transform:translateY(-50%);font-family:var(--mono);color:var(--ash);z-index:2;font-size:11px}
+.kcstep .kn{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);display:block;margin-bottom:4px}
+.kcstep b{font-size:12px;display:block;color:var(--bone)}
+.kcstep p{font-family:var(--mono);font-size:9px;color:var(--ash);margin:4px 0 0}
+.kcstep.active{border-color:var(--blood);background:rgba(251,54,64,.1)}
+.kcstep.active b{color:var(--blood)}
+
+/* TECHNIQUE DETAIL CARDS */
+.techg{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.techcard{border:2px solid var(--line);background:var(--panel);padding:18px 20px;transition:.12s}
+.techcard:hover{border-color:var(--amber)}
+.techcard .tid{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--amber);margin-bottom:4px}
+.techcard h3{margin:0 0 8px;font-size:17px}
+.techcard p{color:var(--ash);font-size:14px;margin:0 0 10px;line-height:1.6}
+.techcard .phase-ref{font-family:var(--mono);font-size:11px;color:var(--volt);margin-top:8px}
+.techcard .detect{border-left:3px solid var(--lime);padding:7px 10px;background:rgba(87,217,119,.06);font-size:13px;color:var(--ash);margin-top:10px}
+.techcard .detect b{color:var(--lime);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;display:block}
+
+/* PYRAMID OF PAIN */
+.pyramid{display:flex;flex-direction:column;align-items:center;gap:4px;margin:16px 0}
+.ptier{border:2px solid;padding:11px 16px;text-align:center;cursor:pointer;transition:.12s;width:100%;max-width:640px;position:relative}
+.ptier:hover{transform:scale(1.01)}
+.ptier .p-label{font-weight:700;font-size:15px}
+.ptier .p-pain{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-top:2px}
+.ptier .p-note{font-size:13px;color:var(--ash);margin-top:6px;display:none}
+.ptier.open .p-note{display:block}
+.tier-toughest{border-color:var(--blood);background:rgba(251,54,64,.1)}
+.tier-tough{border-color:var(--amber);background:rgba(244,183,64,.08)}
+.tier-annoy{border-color:var(--amber);background:rgba(244,183,64,.05)}
+.tier-easy{border-color:var(--volt);background:rgba(45,226,230,.05)}
+.tier-trivial{border-color:var(--ash);background:rgba(135,141,133,.05)}
+
+/* IOC TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ash);text-transform:uppercase;border-bottom:1.5px solid var(--line);padding:8px 10px}
+.tbl td{border-bottom:1px solid var(--line);padding:8px 10px;vertical-align:top;color:var(--ash)}
+.tbl td:first-child{font-family:var(--mono);color:var(--volt);white-space:nowrap}
+.tbl td b{color:var(--bone)}
+
+/* THREAT ACTOR CARDS */
+.actorg{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.actor{border:2px solid var(--line);background:var(--panel);padding:20px}
+.actor h3{margin:0 0 4px;font-size:18px}
+.actor .origin{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash);margin-bottom:10px;display:block}
+.actor p{color:var(--ash);font-size:14px;margin:0 0 12px;line-height:1.6}
+.actor ul{list-style:none;padding:0;margin:0}
+.actor li{font-family:var(--mono);font-size:12px;color:var(--ash);padding:4px 0;border-bottom:1px dashed var(--line)}
+.actor li::before{content:"T";color:var(--blood);margin-right:4px;font-size:10px}
+
+/* DETECTION RULES */
+.rulebox{background:var(--panel);border:2px solid var(--line);padding:18px 20px;margin-bottom:14px}
+.rulebox h4{margin:0 0 8px;font-size:15px;font-family:var(--mono);letter-spacing:.06em;color:var(--volt)}
+.rulebox pre{font-family:var(--mono);font-size:12px;color:#bfe9d8;background:var(--void);border:1px solid var(--line);padding:12px;overflow:auto;margin:0;white-space:pre;line-height:1.5}
+.rulebox:hover{border-color:var(--volt)}
+
+.foot{margin-top:60px;border-top:1px solid var(--line);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--ash);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.foot a{color:var(--volt)}
+@media(max-width:800px){.kc{grid-template-columns:1fr 1fr 1fr}.matrix{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:520px){.kc{grid-template-columns:1fr 1fr}.techg,.actorg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar__in">
+    <div class="brand"><b>BLACK<i>VAULT</i></b><span>Intel &amp; ATT&amp;CK</span></div>
+    <nav class="topnav">
+      <a href="index.html">Home</a>
+      <a href="console.html">Console</a>
+      <a href="tools.html">Tools</a>
+      <a class="active" href="intel.html">Intel</a>
+      <a href="range/README.md">Range</a>
+      <a class="cta" href="console.html">▶ Console</a>
+    </nav>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="hero">
+  <div class="eyebrow">Threat Intelligence · ATT&amp;CK Framework · Detection Engineering</div>
+  <h1 class="h1">Intel Reference</h1>
+  <p class="lede">MITRE ATT&amp;CK technique mapping, Pyramid of Pain, IOC taxonomy, threat actor profiles, and detection rule templates — the intelligence layer that makes technical findings actionable.</p>
+</div>
+
+<!-- KILL CHAIN -->
+<div class="sec__h">The Cyber Kill Chain — mapped to BLACKVAULT phases</div>
+<div class="kc">
+  <div class="kcstep active"><span class="kn">01</span><b>Initial Access</b><p>T1566 Phishing</p></div>
+  <div class="kcstep active"><span class="kn">02</span><b>Execution</b><p>T1059.001 PowerShell</p></div>
+  <div class="kcstep active"><span class="kn">03</span><b>Persistence</b><p>T1547.001 Run Key</p></div>
+  <div class="kcstep active"><span class="kn">04</span><b>Priv-Esc</b><p>T1055 Injection</p></div>
+  <div class="kcstep active"><span class="kn">05</span><b>Defense Evasion</b><p>T1027 Obfuscation</p></div>
+  <div class="kcstep active"><span class="kn">06</span><b>C2</b><p>T1071 Web Protocol</p></div>
+  <div class="kcstep"><span class="kn">07</span><b>Lateral Move</b><p>T1021 Remote Svcs</p></div>
+  <div class="kcstep active"><span class="kn">08</span><b>Collection</b><p>T1005 Local Data</p></div>
+  <div class="kcstep active"><span class="kn">09</span><b>Exfiltration</b><p>T1048 DNS Exfil</p></div>
+</div>
+<div class="callout blood" style="margin-top:10px"><b>Red = covered in BLACKVAULT.</b> The capstone (Phase 12) reconstructs this complete chain from artifacts.</div>
+
+<!-- PYRAMID OF PAIN -->
+<div class="sec__h">Pyramid of Pain</div>
+<p style="color:var(--ash);font-size:14px;margin:0 0 14px">David Bianco's model ranks how much pain you cause an adversary when you burn each indicator type. Detection at the top of the pyramid forces them to change how they operate — not just a file hash. Click a tier for detail.</p>
+<div class="pyramid">
+  <div class="ptier tier-toughest" data-tier>
+    <div class="p-label">TTPs — Tactics, Techniques &amp; Procedures</div>
+    <div class="p-pain" style="color:var(--blood)">TOUGH — change how they operate entirely</div>
+    <div class="p-note">Behavioral signatures: "beacons every 60s from a child of Office via PowerShell" — forces the adversary to redesign their operation from scratch. Built in Phase 12. Documented in ATT&amp;CK as technique IDs.</div>
+  </div>
+  <div class="ptier tier-tough" data-tier>
+    <div class="p-label">Tools — Malware, Implants, Exploits</div>
+    <div class="p-pain" style="color:var(--amber)">CHALLENGING — rebuild or replace tooling</div>
+    <div class="p-note">The malware binary, C2 framework, exploit. Burned by YARA rules matched on code patterns, JA3 fingerprints, and behavioral capability maps. Covered in Phases 4, 6, 7, and 10.</div>
+  </div>
+  <div class="ptier tier-annoy" data-tier>
+    <div class="p-label">Network / Host Artifacts</div>
+    <div class="p-pain" style="color:var(--amber)">ANNOYING — update the payload, rename the mutex</div>
+    <div class="p-note">Mutex names (Global\BV-MTX), registry keys, staging paths (C:\Windows\Temp\~bv.tmp), User-Agent strings, URL patterns. Covered in Phases 8, 9, and 11.</div>
+  </div>
+  <div class="ptier tier-easy" data-tier>
+    <div class="p-label">Domain Names</div>
+    <div class="p-pain" style="color:var(--volt)">SIMPLE — register a new domain in minutes</div>
+    <div class="p-note">C2 domains like cdn-telemetry.xyz used in the BLACKVAULT artifacts. Easy to burn — attackers re-register or use DGA. Hunt by subdomain entropy and query volume (Phase 9).</div>
+  </div>
+  <div class="ptier tier-easy" data-tier>
+    <div class="p-label">IP Addresses</div>
+    <div class="p-pain" style="color:var(--volt)">EASY — spin up a new VPS in minutes</div>
+    <div class="p-note">The C2 IP 185.220.101.47 used throughout BLACKVAULT. Tor exit nodes, rented VPS — trivially replaced. Only useful as a short-term tactical indicator.</div>
+  </div>
+  <div class="ptier tier-trivial" data-tier>
+    <div class="p-label">Hash Values</div>
+    <div class="p-pain" style="color:var(--ash)">TRIVIAL — a single byte change = new hash</div>
+    <div class="p-note">SHA-256 of packed.exe, memory-sample.raw, etc. One recompile or UPX pack defeats a hash IOC. Useful only for known-sample lookup; never the primary detection layer.</div>
+  </div>
+</div>
+
+<!-- ATT&CK TECHNIQUES COVERED -->
+<div class="sec__h">ATT&amp;CK Techniques Covered in BLACKVAULT</div>
+<div class="techg">
+
+  <div class="techcard">
+    <div class="tid">T1566 · T1566.001</div>
+    <h3>Phishing — Spearphishing Attachment</h3>
+    <p>Malicious macro-enabled spreadsheet (.xlsm) delivering the dropper via Office macro execution. The initial access vector in the Phase 12 capstone scenario.</p>
+    <div class="phase-ref">→ Phase 12 capstone · Logs: macro execution from excel.exe</div>
+    <div class="detect"><b>Detection:</b> Sigma: Office process spawning cmd.exe / powershell.exe. Email gateway: block .xlsm/.xlsb attachments from external senders.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1059.001</div>
+    <h3>Command &amp; Scripting — PowerShell</h3>
+    <p>Download cradle executed via <code>powershell.exe -nop -w hidden -enc [base64]</code>. The decoded command fetches and executes a script directly in memory using IEX (New-Object Net.WebClient).DownloadString.</p>
+    <div class="phase-ref">→ Phase 8 range lab (mem lab) · Event ID 4104 scriptblock logging</div>
+    <div class="detect"><b>Detection:</b> Event 4104 scriptblock logging + 4688 process creation. Sigma: powershell.exe with -enc + DownloadString pattern. Constrained Language Mode as hardening.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1027 · T1027.002</div>
+    <h3>Obfuscated Files — Software Packing</h3>
+    <p>UPX packing applied to the sample binary (range/malware/packed.exe). Near-8.0 entropy on the .text section, minimal import table, UPX0/UPX1 section names (sometimes stripped). The packing wall that forced static analysis to fail.</p>
+    <div class="phase-ref">→ Phase 4 (detection) · Phase 7 (unpacking)</div>
+    <div class="detect"><b>Detection:</b> YARA: UPX magic bytes and section names. Entropy scan: flag sections &gt; 7.2 bits/byte. Import count &lt; 5 as suspicious threshold.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1055 · T1055.012</div>
+    <h3>Process Injection — Process Hollowing</h3>
+    <p>Malicious code injected into a suspended legitimate process (svchost.exe started, image swapped). Results in a process with a benign name that doesn't match its on-disk binary — exposed via Volatility's ldrmodules cross-view.</p>
+    <div class="phase-ref">→ Phase 8 (memory forensics) · Phase 11 (rootkit detection)</div>
+    <div class="detect"><b>Detection:</b> Volatility malfind: RWX private region with PE header. Memory ≠ disk image mismatch via ldrmodules. Process parent: svchost from explorer.exe (not services.exe) is wrong.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1547.001</div>
+    <h3>Boot/Logon Autostart — Registry Run Keys</h3>
+    <p>Persistence via <code>HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run</code> — a "WindowsUpdate" value pointing to C:\Temp\svc.exe. Covered in the rootkit phase as a cross-artifact persistence hunt.</p>
+    <div class="phase-ref">→ Phase 11 range lab (registry tab) · Event ID 7045 service install</div>
+    <div class="detect"><b>Detection:</b> Autoruns.exe / Autoruns for Linux. Sigma: new Run key with path outside System32. Monitor: HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Run also.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1543.003</div>
+    <h3>Create or Modify System Process — Windows Service</h3>
+    <p>Malicious service "WinSvc" installed pointing to C:\Temp\svc.exe. Recorded as Event ID 7045 in the System event log — a finding that survives even if the file is deleted.</p>
+    <div class="phase-ref">→ Phase 11 range lab (event log tab)</div>
+    <div class="detect"><b>Detection:</b> Event 7045 with image path outside System32/SysWow64 or in user-writable directories. Sigma: service install + unusual binary path pattern.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1070.006</div>
+    <h3>Indicator Removal — Timestomping</h3>
+    <p>$STANDARD_INFORMATION timestamps modified by anti-forensic tools. The $FILE_NAME attribute (kernel-maintained) retains original timestamps. A mismatch between $SI and $FN is the exposing inconsistency.</p>
+    <div class="phase-ref">→ Phase 11 range lab (MFT tab)</div>
+    <div class="detect"><b>Detection:</b> MFTECmd output: compare $SI Created vs $FN Created. Suspciously round $SI times (00:00:00.000) are a strong indicator. $FN is kernel-set and cannot be modified by user-mode tools.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1070.001</div>
+    <h3>Indicator Removal — Clear Windows Event Logs</h3>
+    <p>Event ID 1102 records the deliberate clearing of the Security log. The clearing itself is evidence — an empty log with a 1102 event tells you the adversary was there and cleaned up.</p>
+    <div class="phase-ref">→ Phase 11 range lab (event log tab)</div>
+    <div class="detect"><b>Detection:</b> Alert on Event 1102. Forward logs to a SIEM in real-time so local clearing doesn't destroy the record. Sigma: Event 1102 in Security log.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1071.001 · T1071.004</div>
+    <h3>Application Layer Protocol — Web + DNS</h3>
+    <p>C2 communication over HTTPS (TLS to 185.220.101.47:443 every ~60s) and DNS exfiltration via hex-encoded subdomains to cdn-telemetry.xyz. Both are covered in the BLACKVAULT pcap and network range labs.</p>
+    <div class="phase-ref">→ Phase 9 (network forensics) · Phase 10 (protocol RE)</div>
+    <div class="detect"><b>Detection:</b> JA3 hash matching known C2 profiles. Beaconing detection: periodic intervals with low jitter. DNS: entropy analysis of subdomain labels. Query volume thresholds.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1095</div>
+    <h3>Non-Application Layer Protocol — Custom C2</h3>
+    <p>The c2_capture.bin artifact uses a custom binary framing protocol: BE EF magic, 2-byte LE length, 1-byte opcode, XOR-encrypted payload with key 0x5A. No RFC, no known signature — reversed from the wire.</p>
+    <div class="phase-ref">→ Phase 10 range lab (protocol RE)</div>
+    <div class="detect"><b>Detection:</b> Network signature on the BE EF 2-byte magic. Suricata: content rule matching the frame header. JA3 if tunneled inside TLS. Anomaly: unusual port, non-standard port for TLS.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1048.003</div>
+    <h3>Exfiltration Over Unencrypted Protocol — DNS</h3>
+    <p>Data exfiltrated by encoding hex into subdomain labels: s0-4256.cdn-telemetry.xyz, s1-6c61.cdn-telemetry.xyz, etc. Reassembled from the pcap to decode the stolen data. Covered in the DNS exfil range lab.</p>
+    <div class="phase-ref">→ Phase 9 range lab (pcap / DNS exfil)</div>
+    <div class="detect"><b>Detection:</b> DNS: high query volume to one domain + high subdomain entropy. Threshold: &gt;50 unique subdomains/minute. Zeek: dns.log query length distribution. Block direct DNS egress; route through recursive resolver.</div>
+  </div>
+
+  <div class="techcard">
+    <div class="tid">T1486</div>
+    <h3>Data Encrypted for Impact — Ransomware</h3>
+    <p>The Phase 12 capstone scenario ends with CryptEncrypt over *.docx/*.xlsx, files renamed *.vault, and a READ_ME.vault.txt ransom note dropped. The full kill chain from phishing to encryption is reconstructed.</p>
+    <div class="phase-ref">→ Phase 12 capstone scenario</div>
+    <div class="detect"><b>Detection:</b> Canary files in predictable locations (C:\Users\Public\canary.docx). Monitor: mass rename events (bulk extension change). VSS snapshot deletion (Event 4688: vssadmin.exe delete shadows).</div>
+  </div>
+
+</div>
+
+<!-- THREAT ACTOR PROFILES -->
+<div class="sec__h">Simplified Threat Actor Profiles (educational)</div>
+<p style="color:var(--ash);font-size:14px;margin:0 0 14px">These profiles are simplified educational summaries for pattern recognition and ATT&amp;CK context. They are not intelligence reporting — consult MITRE ATT&amp;CK Groups for authoritative data.</p>
+<div class="actorg">
+
+  <div class="actor">
+    <h3>APT28 (Fancy Bear)</h3>
+    <span class="origin">Russia · GRU Unit 26165 · Active since ~2004</span>
+    <p>Russian military intelligence group. Targets government, military, defense, aerospace. Known for X-Agent/EVTX implants, spearphishing with weaponized documents, and living-off-the-land techniques.</p>
+    <ul>
+      <li>T1566 Spearphishing attachment</li>
+      <li>T1059.001 PowerShell</li>
+      <li>T1027 Obfuscated files</li>
+      <li>T1071 Application layer C2</li>
+      <li>T1005 Data from local system</li>
+    </ul>
+  </div>
+
+  <div class="actor">
+    <h3>Lazarus Group (Hidden Cobra)</h3>
+    <span class="origin">DPRK · Reconnaissance General Bureau · Active since ~2009</span>
+    <p>Prolific North Korean threat actor responsible for the 2014 Sony hack, WannaCry, and major financial institution targeting. Mixes espionage with financial crime — rare combination. Known for extensive custom malware families.</p>
+    <ul>
+      <li>T1059.001 / T1059.003 PowerShell + cmd</li>
+      <li>T1055 Process injection</li>
+      <li>T1547.001 Registry persistence</li>
+      <li>T1486 Ransomware (WannaCry)</li>
+      <li>T1041 Exfiltration over C2</li>
+    </ul>
+  </div>
+
+  <div class="actor">
+    <h3>FIN7 (Carbanak group)</h3>
+    <span class="origin">Financial crime · Eastern Europe · Active since ~2013</span>
+    <p>Financially-motivated group targeting retail, hospitality, and financial sectors. Known for sophisticated spearphishing campaigns, custom CARBANAK malware, and PoS system compromise. Heavily uses living-off-the-land.</p>
+    <ul>
+      <li>T1566.001 Spearphishing + macros</li>
+      <li>T1204 User execution</li>
+      <li>T1546.003 WMI event subscription</li>
+      <li>T1071.001 HTTPS C2</li>
+      <li>T1056 Input capture (keylogging)</li>
+    </ul>
+  </div>
+
+  <div class="actor">
+    <h3>Sandworm</h3>
+    <span class="origin">Russia · GRU Unit 74455 · Destructive attacks</span>
+    <p>Russian GRU group behind NotPetya, BlackEnergy, and attacks on Ukrainian power grid. Specializes in destructive operations — wipers rather than espionage. Demonstrates the importance of ICS/OT security.</p>
+    <ul>
+      <li>T1078 Valid accounts (credential theft)</li>
+      <li>T1485 Data destruction (wiper)</li>
+      <li>T1489 Service stop (pre-wipe)</li>
+      <li>T1561 Disk wipe</li>
+      <li>T1021 Remote services (lateral movement)</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- IOC TAXONOMY TABLE -->
+<div class="sec__h">IOC Taxonomy &amp; Handling</div>
+<table class="tbl">
+<tr><th>IOC Type</th><th>Example (BLACKVAULT)</th><th>Volatility</th><th>Best Use &amp; Caveats</th></tr>
+<tr><td>File hash (SHA-256)</td><td><b>packed.exe hash</b></td><td>Trivial</td><td>Known-sample lookup; never primary detection. One byte = new hash.</td></tr>
+<tr><td>File hash (imphash)</td><td><b>import-table fingerprint</b></td><td>Low</td><td>Clusters toolchain variants; survives repacking better than SHA-256.</td></tr>
+<tr><td>IP address</td><td><b>185.220.101.47</b></td><td>Easy</td><td>Pivot point for pcap/memory analysis. Block as tactical; attacker rotates in minutes.</td></tr>
+<tr><td>Domain name</td><td><b>cdn-telemetry.xyz</b></td><td>Simple</td><td>Better than IP; combined with subdomain entropy is much stronger signal.</td></tr>
+<tr><td>Mutex name</td><td><b>Global\BV-7f3a-MTX</b></td><td>Annoying</td><td>High-fidelity uniqueness; easy to change. One-time strong indicator.</td></tr>
+<tr><td>URL pattern</td><td><b>/gate.php + user-agent</b></td><td>Annoying</td><td>URL path patterns + custom UA strings persist across infrastructure moves.</td></tr>
+<tr><td>JA3 hash</td><td><b>TLS ClientHello fingerprint</b></td><td>Challenging</td><td>Fingerprints the C2 framework's TLS implementation. Hard to change without code changes.</td></tr>
+<tr><td>YARA rule</td><td><b>packed.exe code pattern</b></td><td>Challenging</td><td>Matches on code or string patterns that survive repacking. Focus on unique function patterns.</td></tr>
+<tr><td>Beacon cadence</td><td><b>~60s ±8s interval</b></td><td>Challenging</td><td>Behavioral: timing pattern survives re-infection, re-C2. Requires baseline to separate from legit.</td></tr>
+<tr><td>TTP / ATT&amp;CK technique</td><td><b>T1059.001 + T1566.001</b></td><td>Tough</td><td>Captures the operation's method. Forces complete re-design. Most durable detection investment.</td></tr>
+</table>
+
+<!-- DETECTION RULE TEMPLATES -->
+<div class="sec__h">Detection Rule Templates</div>
+
+<div class="rulebox">
+  <h4>SIGMA — Office spawning PowerShell (T1059.001 + T1566)</h4>
+  <pre>title: Office Process Spawning PowerShell
+status: stable
+logsource:
+    product: windows
+    category: process_creation
+detection:
+    selection:
+        ParentImage|endswith:
+            - '\WINWORD.EXE'
+            - '\EXCEL.EXE'
+            - '\POWERPNT.EXE'
+        Image|endswith:
+            - '\powershell.exe'
+            - '\cmd.exe'
+            - '\wscript.exe'
+    encoded:
+        CommandLine|contains: '-enc'
+    condition: selection and encoded
+level: high
+tags:
+    - attack.execution
+    - attack.t1059.001
+    - attack.initial_access
+    - attack.t1566</pre>
+</div>
+
+<div class="rulebox">
+  <h4>SURICATA — C2 Beacon Pattern (T1071.001)</h4>
+  <pre>alert tls $HOME_NET any -> $EXTERNAL_NET 443 (
+    msg:"BLACKVAULT C2 Beacon - Known JA3";
+    ja3.hash; content:"a0e9f5d64349fb13191bc781f81f42e1";
+    threshold: type threshold, track by_src, count 5, seconds 600;
+    classtype:trojan-activity;
+    sid:9000001; rev:1;
+    metadata:technique T1071.001;
+)
+
+alert tls $HOME_NET any -> 185.220.101.47 443 (
+    msg:"BLACKVAULT C2 - Known Malicious IP";
+    classtype:trojan-activity;
+    sid:9000002; rev:1;
+)</pre>
+</div>
+
+<div class="rulebox">
+  <h4>YARA — UPX Packing + Suspicious Imports (T1027.002)</h4>
+  <pre>rule Packed_UPX_SuspiciousImports
+{
+    meta:
+        description = "UPX-packed binary with minimal import table"
+        technique   = "T1027.002"
+    strings:
+        $upx0 = "UPX0" ascii
+        $upx1 = "UPX1" ascii
+        $upx_sig = { 55 50 58 21 }   // UPX! signature
+        $mz    = { 4D 5A }            // PE magic
+    condition:
+        $mz at 0
+        and ($upx0 or $upx1 or $upx_sig)
+        and pe.number_of_imports < 5
+}</pre>
+</div>
+
+<div class="rulebox">
+  <h4>SIGMA — Event Log Cleared (T1070.001)</h4>
+  <pre>title: Security Audit Log Cleared
+status: stable
+logsource:
+    product: windows
+    service: security
+detection:
+    selection:
+        EventID: 1102
+    condition: selection
+level: high
+tags:
+    - attack.defense_evasion
+    - attack.t1070.001
+falsepositives:
+    - Legitimate administrator maintenance (rare; investigate all occurrences)</pre>
+</div>
+
+<div class="rulebox">
+  <h4>SIGMA — DNS Exfiltration Detection (T1048.003)</h4>
+  <pre>title: Possible DNS Tunneling - High Subdomain Entropy
+status: experimental
+logsource:
+    product: zeek
+    service: dns
+detection:
+    selection:
+        qtype_name: 'A'
+    filter_legit:
+        query|endswith:
+            - '.windows.com'
+            - '.microsoft.com'
+            - '.google.com'
+    condition: selection and not filter_legit
+    # True positive indicators (evaluate in SIEM):
+    # - query length > 40 chars
+    # - entropy of first label > 4.0 bits/char
+    # - &gt; 30 unique subdomains to same domain in 5 minutes
+level: medium
+tags:
+    - attack.exfiltration
+    - attack.t1048.003</pre>
+</div>
+
+<div class="callout volt">
+  <b>Detection engineering workflow:</b> (1) Understand the technique — what exactly does it do? (2) Find the minimal, durable observable — not the hash, but the behavior. (3) Test the rule for false positives before deploying. (4) Tag each rule with ATT&amp;CK IDs so your coverage map stays current. (5) Review quarterly — adversaries iterate.
+</div>
+
+<!-- INTELLIGENCE CYCLE -->
+<div class="sec__h">The Intelligence Cycle — applied to BLACKVAULT findings</div>
+<table class="tbl">
+<tr><th>Phase</th><th>What it means</th><th>BLACKVAULT example</th></tr>
+<tr><td>Direction</td><td><b>What do we need to know?</b> Scope the question.</td><td>Who is using 185.220.101.47? What technique delivered the dropper?</td></tr>
+<tr><td>Collection</td><td><b>Gather raw data</b> — pcap, memory, logs, binaries.</td><td>Acquire capture.pcap, memory-sample.raw, auth.log, packed.exe.</td></tr>
+<tr><td>Processing</td><td><b>Convert raw data</b> to analyzable form.</td><td>Zeek logs from pcap, Volatility output from raw memory, icat from disk image.</td></tr>
+<tr><td>Analysis</td><td><b>Interpret patterns</b>, form hypotheses, confirm or break.</td><td>Beacon cadence → C2 identification. $SI/$FN mismatch → timestomping.</td></tr>
+<tr><td>Dissemination</td><td><b>Communicate findings</b> to the right audience.</td><td>Executive summary (what happened, impact) + technical appendix (IOCs, timeline, ATT&amp;CK).</td></tr>
+<tr><td>Feedback</td><td><b>Close the loop</b> — did the answer serve the question?</td><td>Write the YARA/Suricata/Sigma rules; retask collection based on new indicators.</td></tr>
+</table>
+
+<div class="foot">
+  <span><a href="index.html">⌂ Home</a> · <a href="console.html">Console</a> · <a href="tools.html">Tools</a> · BLACKVAULT Intel Reference</span>
+  <span>Educational use only</span>
+</div>
+</div>
+
+<script>
+document.querySelectorAll('[data-tier]').forEach(el=>{
+  el.addEventListener('click',()=>{
+    el.classList.toggle('open');
+  });
+});
+</script>
+</body>
+</html>
