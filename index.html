@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BLACKVAULT // Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--void:#050706;--panel:#0b0f0d;--panel2:#101512;--bone:#e9e7dc;--ash:#878d85;--blood:#fb3640;--volt:#2de2e6;--amber:#f4b740;--line:rgba(233,231,220,.13);--grot:'Space Grotesk',-apple-system,sans-serif;--mono:'Space Mono',ui-monospace,monospace;}
+*{box-sizing:border-box}html,body{margin:0;padding:0}
+body{background:var(--void);color:var(--bone);font-family:var(--grot);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;
+ background-image:linear-gradient(rgba(45,226,230,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(45,226,230,.025) 1px,transparent 1px);background-size:44px 44px;min-height:100vh;}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:9;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);opacity:.35;mix-blend-mode:multiply;}
+a{color:inherit}::selection{background:var(--blood);color:var(--void)}
+.wrap{max-width:1100px;margin:0 auto;padding:30px 22px 90px}
+.top{display:flex;align-items:baseline;gap:12px;border-bottom:2px solid var(--bone);padding-bottom:16px}
+.top b{font-weight:700;letter-spacing:-.02em;font-size:22px}.top b i{color:var(--blood);font-style:normal}
+.top span{font-family:var(--mono);font-size:10px;letter-spacing:.32em;color:var(--ash);text-transform:uppercase}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--volt);margin-top:40px}
+.h1{font-size:clamp(30px,6vw,54px);font-weight:700;letter-spacing:-.03em;line-height:1.02;margin:10px 0 0}
+.lede{color:var(--ash);max-width:68ch;margin:16px 0 0}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:34px}
+.card{border:2px solid var(--line);background:var(--panel);padding:24px;text-decoration:none;display:block;transition:.13s}
+.card:hover{border-color:var(--volt);transform:translate(-3px,-3px);box-shadow:8px 8px 0 rgba(45,226,230,.35)}
+.card.blood:hover{border-color:var(--blood);box-shadow:8px 8px 0 rgba(251,54,64,.4)}
+.card h2{margin:6px 0 8px;font-size:24px;letter-spacing:-.01em}.card p{color:var(--ash);font-size:14px;margin:0}
+.card .go{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--volt);margin-top:16px;display:inline-block}
+.card.blood .go{color:var(--blood)}
+.kbd{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--ash);border:1px solid var(--line);padding:2px 7px;text-transform:uppercase}
+.sec__h{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ash);border-bottom:1px solid var(--line);padding-bottom:8px;margin:46px 0 16px}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ash);text-transform:uppercase;border-bottom:1px solid var(--line);padding:8px 10px}
+.tbl td{border-bottom:1px solid var(--line);padding:9px 10px;vertical-align:top}
+.tbl td.n{font-family:var(--mono);color:var(--amber);width:34px}
+.tbl code{font-family:var(--mono);font-size:12px;color:var(--volt);background:var(--panel2);border:1px solid var(--line);padding:2px 6px}
+.tbl .art{color:var(--bone)}.tbl .cmd{color:var(--ash);font-family:var(--mono);font-size:12px}
+.chip{font-family:var(--mono);font-size:9px;letter-spacing:.1em;padding:2px 6px;border:1.5px solid;text-transform:uppercase;margin-left:6px}
+.t-DF{color:var(--amber);border-color:var(--amber)}.t-RE{color:var(--volt);border-color:var(--volt)}.t-MA{color:var(--blood);border-color:var(--blood)}
+.note{border-left:3px solid var(--amber);background:rgba(244,183,64,.07);padding:12px 16px;margin-top:18px;font-size:13.5px;color:var(--ash)}
+.note b{color:var(--amber)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px}
+.box{border:1px solid var(--line);background:var(--panel);padding:16px 18px}
+.box h3{margin:0 0 8px;font-size:15px}.box pre{font-family:var(--mono);font-size:12px;color:#bfe9d8;background:var(--void);border:1px solid var(--line);padding:10px;overflow:auto;margin:8px 0 0;white-space:pre-wrap}
+.foot{margin-top:60px;border-top:1px solid var(--line);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--ash);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@media(max-width:760px){.cards,.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><b>BLACK<i>VAULT</i></b><span>Security Training Vault</span></div>
+
+  <div class="eyebrow">Reverse Engineering · Malware Analysis · DFIR</div>
+  <h1 class="h1">Learn by doing,<br>not by reading.</h1>
+  <p class="lede">A self-directed security range: a study console with 25 in-browser interactive labs, paired with a folder of <b style="color:var(--bone)">real, runnable artifacts</b> — a forensic disk image, a UPX-packed binary, a live pcap, crackmes, hashes — so every concept has a hands-on twin you crack with the actual tools.</p>
+
+  <div class="cards">
+    <a class="card" href="console.html">
+      <span class="kbd">interactive · in-browser</span>
+      <h2>▶ Study Console</h2>
+      <p>12 phases on the Map, each with study notes, drills, quizzes — and a <b style="color:var(--bone)">⚡ Open Lab</b> button. Plus the <b style="color:var(--bone)">Range</b> tab: 25 scored, hands-on labs (memory triage, RE bench, web exploitation, pwn, crypto, and more). Progress saves locally.</p>
+      <span class="go">enter the console →</span>
+    </a>
+    <a class="card blood" href="range/README.md">
+      <span class="kbd">real tools · terminal</span>
+      <h2>⛓ The Range (real)</h2>
+      <p>The browser labs are the trainer; this folder is the real thing. Genuine ELF crackmes for <code style="color:var(--blood)">radare2</code>/<code style="color:var(--blood)">gdb</code>, a Sleuthkit disk image, a UPX binary, a <code style="color:var(--blood)">tcpdump</code>-readable pcap, hashes for <code style="color:var(--blood)">hashcat</code>. Open the README for the guided commands.</p>
+      <span class="go">open the field guide →</span>
+    </a>
+  </div>
+
+  <div class="sec__h">12 chapters · browser lab + real artifact</div>
+  <table class="tbl">
+    <tr><th class="n">#</th><th>Chapter</th><th>Real artifact (in <code>range/</code>)</th><th>Try it for real</th></tr>
+    <tr><td class="n">01</td><td class="art">Disk &amp; File Systems<span class="chip t-DF">DF</span></td><td><code>disk/disk.img</code></td><td class="cmd">mmls disk.img · fls -o 2048 disk.img · icat -o 2048 disk.img 14</td></tr>
+    <tr><td class="n">02</td><td class="art">x86 / x64 Assembly<span class="chip t-RE">RE</span></td><td><code>asm/trace.c</code> + <code>asm/trace</code></td><td class="cmd">gdb ./trace · break compute · run · stepi · info registers rax</td></tr>
+    <tr><td class="n">03</td><td class="art">PE &amp; ELF Formats<span class="chip t-RE">RE</span></td><td><code>crackmes/crackme1</code></td><td class="cmd">readelf -h crackme1 · objdump -d -M intel crackme1</td></tr>
+    <tr><td class="n">04</td><td class="art">Static Analysis<span class="chip t-MA">MA</span></td><td><code>malware/packed.exe</code></td><td class="cmd">strings packed.exe · sha256sum · (high entropy → packed)</td></tr>
+    <tr><td class="n">05</td><td class="art">Ghidra &amp; Decompiler<span class="chip t-RE">RE</span></td><td><code>crackmes/crackme2</code></td><td class="cmd">r2 -A crackme2 · s main · pdc   (pseudo-decompiler)</td></tr>
+    <tr><td class="n">06</td><td class="art">Dynamic Analysis<span class="chip t-MA">MA</span></td><td><code>crackmes/crackme*</code></td><td class="cmd">strace ./crackme1 letmein · ltrace (if installed)</td></tr>
+    <tr><td class="n">07</td><td class="art">Unpacking &amp; Patching<span class="chip t-MA">MA</span></td><td><code>malware/packed.exe</code></td><td class="cmd">upx -d packed.exe · then strings / r2 -w to NOP-patch</td></tr>
+    <tr><td class="n">08</td><td class="art">Memory Forensics<span class="chip t-DF">DF</span></td><td><code>memory/memory-sample.raw</code></td><td class="cmd">strings -n6 | grep -Ei 'svch0st|185\.220|exfil' · base64 -d</td></tr>
+    <tr><td class="n">09</td><td class="art">Network Forensics<span class="chip t-DF">DF</span></td><td><code>network/capture.pcap</code></td><td class="cmd">tcpdump -nr capture.pcap · filter SYN beacons / DNS exfil</td></tr>
+    <tr><td class="n">10</td><td class="art">Protocol RE &amp; C2<span class="chip t-RE">RE</span></td><td><code>protocol/c2_capture.bin</code></td><td class="cmd">xxd c2_capture.bin · parse BE EF frames, XOR 0x5A</td></tr>
+    <tr><td class="n">11</td><td class="art">Rootkits &amp; Artifacts<span class="chip t-MA">MA</span></td><td><code>logs/</code> + <code>memory/</code></td><td class="cmd">grep persistence / timestomp tells in the artifacts</td></tr>
+    <tr><td class="n">12</td><td class="art">Full Investigation<span class="chip t-DF">DF</span></td><td>all of the above</td><td class="cmd">chain disk → pcap → memory → logs into one timeline</td></tr>
+  </table>
+
+  <div class="sec__h">skill-lab artifacts (cross-cutting)</div>
+  <div class="grid2">
+    <div class="box"><h3>Crypto &amp; Hashes</h3><pre>cat range/crypto/ciphertexts.txt
+hashcat -m 0 range/hashcrack/hashes.txt \
+        range/hashcrack/wordlist.txt</pre></div>
+    <div class="box"><h3>Stego &amp; Carving</h3><pre>file range/stego/photo.png
+strings range/stego/photo.png | grep BV
+unzip -p range/stego/carve_me.bin</pre></div>
+    <div class="box"><h3>Reverse Engineering</h3><pre>cd range/crackmes &amp;&amp; make
+./crackme1 letmein   # ACCESS GRANTED
+r2 -A crackme2       # then: pdc</pre></div>
+    <div class="box"><h3>Disk forensics</h3><pre>mmls range/disk/disk.img
+fls -o 2048 range/disk/disk.img
+icat -o 2048 range/disk/disk.img 14</pre></div>
+  </div>
+
+  <div class="note"><b>Everything is synthetic &amp; defensive.</b> Crackmes, fabricated samples, simulated endpoints — built for learning DFIR / RE / malware-analysis skills. Nothing here is live malware, and the web-exploitation lab never actually executes payloads.</div>
+
+  <div class="foot"><span>BLACKVAULT // self-directed RE · MA · DFIR track</span><span>open console.html to begin</span></div>
+</div>
+</body>
+</html>
