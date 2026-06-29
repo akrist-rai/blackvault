@@ -1,6 +1,6 @@
 <script>
   import { PHASES } from '$lib/data';
-  import { phases } from '$lib/stores';
+  import { phases, drillProgress } from '$lib/stores';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
 
@@ -14,35 +14,102 @@
   let gotIt = new Set();
   let reviewAgain = new Set();
 
+  // Command challenge
+  let chalMode = false; // false = flashcards, true = command challenge
+  let chalIdx = 0;
+  let chalSelected = null;
+  let chalAnswered = false;
+  let chalScore = 0;
+  let chalTotal = 0;
+  let challengeQs = [];
+
   $: drillCards = content?.concepts ?? [];
   $: drillTotal = drillCards.length;
   $: drillCard  = drillCards[cardIdx] ?? null;
+  $: allGotIt   = drillTotal > 0 && gotIt.size === drillTotal;
 
   function nextCard() {
     flipped = false;
-    setTimeout(() => { cardIdx = (cardIdx + 1) % drillTotal; }, 100);
+    setTimeout(() => { cardIdx = (cardIdx + 1) % drillTotal; }, 80);
   }
   function prevCard() {
     flipped = false;
-    setTimeout(() => { cardIdx = (cardIdx - 1 + drillTotal) % drillTotal; }, 100);
+    setTimeout(() => { cardIdx = (cardIdx - 1 + drillTotal) % drillTotal; }, 80);
   }
   function markGot() {
     gotIt.add(cardIdx);
     reviewAgain.delete(cardIdx);
-    gotIt = gotIt;
+    gotIt = gotIt; reviewAgain = reviewAgain;
+    saveDrill();
     nextCard();
   }
   function markReview() {
     reviewAgain.add(cardIdx);
     gotIt.delete(cardIdx);
-    reviewAgain = reviewAgain;
+    reviewAgain = reviewAgain; gotIt = gotIt;
+    saveDrill();
     nextCard();
   }
   function resetDrill() {
-    cardIdx = 0; flipped = false; gotIt = new Set(); reviewAgain = new Set();
+    const saved = $drillProgress[selectedId];
+    if (saved) {
+      gotIt = new Set(saved.got ?? []);
+      reviewAgain = new Set(saved.review ?? []);
+    } else {
+      gotIt = new Set(); reviewAgain = new Set();
+    }
+    cardIdx = 0; flipped = false;
+    chalMode = false; chalIdx = 0; chalSelected = null; chalAnswered = false; chalScore = 0;
+  }
+  function saveDrill() {
+    drillProgress.update(d => ({ ...d, [selectedId]: { got: [...gotIt], review: [...reviewAgain] } }));
   }
 
   $: if (selectedId) { resetDrill(); }
+
+  // Build command challenges: show note, pick correct command from 4 options
+  function buildChallenges(cmds) {
+    if (!cmds || cmds.length < 2) return [];
+    return cmds.map((c, i) => {
+      const pool = cmds.filter((_, j) => j !== i);
+      const wrong = pool.sort(() => Math.random() - .5).slice(0, 3).map(w => w.cmd);
+      const opts = [...wrong, c.cmd].sort(() => Math.random() - .5);
+      return { note: c.note, answer: c.cmd, opts };
+    });
+  }
+
+  function startChallenge() {
+    const cmds = content?.commands ?? [];
+    challengeQs = buildChallenges(cmds);
+    chalIdx = 0; chalSelected = null; chalAnswered = false; chalScore = 0; chalTotal = challengeQs.length;
+    chalMode = true;
+  }
+
+  function pickAnswer(opt) {
+    if (chalAnswered) return;
+    chalSelected = opt;
+    chalAnswered = true;
+    if (opt === challengeQs[chalIdx]?.answer) chalScore++;
+  }
+
+  function nextChallenge() {
+    if (chalIdx + 1 < challengeQs.length) {
+      chalIdx++; chalSelected = null; chalAnswered = false;
+    } else {
+      chalIdx = challengeQs.length; // show results
+    }
+  }
+
+  // Keyboard shortcuts for drill mode
+  function handleKey(e) {
+    if (mode !== 'drill') return;
+    if (chalMode) return;
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipped = !flipped; }
+    if (e.key === 'ArrowRight' || e.key === 'n') nextCard();
+    if (e.key === 'ArrowLeft'  || e.key === 'p') prevCard();
+    if (e.key === 'g' && flipped) markGot();
+    if (e.key === 'r' && flipped) markReview();
+  }
 
   const CONTENT = {
     p01: {
@@ -393,6 +460,7 @@
 </script>
 
 <svelte:head><title>Study — BLACKVAULT</title></svelte:head>
+<svelte:window on:keydown={handleKey} />
 
 <div class="topstrip">
   <span>STUDY</span>
@@ -474,12 +542,80 @@
 
           <button class="reset-drill" on:click={resetDrill}>Reset Deck</button>
         </div>
+
+        {#if allGotIt && !chalMode}
+          <div class="all-done-banner">
+            <span class="adb-icon">★</span>
+            All {drillTotal} cards mastered! Ready to test your commands?
+            <button class="adb-cta" on:click={startChallenge}>Command Challenge →</button>
+          </div>
+        {:else if !chalMode && drillTotal > 0 && content?.commands?.length >= 2}
+          <button class="challenge-start-btn" on:click={startChallenge}>
+            Switch to Command Challenge ({content.commands.length} questions)
+          </button>
+        {/if}
+
+        {#if chalMode}
+          <div class="challenge-wrap">
+            <div class="chal-header">
+              <span class="chal-title">COMMAND CHALLENGE</span>
+              <span class="chal-prog">{Math.min(chalIdx + 1, challengeQs.length)} / {challengeQs.length}</span>
+              <button class="chal-exit" on:click={() => chalMode = false}>← Back to Flashcards</button>
+            </div>
+
+            {#if chalIdx < challengeQs.length}
+              {@const q = challengeQs[chalIdx]}
+              <div class="chal-card">
+                <div class="chal-q-label">What command does this?</div>
+                <div class="chal-q-note">{q.note}</div>
+                <div class="chal-opts">
+                  {#each q.opts as opt}
+                    {@const isCorrect = opt === q.answer}
+                    {@const isSelected = opt === chalSelected}
+                    <button
+                      class="chal-opt"
+                      class:opt-correct={chalAnswered && isCorrect}
+                      class:opt-wrong={chalAnswered && isSelected && !isCorrect}
+                      class:opt-dim={chalAnswered && !isSelected && !isCorrect}
+                      on:click={() => pickAnswer(opt)}
+                      disabled={chalAnswered}
+                    >
+                      <code>{opt}</code>
+                    </button>
+                  {/each}
+                </div>
+                {#if chalAnswered}
+                  <div class="chal-feedback" class:fb-correct={chalSelected === q.answer} class:fb-wrong={chalSelected !== q.answer}>
+                    {chalSelected === q.answer ? '✓ Correct!' : '✗ Wrong — correct: ' + q.answer}
+                  </div>
+                  <button class="chal-next" on:click={nextChallenge}>
+                    {chalIdx + 1 < challengeQs.length ? 'Next Question →' : 'See Results'}
+                  </button>
+                {/if}
+              </div>
+            {:else}
+              <div class="chal-results">
+                <div class="cr-score">{chalScore}/{chalTotal}</div>
+                <div class="cr-label">{chalScore === chalTotal ? 'Perfect score!' : chalScore >= chalTotal * .7 ? 'Good work!' : 'Keep practicing.'}</div>
+                <div class="cr-actions">
+                  <button class="cr-btn" on:click={startChallenge}>Retry Challenge</button>
+                  <button class="cr-btn cr-back" on:click={() => chalMode = false}>Back to Flashcards</button>
+                </div>
+              </div>
+            {/if}
+          </div>
+        {/if}
+
       {:else}
         <div class="drill-empty">No concepts for this phase yet.</div>
       {/if}
     </main>
   </div>
 {/if}
+
+<div class="drill-kb-hint" class:visible={mode === 'drill' && !chalMode}>
+  Space to flip · G = got it · R = review · ← → to navigate
+</div>
 
 {#if mode === 'read'}
 <div class="study-layout">
@@ -526,10 +662,15 @@
         <h2 class="sc-h2">Command Reference</h2>
         <div class="cmd-list">
           {#each content.commands as c}
-            <div class="cmd-item">
+            <button
+              class="cmd-item"
+              on:click={async () => { await navigator.clipboard.writeText(c.cmd); }}
+              title="Click to copy"
+            >
               <code class="cmd-code">{c.cmd}</code>
               <span class="cmd-note">{c.note}</span>
-            </div>
+              <span class="cmd-copy-icon">⎘</span>
+            </button>
           {/each}
         </div>
       </div>
@@ -666,6 +807,103 @@
 
   .drill-empty { color: var(--ash); padding: 40px; text-align: center; }
 
+  /* all-done banner */
+  .all-done-banner {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    background: color-mix(in srgb, var(--volt) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--volt) 25%, transparent);
+    border-radius: var(--rad); padding: 14px 18px;
+    font-size: 13px; color: var(--volt); font-weight: 600;
+    max-width: 560px; margin: 0 auto;
+  }
+  .adb-icon { font-size: 18px; }
+  .adb-cta {
+    margin-left: auto; background: var(--volt); color: var(--void);
+    border: none; border-radius: 4px; padding: 6px 14px;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+  }
+
+  .challenge-start-btn {
+    display: block; margin: 0 auto;
+    background: transparent; border: 1px solid var(--line2); color: var(--ash);
+    border-radius: var(--rad); padding: 8px 16px; font-size: 12px; cursor: pointer;
+    transition: all .15s;
+  }
+  .challenge-start-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+  /* challenge UI */
+  .challenge-wrap {
+    max-width: 600px; margin: 0 auto;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--rad); overflow: hidden;
+  }
+  .chal-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 18px; background: var(--panel2);
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .chal-title { font-size: 10px; font-weight: 700; color: var(--volt); letter-spacing: .1em; }
+  .chal-prog  { font-family: var(--mono); font-size: 11px; color: var(--ash); }
+  .chal-exit  { margin-left: auto; font-size: 11px; color: var(--ash); background: none; border: none; cursor: pointer; }
+  .chal-exit:hover { color: var(--volt); }
+
+  .chal-card { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+  .chal-q-label { font-size: 10px; font-weight: 700; color: var(--dim); letter-spacing: .1em; text-transform: uppercase; }
+  .chal-q-note  { font-size: 14px; color: var(--bone); line-height: 1.5; }
+
+  .chal-opts { display: flex; flex-direction: column; gap: 6px; }
+  .chal-opt {
+    padding: 10px 14px; border-radius: var(--rad); cursor: pointer;
+    background: var(--panel2); border: 1px solid var(--line2); text-align: left;
+    transition: border-color .15s, background .15s;
+  }
+  .chal-opt:not(:disabled):hover { border-color: var(--blue); }
+  .chal-opt code { font-family: var(--mono); font-size: 11px; color: var(--ash); }
+  .chal-opt.opt-correct { border-color: var(--volt); background: color-mix(in srgb,var(--volt) 8%,transparent); }
+  .chal-opt.opt-correct code { color: var(--volt); }
+  .chal-opt.opt-wrong   { border-color: var(--blood); background: color-mix(in srgb,var(--blood) 8%,transparent); }
+  .chal-opt.opt-wrong code  { color: var(--blood); }
+  .chal-opt.opt-dim code    { color: var(--dim); }
+
+  .chal-feedback {
+    font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 4px;
+  }
+  .chal-feedback.fb-correct { color: var(--volt); background: color-mix(in srgb,var(--volt) 8%,transparent); }
+  .chal-feedback.fb-wrong   { color: var(--blood); background: color-mix(in srgb,var(--blood) 8%,transparent); }
+  .chal-next {
+    align-self: flex-end; padding: 8px 18px; border-radius: var(--rad);
+    background: var(--volt); color: var(--void); border: none; font-weight: 700;
+    font-size: 12px; cursor: pointer;
+  }
+
+  .chal-results {
+    padding: 32px 24px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .cr-score { font-size: 48px; font-weight: 700; color: var(--volt); font-family: var(--mono); }
+  .cr-label { font-size: 14px; color: var(--ash); }
+  .cr-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+  .cr-btn {
+    padding: 8px 18px; border-radius: var(--rad);
+    background: color-mix(in srgb,var(--volt) 12%,transparent);
+    border: 1px solid color-mix(in srgb,var(--volt) 28%,transparent);
+    color: var(--volt); font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .cr-back { background: transparent; border-color: var(--line2); color: var(--ash); }
+
+  /* keyboard hint */
+  .drill-kb-hint {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    font-size: 10px; color: var(--dim); letter-spacing: .06em;
+    background: color-mix(in srgb,var(--panel) 95%,transparent);
+    border: 1px solid var(--line); border-radius: 20px;
+    padding: 5px 14px; pointer-events: none;
+    opacity: 0; transition: opacity .3s;
+    white-space: nowrap; z-index: 50;
+  }
+  .drill-kb-hint.visible { opacity: 1; }
+
   .study-layout { display: flex; flex: 1; overflow: hidden; }
 
   .phase-nav {
@@ -713,7 +951,18 @@
   .ci-cmd { display: block; margin-top: 8px; font-size: 11px; color: var(--bone); font-family: var(--mono); background: var(--panel3); padding: 4px 8px; border-radius: 3px; }
 
   .cmd-list { display: flex; flex-direction: column; gap: 6px; }
-  .cmd-item { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px; background: var(--panel3); border-radius: var(--rad); border: 1px solid var(--line); }
+  .cmd-item {
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 10px 14px; background: var(--panel3); border-radius: var(--rad); border: 1px solid var(--line);
+    cursor: pointer; text-align: left; position: relative; width: 100%;
+    transition: border-color .15s;
+  }
+  .cmd-item:hover { border-color: var(--volt); }
+  .cmd-copy-icon {
+    position: absolute; top: 8px; right: 10px;
+    font-size: 12px; color: var(--dim); opacity: 0; transition: opacity .15s;
+  }
+  .cmd-item:hover .cmd-copy-icon { opacity: 1; color: var(--volt); }
   .cmd-code { font-family: var(--mono); font-size: 12px; color: var(--volt); word-break: break-all; }
   .cmd-note { font-size: 11px; color: var(--ash); }
 
