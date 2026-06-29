@@ -9,43 +9,32 @@
 
   const NAV = [
     { group: 'HOME', items: [
-      { href: '/',        label: 'Landing',   icon: '◈' },
-      { href: '/console', label: 'Dashboard', icon: '⬡' },
+      { href: '/',        label: 'Landing',    icon: '◈' },
+      { href: '/console', label: 'Dashboard',  icon: '⬡' },
     ]},
     { group: 'LEARN', items: [
-      { href: '/console/study', label: 'Study',      icon: '▣' },
-      { href: '/console/drill', label: 'Flashcards', icon: '◧' },
-      { href: '/console/quiz',  label: 'Quiz',        icon: '◉' },
-      { href: '/console/exam',  label: 'Exam',        icon: '◈' },
+      { href: '/console/study', label: 'Study Guide',  icon: '▣' },
+      { href: '/console/range', label: 'Range Labs',   icon: '◉' },
     ]},
-    { group: 'REFERENCE', items: [
-      { href: '/intel',         label: 'Intel',   icon: '◈' },
-      { href: '/tools',         label: 'Arsenal', icon: '◧' },
-      { href: '/console/attack',label: 'ATT&CK',  icon: '◉' },
-    ]},
-    { group: 'OPS', items: [
-      { href: '/console/range',  label: 'Range Labs', icon: '▣' },
-      { href: '/console/case',   label: 'Cases',      icon: '◉' },
-      { href: '/console/badges', label: 'Badges',     icon: '◈' },
-      { href: '/playbook',       label: 'Playbooks',  icon: '◧' },
+    { group: 'INTEL', items: [
+      { href: '/intel',          label: 'Intel Feed',  icon: '◧' },
+      { href: '/tools',          label: 'Arsenal',     icon: '◈' },
+      { href: '/playbook',       label: 'Playbooks',   icon: '▣' },
     ]},
   ];
 
   $: pct = $mastery;
   $: meterColor = pct >= 75 ? 'var(--volt)' : pct >= 40 ? 'var(--amber)' : 'var(--blood)';
+  $: meterGlow  = pct >= 75 ? 'var(--glow-volt)' : pct >= 40 ? 'var(--glow-amber)' : 'var(--glow-blood)';
 
   function active(href) {
     if (href === '/') return $page.url.pathname === '/';
+    if (href === '/console') return $page.url.pathname === '/console';
     return $page.url.pathname.startsWith(href);
   }
 
-  function close() {
-    dispatch('close');
-  }
-
-  function handleNavClick() {
-    dispatch('close');
-  }
+  function close() { dispatch('close'); }
+  function handleNavClick() { dispatch('close'); }
 </script>
 
 {#if open}
@@ -53,6 +42,7 @@
 {/if}
 
 <aside class="sidebar" class:sidebar-open={open} aria-label="Navigation">
+
   <div class="sb-top">
     <a class="brand" href="/" on:click={handleNavClick}>
       <div class="brand-logo">BLACK<em>VAULT</em></div>
@@ -62,11 +52,12 @@
   </div>
 
   <div class="meter-wrap">
-    <div class="meter-bar">
-      <div class="meter-fill" style="width:{pct}%; background:{meterColor}"></div>
+    <div class="meter-header">
+      <span class="meter-lbl">MASTERY</span>
+      <span class="meter-pct" style="color:{meterColor}">{pct}%</span>
     </div>
-    <div class="meter-label">
-      <strong>{pct}%</strong> MASTERY
+    <div class="meter-bar">
+      <div class="meter-fill" style="width:{pct}%; background:{meterColor}; box-shadow:{meterGlow}"></div>
     </div>
   </div>
 
@@ -82,20 +73,19 @@
           on:click={handleNavClick}
         >
           <span class="nav-icon">{item.icon}</span>
-          {item.label}
+          <span class="nav-label">{item.label}</span>
         </a>
       {/each}
     {/each}
   </nav>
 
   <div class="sb-foot">
-    <div class="sb-foot-links">
-      <a href="/tools" on:click={handleNavClick}>Tools</a>
-      <a href="/intel" on:click={handleNavClick}>Intel</a>
-      <a href="/playbook" on:click={handleNavClick}>Playbooks</a>
+    <div class="sb-version">
+      <span class="ver-dot"></span>
+      BLACKVAULT v0.2
     </div>
-    <div class="sb-version">BLACKVAULT v0.2</div>
   </div>
+
 </aside>
 
 <style>
@@ -115,31 +105,34 @@
     transition: transform .25s cubic-bezier(.25,.46,.45,.94);
   }
 
+  /* ── Brand ── */
   .sb-top {
     display: flex;
     align-items: stretch;
     border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
   }
-
   .brand {
     flex: 1;
     display: block;
-    padding: 18px 16px 14px;
+    padding: 18px 18px 15px;
     text-decoration: none;
   }
+  .brand:hover { text-decoration: none; }
   .brand-logo {
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: .12em;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: .14em;
     color: var(--bone);
+    line-height: 1;
   }
   .brand-logo em { font-style: normal; color: var(--volt); }
   .brand-sub {
-    font-size: 10px;
-    color: var(--ash);
-    letter-spacing: .06em;
+    font-size: 9px;
+    color: var(--dim);
+    letter-spacing: .08em;
     text-transform: uppercase;
-    margin-top: 2px;
+    margin-top: 4px;
   }
 
   .sb-close {
@@ -147,19 +140,42 @@
     align-items: center;
     justify-content: center;
     width: 44px;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--ash);
     background: none;
     border: none;
     cursor: pointer;
     border-left: 1px solid var(--line);
     flex-shrink: 0;
+    transition: color var(--tx), background var(--tx);
   }
   .sb-close:hover { color: var(--bone); background: var(--panel2); }
 
+  /* ── Mastery meter ── */
   .meter-wrap {
-    padding: 12px 16px;
+    padding: 14px 18px;
     border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+  .meter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 7px;
+  }
+  .meter-lbl {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  .meter-pct {
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--mono);
+    letter-spacing: .04em;
+    transition: color .4s ease;
   }
   .meter-bar {
     height: 3px;
@@ -170,43 +186,36 @@
   .meter-fill {
     height: 100%;
     border-radius: 2px;
-    transition: width .6s ease, background .4s ease;
+    transition: width .6s ease, background .4s ease, box-shadow .4s ease;
   }
-  .meter-label {
-    font-size: 10px;
-    letter-spacing: .08em;
-    color: var(--ash);
-    text-transform: uppercase;
-    margin-top: 5px;
-  }
-  .meter-label strong { color: var(--bone); }
 
+  /* ── Nav ── */
   nav {
     flex: 1;
-    padding: 8px 0;
+    padding: 6px 0;
     overflow-y: auto;
   }
   .nav-group-lbl {
     font-size: 9px;
     font-weight: 700;
-    letter-spacing: .14em;
+    letter-spacing: .16em;
     color: var(--dim);
-    padding: 10px 16px 4px;
+    padding: 12px 18px 4px;
     text-transform: uppercase;
   }
   .nav-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
+    gap: 9px;
+    padding: 0 18px;
+    height: 38px;
     font-size: 13px;
     font-weight: 500;
     color: var(--ash);
     text-decoration: none;
     border-left: 2px solid transparent;
-    transition: color .15s, background .15s, border-color .15s;
-    letter-spacing: .02em;
-    min-height: 40px;
+    transition: color var(--tx), background var(--tx), border-color var(--tx);
+    letter-spacing: .01em;
   }
   .nav-item:hover {
     color: var(--bone);
@@ -216,40 +225,54 @@
   .nav-item.active {
     color: var(--volt);
     border-left-color: var(--volt);
-    background: color-mix(in srgb, var(--volt) 6%, transparent);
+    background: var(--volt-dim);
   }
   .nav-icon {
     font-size: 10px;
-    opacity: .5;
+    opacity: .4;
     flex-shrink: 0;
+    width: 14px;
+    text-align: center;
+    transition: opacity var(--tx);
   }
   .nav-item.active .nav-icon { opacity: 1; }
+  .nav-item:hover .nav-icon { opacity: .7; }
+  .nav-label { flex: 1; }
 
+  /* ── Footer ── */
   .sb-foot {
-    padding: 12px 16px;
+    padding: 12px 18px;
     border-top: 1px solid var(--line);
+    flex-shrink: 0;
   }
-  .sb-foot-links {
+  .sb-version {
     display: flex;
-    gap: 10px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: .08em;
+    font-family: var(--mono);
   }
-  .sb-foot-links a { color: var(--ash); font-size: 11px; }
-  .sb-foot-links a:hover { color: var(--volt); text-decoration: none; }
-  .sb-version { font-size: 10px; color: var(--dim); letter-spacing: .06em; }
+  .ver-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--volt);
+    box-shadow: 0 0 6px var(--volt);
+    flex-shrink: 0;
+  }
 
-  /* backdrop */
+  /* ── Backdrop (mobile) ── */
   .sb-backdrop {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,.55);
+    background: rgba(0,0,0,.6);
     z-index: 190;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(3px);
   }
 
-  /* Mobile */
+  /* ── Mobile ── */
   @media (max-width: 860px) {
     .sidebar {
       position: fixed;
@@ -259,13 +282,9 @@
     }
     .sidebar.sidebar-open {
       transform: translateX(0);
-      box-shadow: 4px 0 32px rgba(0,0,0,.5);
+      box-shadow: 4px 0 40px rgba(0,0,0,.6);
     }
-    .sb-close {
-      display: flex;
-    }
-    .sb-backdrop {
-      display: block;
-    }
+    .sb-close  { display: flex; }
+    .sb-backdrop { display: block; }
   }
 </style>

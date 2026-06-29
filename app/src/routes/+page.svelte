@@ -3,52 +3,53 @@
 
   const STATS = [
     { n: '12',  label: 'Phases' },
-    { n: '16+', label: 'Labs' },
-    { n: '30',  label: 'CTF Challenges' },
-    { n: '70+', label: 'ATT&CK Techniques' },
+    { n: '16',  label: 'Labs' },
+    { n: '70+', label: 'ATT&CK TTPs' },
+    { n: '130+', label: 'Arsenal Commands' },
     { n: '4',   label: 'IR Playbooks' },
     { n: '22',  label: 'Badges' },
   ];
 
   const TRACKS = [
     {
-      id: 'df', accent: 'amber', label: 'DIGITAL FORENSICS',
-      desc: 'Disk imaging, memory analysis, network capture, timeline reconstruction.',
+      id: 'df', chip: 'chip-df', label: 'DIGITAL FORENSICS',
+      color: 'var(--amber)',
+      desc: 'Disk imaging, file carving, memory acquisition, network capture analysis, super-timeline construction, incident scoping.',
       phases: [1,8,9,11,12],
     },
     {
-      id: 're', accent: 'volt', label: 'REVERSE ENGINEERING',
-      desc: 'Binary analysis, decompilation, unpacking, protocol RE, C2 internals.',
+      id: 're', chip: 'chip-re', label: 'REVERSE ENGINEERING',
+      color: 'var(--volt)',
+      desc: 'x86-64 assembly, PE/ELF internals, Ghidra decompilation, unpacking, protocol RE, cryptographic algorithm identification.',
       phases: [2,3,5,7,10],
     },
     {
-      id: 'ma', accent: 'blood', label: 'MALWARE ANALYSIS',
-      desc: 'Static triage, dynamic sandboxing, rootkit hunting, YARA authoring.',
+      id: 'ma', chip: 'chip-ma', label: 'MALWARE ANALYSIS',
+      color: 'var(--blood)',
+      desc: 'Static triage, dynamic sandboxing, rootkit hunting, YARA rule authoring, C2 beacon detection, LotL technique identification.',
       phases: [4,6,7,11],
     },
   ];
 
   const TERM_LINES = [
-    { type: 'cmd',  text: 'vol3 -f hermes07.raw windows.malfind' },
-    { type: 'out',  text: 'Process  PID    Base         End          Protection' },
-    { type: 'hit',  text: 'svchost  3824   0x1e80000   0x1ebffff    PAGE_EXECUTE_READWRITE' },
-    { type: 'dim',  text: '  MZ header detected at 0x1e80000 — injected PE' },
-    { type: 'cmd',  text: 'vol3 -f hermes07.raw windows.netscan' },
-    { type: 'hit',  text: '3824  svchost  185.220.101.47:443  ESTABLISHED' },
-    { type: 'dim',  text: '  → Tor exit node, Cobalt Strike beacon' },
-    { type: 'cmd',  text: 'tshark -r capture.pcap -Y "dns" -T fields -e dns.qry.name | head' },
-    { type: 'hit',  text: 's0-deadbeef.exfil.cdn-telemetry.xyz' },
-    { type: 'dim',  text: '  → DNS exfiltration channel detected' },
+    { t: 'cmd', text: 'vol3 -f hermes07.raw windows.malfind' },
+    { t: 'info', text: 'Process        PID    Base          Protection' },
+    { t: 'hit',  text: 'svchost.exe    3824   0x1e800000    PAGE_EXECUTE_READWRITE' },
+    { t: 'dim',  text: '  Dump: MZ header @ 0x1e800000 — injected PE module' },
+    { t: 'cmd',  text: 'vol3 -f hermes07.raw windows.netscan | grep ESTABLISHED' },
+    { t: 'hit',  text: '3824  svchost  185.220.101.47:443  ESTABLISHED' },
+    { t: 'dim',  text: '  Tor exit node · Cobalt Strike beacon fingerprint' },
+    { t: 'cmd',  text: 'tshark -r cap.pcap -Y dns -T fields -e dns.qry.name' },
+    { t: 'hit',  text: 's0-deadbeef.cdn-telemetry.xyz' },
+    { t: 'dim',  text: '  DNS exfil: 32 bytes/query · base32 encoded payload' },
   ];
 
-  function copy(e) {
-    const text = e.target.closest('code')?.textContent?.trim();
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    const el = e.target.closest('code');
-    el.classList.add('copied');
-    setTimeout(() => el.classList.remove('copied'), 1200);
-  }
+  const PB = [
+    { title: 'Ransomware Response',     sev: 'CRITICAL', time: '72h',  color: 'blood' },
+    { title: 'Data Breach',             sev: 'HIGH',     time: '96h',  color: 'amber' },
+    { title: 'Supply Chain Compromise', sev: 'CRITICAL', time: '120h', color: 'blood' },
+    { title: 'BEC / Email Fraud',       sev: 'HIGH',     time: '48h',  color: 'amber' },
+  ];
 </script>
 
 <svelte:head>
@@ -56,80 +57,101 @@
 </svelte:head>
 
 <div class="landing">
+
   <!-- ── Topbar ── -->
   <header class="topbar">
-    <div class="tb-logo">BLACK<em>VAULT</em></div>
+    <a href="/" class="tb-logo">BLACK<em>VAULT</em></a>
     <nav class="tb-nav">
+      <a href="#tracks">Tracks</a>
       <a href="#curriculum">Curriculum</a>
       <a href="#labs">Labs</a>
-      <a href="#playbooks">Playbooks</a>
-      <a href="/tools">Tools</a>
+      <a href="/intel">Intel</a>
     </nav>
     <a href="/console" class="tb-cta">Open Console →</a>
   </header>
 
   <!-- ── Hero ── -->
   <section class="hero">
-    <div class="hero-left">
-      <div class="hero-eyebrow">Real-tool security training</div>
-      <h1 class="hero-h1">
-        Learn forensics, RE,<br />
-        and malware analysis<br />
-        <span class="h1-accent">the hard way.</span>
-      </h1>
-      <p class="hero-sub">
-        12-phase curriculum. Browser-based labs backed by real artifact exercises.
-        No VMs to configure. No accounts. Open a file and start.
-      </p>
-      <div class="hero-ctas">
-        <a href="/console" class="btn-primary">Enter the Range →</a>
-        <a href="#curriculum" class="btn-ghost">View Curriculum</a>
-      </div>
-    </div>
-    <div class="hero-right">
-      <div class="term">
-        <div class="term-bar">
-          <span class="td"></span><span class="td"></span><span class="td"></span>
-          <span class="term-title">blackvault — analyst@range:~</span>
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-dot"></span>
+          Real-tool security training
         </div>
-        <div class="term-body">
+        <h1 class="hero-h1">
+          Learn forensics, RE,<br />
+          and malware analysis<br />
+          <span class="h1-accent">the hard way.</span>
+        </h1>
+        <p class="hero-sub">
+          12-phase curriculum. 16 browser labs with simulated real-tool output.
+          Backed by authentic artifacts. No VMs. No accounts. Open and start.
+        </p>
+        <div class="hero-ctas">
+          <a href="/console" class="btn-primary">Enter the Range →</a>
+          <a href="#curriculum" class="btn-ghost">View Curriculum</a>
+        </div>
+        <div class="hero-meta">
+          <span class="hm-item"><span class="hm-dot volt"></span>DF · RE · MA tracks</span>
+          <span class="hm-item"><span class="hm-dot amber"></span>MITRE ATT&CK mapped</span>
+          <span class="hm-item"><span class="hm-dot blue"></span>GREM / GCFE aligned</span>
+        </div>
+      </div>
+
+      <div class="hero-term">
+        <div class="ht-chrome">
+          <span class="htd htd-r"></span>
+          <span class="htd htd-y"></span>
+          <span class="htd htd-g"></span>
+          <span class="ht-label">analyst@blackvault:~/range $</span>
+        </div>
+        <div class="ht-body">
           {#each TERM_LINES as line}
-            {#if line.type === 'cmd'}
-              <div class="tl-cmd"><span class="tpmt">$</span> {line.text}</div>
-            {:else if line.type === 'hit'}
-              <div class="tl-hit">{line.text}</div>
+            {#if line.t === 'cmd'}
+              <div class="hl-cmd"><span class="hl-ps">$</span>{line.text}</div>
+            {:else if line.t === 'hit'}
+              <div class="hl-hit">{line.text}</div>
+            {:else if line.t === 'info'}
+              <div class="hl-info">{line.text}</div>
             {:else}
-              <div class="tl-dim">{line.text}</div>
+              <div class="hl-dim">{line.text}</div>
             {/if}
           {/each}
-          <div class="tl-cmd"><span class="tpmt">$</span> <span class="cursor">▋</span></div>
+          <div class="hl-cmd"><span class="hl-ps">$</span><span class="cursor">▋</span></div>
         </div>
+        <div class="ht-glow"></div>
       </div>
     </div>
   </section>
 
-  <!-- ── Stats strip ── -->
+  <!-- ── Stats ── -->
   <div class="stats-strip">
-    {#each STATS as s}
-      <div class="stat">
-        <div class="stat-n">{s.n}</div>
-        <div class="stat-l">{s.label}</div>
+    {#each STATS as s, i}
+      {#if i > 0}<div class="stats-sep"></div>{/if}
+      <div class="stat-item">
+        <div class="si-n">{s.n}</div>
+        <div class="si-l">{s.label}</div>
       </div>
     {/each}
   </div>
 
   <!-- ── Tracks ── -->
-  <section class="section tracks-section" id="tracks">
-    <h2 class="section-h">Three Skill Tracks</h2>
-    <div class="tracks">
+  <section class="section" id="tracks">
+    <div class="section-label">Skill Tracks</div>
+    <h2 class="section-h">Three paths to mastery</h2>
+    <div class="tracks-grid">
       {#each TRACKS as t}
-        <div class="track-card track-{t.id}">
-          <div class="track-lbl chip chip-{t.id === 'df' ? 'df' : t.id === 're' ? 're' : 'ma'}">{t.label}</div>
-          <p class="track-desc">{t.desc}</p>
-          <div class="track-phases">
-            {#each t.phases as n}
-              <span class="ph-chip">Phase {n}</span>
-            {/each}
+        <div class="track-card" style="--track-color:{t.color}">
+          <div class="tc-accent"></div>
+          <div class="tc-body">
+            <span class="chip {t.chip}">{t.label}</span>
+            <p class="tc-desc">{t.desc}</p>
+            <div class="tc-phases">
+              {#each t.phases as n}
+                <span class="tc-phase">Phase {n}</span>
+              {/each}
+            </div>
           </div>
         </div>
       {/each}
@@ -138,425 +160,397 @@
 
   <!-- ── Curriculum ── -->
   <section class="section" id="curriculum">
-    <h2 class="section-h">12-Phase Curriculum</h2>
-    <div class="curriculum-grid">
+    <div class="section-label">Curriculum</div>
+    <h2 class="section-h">12-Phase learning path</h2>
+    <div class="curriculum-table">
+      <div class="ct-head">
+        <span>Phase</span><span>Module</span><span>Tools</span><span>Track</span>
+      </div>
       {#each PHASES as p}
-        <div class="phase-row">
-          <span class="ph-n">{String(p.n).padStart(2,'0')}</span>
-          <div class="ph-info">
-            <div class="ph-name">{p.name}</div>
-            <div class="ph-tools">{p.tools}</div>
-          </div>
-          <span class="chip chip-{p.track === 'DF' ? 'df' : p.track === 'RE' ? 're' : 'ma'}">{p.track}</span>
-        </div>
+        <a href="/console/study?phase={p.id}" class="ct-row">
+          <span class="ct-num">{String(p.n).padStart(2,'0')}</span>
+          <span class="ct-name">{p.name}</span>
+          <span class="ct-tools">{p.tools}</span>
+          <span class="chip chip-{p.track==='DF'?'df':p.track==='RE'?'re':'ma'}">{p.track}</span>
+        </a>
       {/each}
     </div>
   </section>
 
   <!-- ── Labs ── -->
   <section class="section" id="labs">
-    <h2 class="section-h">Range Labs</h2>
+    <div class="section-label">Range Labs</div>
+    <h2 class="section-h">Browser-based lab simulations</h2>
     <div class="labs-grid">
       {#each LABS as lab}
-        <div class="lab-card">
-          <div class="lab-top">
-            <span class="chip chip-{lab.track === 'DF' ? 'df' : lab.track === 'RE' ? 're' : 'ma'}">{lab.track}</span>
-            <span class="lab-phase">Ph.{lab.phase}</span>
+        <a href="/console/range/{lab.id}" class="lab-card">
+          <div class="lc-header">
+            <span class="chip chip-{lab.track==='DF'?'df':lab.track==='RE'?'re':'ma'}">{lab.track}</span>
+            <span class="lc-phase">Ph.{lab.phase}</span>
           </div>
-          <div class="lab-name">{lab.name}</div>
-          <div class="lab-tool">{lab.tool}</div>
-          <p class="lab-blurb">{lab.blurb}</p>
-        </div>
+          <div class="lc-name">{lab.name}</div>
+          <div class="lc-tool">{lab.tool}</div>
+          <p class="lc-blurb">{lab.blurb}</p>
+          <div class="lc-arrow">→</div>
+        </a>
       {/each}
     </div>
-    <div class="labs-cta">
+    <div class="section-cta">
       <a href="/console/range" class="btn-primary">Open Range Hub →</a>
     </div>
   </section>
 
   <!-- ── Playbooks ── -->
   <section class="section" id="playbooks">
-    <h2 class="section-h">IR Playbooks</h2>
+    <div class="section-label">IR Playbooks</div>
+    <h2 class="section-h">Incident response runbooks</h2>
     <div class="pb-grid">
-      {#each [
-        { title:'Ransomware Response',      sev:'CRITICAL', time:'72h',  color:'blood' },
-        { title:'Data Breach',              sev:'HIGH',     time:'96h',  color:'amber' },
-        { title:'Supply Chain Compromise',  sev:'CRITICAL', time:'120h', color:'blood' },
-        { title:'BEC / Email Fraud',        sev:'HIGH',     time:'48h',  color:'amber' },
-      ] as pb}
-        <div class="pb-card">
-          <div class="pb-top">
-            <span class="sev sev-{pb.color}">{pb.sev}</span>
-            <span class="pb-time">Target: {pb.time}</span>
-          </div>
+      {#each PB as pb}
+        <div class="pb-card pb-{pb.color}">
+          <div class="pb-sev sev-{pb.color}">{pb.sev}</div>
           <div class="pb-title">{pb.title}</div>
+          <div class="pb-time">Target containment: <strong>{pb.time}</strong></div>
         </div>
       {/each}
     </div>
-    <div class="labs-cta">
+    <div class="section-cta">
       <a href="/playbook" class="btn-ghost">Open Playbooks →</a>
-    </div>
-  </section>
-
-  <!-- ── Quick start ── -->
-  <section class="section" id="start">
-    <h2 class="section-h">Quick Start</h2>
-    <div class="qs-card">
-      <code on:click={copy}>python3 -m http.server 8000</code>
-      <p>Then open <strong>http://localhost:8000</strong> — or just open <code on:click={copy}>console.html</code> directly in your browser. Zero install.</p>
-      <div class="qs-links">
-        <a href="/console" class="btn-primary">Open Console →</a>
-        <a href="/tools">Tool Arsenal</a>
-        <a href="/intel">Intel Reference</a>
-      </div>
     </div>
   </section>
 
   <!-- ── Footer ── -->
   <footer class="footer">
-    <div class="footer-logo">BLACK<em>VAULT</em></div>
-    <div class="footer-links">
-      <a href="/console">Console</a>
-      <a href="/playbook">Playbooks</a>
-      <a href="/tools">Tools</a>
-      <a href="/intel">Intel</a>
-    </div>
-    <div class="footer-note">
-      Synthetic artifacts only. All samples are fabricated for training purposes.
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">BLACK<em>VAULT</em></div>
+        <div class="footer-tagline">Security Training Range</div>
+      </div>
+      <nav class="footer-nav">
+        <a href="/console">Console</a>
+        <a href="/console/range">Labs</a>
+        <a href="/playbook">Playbooks</a>
+        <a href="/tools">Arsenal</a>
+        <a href="/intel">Intel</a>
+      </nav>
+      <div class="footer-note">
+        Synthetic artifacts only. All samples fabricated for training.
+      </div>
     </div>
   </footer>
+
 </div>
 
 <style>
-  /* ── Layout ── */
-  .landing { min-height: 100dvh; }
+  .landing {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--void);
+  }
 
   /* ── Topbar ── */
   .topbar {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    padding: 0 48px;
-    height: 56px;
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; gap: 0;
+    padding: 0 40px; height: 56px;
+    background: color-mix(in srgb, var(--void) 88%, transparent);
+    backdrop-filter: blur(14px) saturate(1.4);
     border-bottom: 1px solid var(--line);
-    background: var(--void);
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    backdrop-filter: blur(6px);
   }
   .tb-logo {
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: .1em;
-    color: var(--bone);
-    flex-shrink: 0;
+    font-size: 15px; font-weight: 800; letter-spacing: .14em;
+    color: var(--bone); text-decoration: none; margin-right: auto;
   }
   .tb-logo em { font-style: normal; color: var(--volt); }
-  .tb-nav {
-    display: flex;
-    gap: 20px;
-    flex: 1;
-    margin-left: 16px;
-  }
-  .tb-nav a {
-    font-size: 13px;
-    color: var(--ash);
-    font-weight: 500;
-    transition: color .15s;
-  }
+  .tb-nav { display: flex; gap: 32px; margin: 0 32px; }
+  .tb-nav a { font-size: 13px; color: var(--ash); font-weight: 500; transition: color var(--tx); }
   .tb-nav a:hover { color: var(--bone); text-decoration: none; }
   .tb-cta {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--volt);
-    background: color-mix(in srgb, var(--volt) 12%, transparent);
-    border: 1px solid color-mix(in srgb, var(--volt) 40%, transparent);
-    padding: 6px 14px;
-    border-radius: var(--rad);
-    transition: background .15s;
-    text-decoration: none;
+    font-size: 12px; font-weight: 700; letter-spacing: .04em;
+    padding: 7px 18px; border-radius: var(--rad);
+    background: var(--volt); color: #030810;
+    transition: box-shadow var(--tx), opacity var(--tx);
   }
-  .tb-cta:hover { background: color-mix(in srgb, var(--volt) 20%, transparent); text-decoration: none; }
+  .tb-cta:hover { text-decoration: none; box-shadow: var(--glow-volt); opacity: .92; }
 
   /* ── Hero ── */
   .hero {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 48px;
-    align-items: center;
-    padding: 80px 48px 60px;
-    max-width: 1200px;
-    margin: 0 auto;
-    width: 100%;
+    position: relative;
+    overflow: hidden;
+    padding: 80px 40px 70px;
+    border-bottom: 1px solid var(--line);
+  }
+  .hero-glow {
+    position: absolute; top: -40%; right: -5%; width: 70%; height: 200%;
+    background: radial-gradient(ellipse 60% 50% at 60% 40%, color-mix(in srgb, var(--volt) 7%, transparent) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 60px; align-items: center;
   }
   .hero-eyebrow {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--volt);
-    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 700; letter-spacing: .12em;
+    color: var(--volt); text-transform: uppercase; margin-bottom: 20px;
+  }
+  .eyebrow-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--volt);
+    box-shadow: 0 0 8px var(--volt); flex-shrink: 0;
   }
   .hero-h1 {
-    font-size: clamp(28px, 4vw, 44px);
-    font-weight: 700;
-    line-height: 1.15;
-    letter-spacing: -.01em;
-    color: var(--bone);
-    margin-bottom: 20px;
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 800; line-height: 1.12;
+    color: var(--bone); letter-spacing: -.02em;
+    margin-bottom: 22px;
   }
   .h1-accent { color: var(--volt); }
   .hero-sub {
-    font-size: 15px;
-    color: var(--ash);
-    line-height: 1.7;
-    margin-bottom: 28px;
-    max-width: 480px;
+    font-size: 15px; color: var(--ash); line-height: 1.7;
+    max-width: 440px; margin-bottom: 32px;
   }
-  .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero-ctas { display: flex; gap: 12px; align-items: center; margin-bottom: 28px; flex-wrap: wrap; }
+  .hero-meta { display: flex; gap: 20px; flex-wrap: wrap; }
+  .hm-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ash); }
+  .hm-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .hm-dot.volt  { background: var(--volt); }
+  .hm-dot.amber { background: var(--amber); }
+  .hm-dot.blue  { background: var(--blue); }
+
+  /* Terminal */
+  .hero-term {
+    position: relative;
+    background: #010c0a;
+    border: 1px solid color-mix(in srgb, var(--volt) 20%, transparent);
+    border-radius: var(--rad-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg), var(--glow-volt);
+  }
+  .ht-chrome {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 16px;
+    background: #020e0b;
+    border-bottom: 1px solid color-mix(in srgb, var(--volt) 12%, transparent);
+  }
+  .htd { width: 10px; height: 10px; border-radius: 50%; }
+  .htd-r { background: #e53040; }
+  .htd-y { background: #e0a020; }
+  .htd-g { background: #00d4b8; }
+  .ht-label { font-size: 10px; color: var(--ash); font-family: var(--mono); margin-left: 6px; letter-spacing: .04em; }
+  .ht-body {
+    padding: 16px 18px;
+    font-family: var(--mono); font-size: 12px;
+    display: flex; flex-direction: column; gap: 3px;
+    line-height: 1.6;
+  }
+  .ht-glow {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+    background: linear-gradient(to top, color-mix(in srgb, var(--volt) 4%, transparent), transparent);
+    pointer-events: none;
+  }
+  .hl-cmd { color: var(--bone); }
+  .hl-ps  { color: var(--volt); margin-right: 8px; font-weight: 700; }
+  .hl-hit { color: var(--volt); padding-left: 2px; }
+  .hl-info { color: var(--ash); padding-left: 2px; }
+  .hl-dim { color: var(--dim); padding-left: 4px; font-size: 11px; }
+  .cursor {
+    color: var(--volt);
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
   /* ── Buttons ── */
   .btn-primary {
-    display: inline-block;
-    background: var(--volt);
-    color: var(--void);
-    font-weight: 700;
-    font-size: 13px;
-    padding: 10px 20px;
-    border-radius: var(--rad);
-    letter-spacing: .04em;
-    transition: opacity .15s;
-    text-decoration: none;
+    display: inline-flex; align-items: center;
+    padding: 10px 22px; border-radius: var(--rad);
+    background: var(--volt); color: #030810;
+    font-size: 13px; font-weight: 700; letter-spacing: .03em;
+    text-decoration: none; transition: box-shadow var(--tx), opacity var(--tx);
+    white-space: nowrap;
   }
-  .btn-primary:hover { opacity: .85; text-decoration: none; }
+  .btn-primary:hover { text-decoration: none; box-shadow: var(--glow-volt); opacity: .9; }
   .btn-ghost {
-    display: inline-block;
-    color: var(--bone);
-    font-weight: 600;
-    font-size: 13px;
-    padding: 10px 20px;
-    border-radius: var(--rad);
-    border: 1px solid var(--line2);
-    transition: border-color .15s, color .15s;
-    text-decoration: none;
+    display: inline-flex; align-items: center;
+    padding: 10px 22px; border-radius: var(--rad);
+    border: 1px solid var(--line2); color: var(--ash);
+    font-size: 13px; font-weight: 600;
+    text-decoration: none; transition: border-color var(--tx), color var(--tx);
   }
   .btn-ghost:hover { border-color: var(--ash); color: var(--bone); text-decoration: none; }
 
-  /* ── Terminal ── */
-  .term {
-    background: var(--panel);
-    border: 1px solid var(--line2);
-    border-radius: 10px;
-    overflow: hidden;
-    font-family: var(--mono);
-    font-size: 12.5px;
-    box-shadow: 0 16px 48px rgba(0,0,0,.5);
-  }
-  .term-bar {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 14px;
-    background: var(--panel2);
-    border-bottom: 1px solid var(--line);
-  }
-  .td {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: var(--line2);
-  }
-  .term-title {
-    font-size: 11px;
-    color: var(--ash);
-    margin-left: 6px;
-    letter-spacing: .04em;
-  }
-  .term-body { padding: 16px; display: flex; flex-direction: column; gap: 3px; }
-  .tl-cmd { color: var(--bone); }
-  .tl-hit { color: var(--volt); }
-  .tl-dim { color: var(--ash); padding-left: 12px; }
-  .tpmt   { color: var(--volt); margin-right: 6px; }
-  .cursor {
-    display: inline-block;
-    animation: blink 1s step-end infinite;
-    color: var(--volt);
-  }
-  @keyframes blink { 50% { opacity: 0; } }
-
   /* ── Stats strip ── */
   .stats-strip {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0;
-    border-top: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; padding: 0 40px;
     border-bottom: 1px solid var(--line);
     background: var(--panel);
+    overflow-x: auto;
   }
-  .stat {
-    padding: 20px 32px;
-    text-align: center;
-    border-right: 1px solid var(--line);
-  }
-  .stat:last-child { border-right: none; }
-  .stat-n { font-size: 24px; font-weight: 700; color: var(--volt); letter-spacing: -.01em; }
-  .stat-l { font-size: 11px; color: var(--ash); text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; }
+  .stat-item { padding: 24px 36px; text-align: center; flex-shrink: 0; }
+  .stats-sep { width: 1px; height: 40px; background: var(--line2); flex-shrink: 0; }
+  .si-n { font-size: 28px; font-weight: 800; color: var(--volt); letter-spacing: -.02em; font-family: var(--mono); }
+  .si-l { font-size: 10px; color: var(--ash); letter-spacing: .1em; text-transform: uppercase; margin-top: 2px; }
 
   /* ── Sections ── */
   .section {
-    padding: 80px 48px;
-    max-width: 1200px;
-    margin: 0 auto;
+    padding: 80px 40px;
+    max-width: 1200px; margin: 0 auto;
     width: 100%;
   }
-  .section-h {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--bone);
-    letter-spacing: -.01em;
-    margin-bottom: 32px;
+  .section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .14em;
+    color: var(--volt); text-transform: uppercase; margin-bottom: 10px;
   }
+  .section-h {
+    font-size: clamp(22px, 3vw, 34px);
+    font-weight: 800; color: var(--bone);
+    letter-spacing: -.02em; margin-bottom: 40px;
+  }
+  .section-cta { margin-top: 36px; display: flex; gap: 12px; }
 
   /* ── Tracks ── */
-  .tracks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .tracks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .track-card {
     background: var(--panel);
     border: 1px solid var(--line);
-    border-radius: var(--rad);
-    padding: 24px;
-    transition: border-color .2s, transform .2s;
+    border-radius: var(--rad-lg);
+    overflow: hidden;
+    transition: border-color var(--tx), box-shadow var(--tx);
   }
-  .track-card:hover { transform: translateY(-2px); }
-  .track-df:hover { border-color: var(--amber); }
-  .track-re:hover { border-color: var(--volt); }
-  .track-ma:hover { border-color: var(--blood); }
-  .track-lbl { display: inline-block; margin-bottom: 12px; font-size: 11px !important; }
-  .track-desc { font-size: 14px; color: var(--ash); line-height: 1.6; margin-bottom: 16px; }
-  .track-phases { display: flex; flex-wrap: wrap; gap: 6px; }
-  .ph-chip {
-    font-size: 11px;
-    color: var(--dim);
+  .track-card:hover {
+    border-color: color-mix(in srgb, var(--track-color) 35%, transparent);
+    box-shadow: 0 0 28px color-mix(in srgb, var(--track-color) 10%, transparent);
+  }
+  .tc-accent {
+    height: 3px;
+    background: var(--track-color);
+    box-shadow: 0 0 12px var(--track-color);
+  }
+  .tc-body { padding: 24px 22px; display: flex; flex-direction: column; gap: 14px; }
+  .tc-desc { font-size: 13px; color: var(--ash); line-height: 1.7; }
+  .tc-phases { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tc-phase {
+    font-size: 10px; font-family: var(--mono);
+    padding: 2px 8px; border-radius: 3px;
+    background: var(--panel2); color: var(--dim);
     border: 1px solid var(--line2);
-    padding: 2px 7px;
-    border-radius: 3px;
   }
 
   /* ── Curriculum ── */
-  .curriculum-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-    border-radius: var(--rad);
-    overflow: hidden;
+  .curriculum-table {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--rad-lg); overflow: hidden;
   }
-  .phase-row {
-    display: flex;
-    align-items: center;
+  .ct-head {
+    display: grid; grid-template-columns: 44px 1fr 1fr 60px;
+    gap: 0; padding: 10px 20px;
+    background: var(--panel2);
+    border-bottom: 1px solid var(--line);
+    font-size: 10px; font-weight: 700; color: var(--dim);
+    letter-spacing: .1em; text-transform: uppercase;
     gap: 16px;
-    padding: 14px 20px;
-    background: var(--panel);
-    transition: background .15s;
   }
-  .phase-row:hover { background: var(--panel2); }
-  .ph-n { font-family: var(--mono); font-size: 13px; color: var(--volt); flex-shrink: 0; width: 24px; }
-  .ph-info { flex: 1; min-width: 0; }
-  .ph-name { font-size: 13px; font-weight: 600; color: var(--bone); }
-  .ph-tools { font-size: 11px; color: var(--ash); margin-top: 2px; font-family: var(--mono); }
+  .ct-row {
+    display: grid; grid-template-columns: 44px 1fr 1fr 60px;
+    gap: 16px; padding: 12px 20px;
+    border-bottom: 1px solid var(--line);
+    align-items: center; text-decoration: none;
+    transition: background var(--tx);
+  }
+  .ct-row:last-child { border-bottom: none; }
+  .ct-row:hover { background: var(--panel2); text-decoration: none; }
+  .ct-num { font-family: var(--mono); font-size: 13px; color: var(--volt); font-weight: 700; }
+  .ct-name { font-size: 13px; color: var(--bone); font-weight: 500; }
+  .ct-tools { font-family: var(--mono); font-size: 11px; color: var(--ash); }
 
   /* ── Labs ── */
-  .labs-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 28px;
-  }
+  .labs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .lab-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: var(--rad);
-    padding: 16px;
-    transition: border-color .15s;
+    display: flex; flex-direction: column;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--rad-lg); padding: 18px; gap: 8px;
+    text-decoration: none;
+    transition: border-color var(--tx), transform var(--tx), box-shadow var(--tx);
+    position: relative; overflow: hidden;
   }
-  .lab-card:hover { border-color: var(--line2); }
-  .lab-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .lab-phase { font-size: 10px; color: var(--dim); font-family: var(--mono); }
-  .lab-name { font-size: 13px; font-weight: 600; color: var(--bone); margin-bottom: 4px; }
-  .lab-tool { font-size: 11px; color: var(--volt); font-family: var(--mono); margin-bottom: 8px; }
-  .lab-blurb { font-size: 12px; color: var(--ash); line-height: 1.5; }
-  .labs-cta { text-align: center; margin-top: 8px; }
+  .lab-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb,var(--volt) 4%,transparent), transparent);
+    opacity: 0; transition: opacity var(--tx);
+  }
+  .lab-card:hover { border-color: var(--line2); transform: translateY(-2px); box-shadow: var(--shadow-md); text-decoration: none; }
+  .lab-card:hover::before { opacity: 1; }
+  .lc-header { display: flex; align-items: center; gap: 8px; }
+  .lc-phase { font-size: 10px; color: var(--dim); font-family: var(--mono); margin-left: auto; }
+  .lc-name { font-size: 13px; font-weight: 700; color: var(--bone); line-height: 1.3; }
+  .lc-tool { font-size: 11px; color: var(--volt); font-family: var(--mono); }
+  .lc-blurb { font-size: 11px; color: var(--ash); line-height: 1.55; flex: 1; }
+  .lc-arrow { font-size: 13px; color: var(--dim); margin-top: auto; transition: color var(--tx); }
+  .lab-card:hover .lc-arrow { color: var(--volt); }
 
   /* ── Playbooks ── */
-  .pb-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+  .pb-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .pb-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: var(--rad);
-    padding: 20px;
-    transition: border-color .15s;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--rad-lg); padding: 20px 18px;
+    display: flex; flex-direction: column; gap: 10px;
+    transition: border-color var(--tx);
   }
+  .pb-blood { border-top: 2px solid var(--blood); }
+  .pb-amber { border-top: 2px solid var(--amber); }
   .pb-card:hover { border-color: var(--line2); }
-  .pb-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .sev { font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+  .pb-sev { font-size: 10px; font-weight: 700; letter-spacing: .1em; }
   .sev-blood { color: var(--blood); }
   .sev-amber { color: var(--amber); }
-  .pb-time { font-size: 10px; color: var(--ash); font-family: var(--mono); }
-  .pb-title { font-size: 14px; font-weight: 600; color: var(--bone); }
-
-  /* ── Quick start ── */
-  .qs-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: var(--rad);
-    padding: 32px 36px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-  .qs-card code {
-    display: block;
-    font-family: var(--mono);
-    font-size: 14px;
-    color: var(--volt);
-    background: var(--panel2);
-    padding: 12px 16px;
-    border-radius: var(--rad);
-    border: 1px solid var(--line2);
-    cursor: copy;
-    width: fit-content;
-  }
-  .qs-card code:hover { border-color: var(--volt); }
-  .qs-card p { font-size: 14px; color: var(--ash); }
-  .qs-card p strong { color: var(--bone); }
-  .qs-links { display: flex; gap: 12px; align-items: center; }
-  .qs-links a:not(.btn-primary) { color: var(--ash); font-size: 13px; }
-  .qs-links a:not(.btn-primary):hover { color: var(--volt); }
+  .pb-title { font-size: 14px; font-weight: 700; color: var(--bone); line-height: 1.3; }
+  .pb-time  { font-size: 11px; color: var(--ash); }
+  .pb-time strong { color: var(--bone); }
 
   /* ── Footer ── */
   .footer {
+    margin-top: auto;
     border-top: 1px solid var(--line);
-    padding: 32px 48px;
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;
+    background: var(--panel);
+    padding: 36px 40px;
   }
-  .footer-logo { font-size: 13px; font-weight: 700; letter-spacing: .1em; color: var(--ash); }
+  .footer-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; gap: 32px; flex-wrap: wrap;
+  }
+  .footer-brand { display: flex; flex-direction: column; gap: 3px; }
+  .footer-logo { font-size: 14px; font-weight: 800; letter-spacing: .12em; color: var(--bone); }
   .footer-logo em { font-style: normal; color: var(--volt); }
-  .footer-links { display: flex; gap: 16px; flex: 1; }
-  .footer-links a { font-size: 12px; color: var(--dim); }
-  .footer-links a:hover { color: var(--ash); text-decoration: none; }
-  .footer-note { font-size: 11px; color: var(--dim); width: 100%; margin-top: 4px; }
+  .footer-tagline { font-size: 10px; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; }
+  .footer-nav { display: flex; gap: 24px; flex-wrap: wrap; }
+  .footer-nav a { font-size: 12px; color: var(--ash); transition: color var(--tx); }
+  .footer-nav a:hover { color: var(--bone); text-decoration: none; }
+  .footer-note { font-size: 11px; color: var(--dim); margin-left: auto; max-width: 260px; }
 
-  @media (max-width: 900px) {
-    .hero { grid-template-columns: 1fr; padding: 40px 24px; }
-    .tracks { grid-template-columns: 1fr; }
-    .curriculum-grid { grid-template-columns: 1fr; }
+  /* ── Responsive ── */
+  @media (max-width: 1100px) {
+    .labs-grid { grid-template-columns: repeat(3, 1fr); }
+    .pb-grid   { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 860px) {
+    .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+    .hero { padding: 50px 20px 50px; }
+    .tracks-grid { grid-template-columns: 1fr; }
     .labs-grid { grid-template-columns: repeat(2, 1fr); }
-    .pb-grid { grid-template-columns: repeat(2, 1fr); }
-    .section { padding: 48px 24px; }
-    .topbar { padding: 0 24px; }
+    .section { padding: 50px 20px; }
+    .ct-head, .ct-row { grid-template-columns: 40px 1fr 70px; }
+    .ct-tools { display: none; }
+    .topbar { padding: 0 20px; }
+    .tb-nav { display: none; }
+    .stats-strip { justify-content: flex-start; }
+    .stat-item { padding: 18px 20px; }
+    .footer-inner { flex-direction: column; align-items: flex-start; gap: 20px; }
+    .footer-note { margin-left: 0; }
+  }
+  @media (max-width: 580px) {
+    .labs-grid { grid-template-columns: 1fr; }
+    .pb-grid   { grid-template-columns: 1fr; }
+    .hero-ctas { flex-direction: column; align-items: flex-start; }
   }
 </style>

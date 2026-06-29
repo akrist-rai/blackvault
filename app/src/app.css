@@ -1,41 +1,78 @@
 :root {
-  --void:   #05080A;
-  --panel:  #0A1018;
-  --panel2: #0E1620;
-  --panel3: #131E2A;
-  --line:   #192535;
-  --line2:  #223044;
-  --bone:   #CDD8E3;
-  --ash:    #5F7A90;
-  --dim:    #2C404F;
-  --blood:  #E53040;
-  --volt:   #00D4B8;
-  --amber:  #E0A020;
-  --blue:   #38BCEC;
-  --purple: #9B6EE0;
-  --sb:     230px;
-  --rad:    6px;
-  --font:   'Space Grotesk', system-ui, sans-serif;
-  --mono:   'Space Mono', 'Cascadia Code', monospace;
+  /* ── Palette ── */
+  --void:    #030810;
+  --panel:   #070D16;
+  --panel2:  #0B1420;
+  --panel3:  #10192A;
+  --panel4:  #141F30;
+  --line:    #172234;
+  --line2:   #1F3048;
+  --bone:    #D2DEEA;
+  --ash:     #5B7A92;
+  --dim:     #273D52;
+  --blood:   #E8293A;
+  --volt:    #00D4B8;
+  --amber:   #E0A020;
+  --blue:    #3AC0F0;
+  --purple:  #9B6EE0;
+
+  /* ── Accent shorthands ── */
+  --volt-dim: color-mix(in srgb, var(--volt)  7%, transparent);
+  --volt-low: color-mix(in srgb, var(--volt) 14%, transparent);
+  --volt-mid: color-mix(in srgb, var(--volt) 28%, transparent);
+  --volt-brd: color-mix(in srgb, var(--volt) 35%, transparent);
+
+  /* ── Glow ── */
+  --glow-volt:  0 0 24px color-mix(in srgb, var(--volt)  22%, transparent);
+  --glow-amber: 0 0 24px color-mix(in srgb, var(--amber) 18%, transparent);
+  --glow-blood: 0 0 24px color-mix(in srgb, var(--blood) 18%, transparent);
+  --glow-blue:  0 0 24px color-mix(in srgb, var(--blue)  18%, transparent);
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 6px rgba(0,0,0,.5);
+  --shadow-md: 0 4px 20px rgba(0,0,0,.55);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,.6);
+
+  /* ── Layout ── */
+  --sb:     240px;
+  --rad:    8px;
+  --rad-sm: 4px;
+  --rad-lg: 14px;
+
+  /* ── Typography ── */
+  --font: 'Space Grotesk', system-ui, sans-serif;
+  --mono: 'Space Mono', 'Cascadia Code', monospace;
+
+  /* ── Motion ── */
+  --tx:      .16s cubic-bezier(.25,.46,.45,.94);
+  --tx-slow: .32s cubic-bezier(.25,.46,.45,.94);
 }
 
+/* ── Reset ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { color-scheme: dark; scroll-behavior: smooth; }
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
 
 body {
   background: var(--void);
   color: var(--bone);
   font-family: var(--font);
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
 }
 
+/* ── Links ── */
 a { color: var(--volt); text-decoration: none; }
 a:hover { text-decoration: underline; }
+a:focus-visible { outline: 2px solid var(--volt); outline-offset: 3px; border-radius: 3px; }
 
+/* ── Buttons ── */
 button {
   font-family: var(--font);
   cursor: pointer;
@@ -43,40 +80,43 @@ button {
   background: none;
   color: inherit;
 }
+button:focus-visible { outline: 2px solid var(--volt); outline-offset: 3px; border-radius: 3px; }
 
+/* ── Code ── */
 code, pre, .mono { font-family: var(--mono); }
 
-/* scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--panel); }
-::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 3px; }
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ash); }
 
-/* utility */
+/* ── Selection ── */
+::selection { background: var(--volt-low); color: var(--bone); }
+
+/* ── Utility ── */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 
-/* responsive base */
+/* ── Chips / badges ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  padding: 2px 8px;
+  border-radius: var(--rad-sm);
+  text-transform: uppercase;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+.chip-df   { background: color-mix(in srgb, var(--amber)  12%, transparent); color: var(--amber);  border: 1px solid color-mix(in srgb, var(--amber)  22%, transparent); }
+.chip-re   { background: color-mix(in srgb, var(--volt)   12%, transparent); color: var(--volt);   border: 1px solid color-mix(in srgb, var(--volt)   22%, transparent); }
+.chip-ma   { background: color-mix(in srgb, var(--blood)  12%, transparent); color: var(--blood);  border: 1px solid color-mix(in srgb, var(--blood)  22%, transparent); }
+.chip-blue { background: color-mix(in srgb, var(--blue)   12%, transparent); color: var(--blue);   border: 1px solid color-mix(in srgb, var(--blue)   22%, transparent); }
+.chip-dim  { background: var(--panel2); color: var(--ash); border: 1px solid var(--line2); }
+
+/* ── Responsive base ── */
 @media (max-width: 860px) {
   body { font-size: 14px; }
 }
-
-/* touch targets — all interactive elements at least 40px tall on mobile */
-@media (max-width: 860px) {
-  button, [role="button"], input[type="checkbox"], input[type="radio"], a.btn {
-    min-height: 40px;
-  }
-}
-
-/* chip / badge */
-.chip {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  padding: 2px 7px;
-  border-radius: 3px;
-  text-transform: uppercase;
-}
-.chip-df  { background: color-mix(in srgb, var(--amber) 15%, transparent); color: var(--amber); }
-.chip-re  { background: color-mix(in srgb, var(--volt)  15%, transparent); color: var(--volt); }
-.chip-ma  { background: color-mix(in srgb, var(--blood) 15%, transparent); color: var(--blood); }
-.chip-blue{ background: color-mix(in srgb, var(--blue)  15%, transparent); color: var(--blue); }
