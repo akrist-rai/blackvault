@@ -2,78 +2,150 @@
   import { ATTACK } from '$lib/data';
 
   const ACTORS = [
-    { name:'APT28 / Fancy Bear',  origin:'Russia', targets:'Government, Military, Energy', ttps:'T1566.001 · T1059.001 · T1003.001' },
-    { name:'APT29 / Cozy Bear',   origin:'Russia', targets:'Tech, Government, NGOs',       ttps:'T1195.002 · T1027.002 · T1071.001' },
-    { name:'APT41',               origin:'China',  targets:'Healthcare, Tech, Defense',    ttps:'T1190 · T1059 · T1055' },
-    { name:'Lazarus Group',       origin:'DPRK',   targets:'Finance, Crypto, Defense',     ttps:'T1566 · T1105 · T1486' },
-    { name:'TA542 (Emotet)',      origin:'UNK',    targets:'All sectors',                  ttps:'T1566.001 · T1547.001 · T1055' },
-    { name:'ALPHV / BlackCat',    origin:'RU affl',targets:'Healthcare, Finance',          ttps:'T1486 · T1490 · T1021.002' },
+    { name:'APT28 / Fancy Bear',    origin:'Russia (GRU)', targets:'Government, Military, Energy, NATO',   ttps:'T1566.001 · T1059.001 · T1003.001 · T1071.001', notes:'Active since 2004. Responsible for DNC hack (2016), Bundestag breach (2015). Uses X-Agent implant, Sofacy, and LAPSUS-style credential theft. Often exploits 0-days in Outlook (CVE-2023-23397).' },
+    { name:'APT29 / Cozy Bear',     origin:'Russia (SVR)', targets:'Tech, Government, NGOs, Pharma',       ttps:'T1195.002 · T1027.002 · T1071.001 · T1070.004', notes:'SolarWinds SUNBURST (2020). MagicWeb, GraphicalNeutrino (2023) — uses Microsoft Graph API for C2 traffic blending. 14-day dormancy before activation. Certificate theft for long-term access.' },
+    { name:'APT41 / Double Dragon', origin:'China (MSS)',  targets:'Healthcare, Tech, Defense, Gaming',    ttps:'T1190 · T1059 · T1055 · T1574.002', notes:'Unique: conducts both state espionage AND financially motivated crime. Operation CuckooBees (Cybereason 2022) — 9 months undetected across defense orgs. Uses KEYPLUG, DUSTPAN, DUSTTRAP.' },
+    { name:'Lazarus Group',         origin:'DPRK (RGB)',   targets:'Finance, Crypto, Defense, Tech',       ttps:'T1566 · T1105 · T1486 · T1550.002', notes:'$625M Ronin Bridge crypto theft (2022), Bangladesh Bank SWIFT heist ($81M, 2016). TraderTraitor campaign targets crypto devs via fake job offers on LinkedIn. Uses custom tools: BLINDINGCAN, MATA.' },
+    { name:'TA542 / Emotet (QBot)', origin:'UNK (Eastern Europe)', targets:'All sectors — commodity loader', ttps:'T1566.001 · T1547.001 · T1055 · T1021.002', notes:'Returned in 2021 after FBI takedown. Pivoted from XLS macros → OneNote .one files (2023). QakBot successor. Delivers IcedID, BlackBasta ransomware. ~$2.7B damage estimate globally.' },
+    { name:'ALPHV / BlackCat',      origin:'RU-affiliated', targets:'Healthcare, Finance, Legal',          ttps:'T1486 · T1490 · T1021.002 · T1048.003', notes:'Rust-based ransomware (first major one). Triple extortion: encrypt + exfil + DDoS victim site. $22M ransom from Change Healthcare (2024, unpaid). ALPHV exit-scammed affiliates and shut down March 2024.' },
+    { name:'Volt Typhoon',          origin:'China (PLA)',  targets:'Critical Infra — energy, water, comms', ttps:'T1078 · T1218 · T1053.005 · T1021.001', notes:'Pre-positioned in US critical infrastructure for potential conflict-time disruption. Entirely LotL — no custom malware. Uses stolen credentials, netsh portproxy, living-off-the-land binaries (LOLBins).' },
+    { name:'Scattered Spider',      origin:'UNK (English-speaking)', targets:'Tech, Gaming, Telecom, Finance', ttps:'T1566.004 · T1621 · T1078 · T1213.003', notes:'Social engineering specialists: impersonate IT helpdesk, SIM-swap, MFA fatigue bombing. MGM Resorts ($100M loss, 2023), Caesars ($15M ransom paid). Native English speakers, often US/UK teenagers.' },
+    { name:'Cl0p',                  origin:'UNK (RU links)', targets:'All sectors — MOVEit/GoAnywhere victims', ttps:'T1190 · T1560.001 · T1567.002 · T1486', notes:'Mass exploitation of managed file transfer tools: MOVEit (CVE-2023-34362), GoAnywhere (CVE-2023-0669). 2,000+ victim orgs in 2023. Pure exfiltration-only (no encryption in recent campaigns), then extortion.' },
+    { name:'FIN7 / Carbanak',       origin:'UNK (RU links)', targets:'Retail, Hospitality, Finance',       ttps:'T1566.001 · T1059.001 · T1574.002 · T1565.001', notes:'$1B+ theft from banks via ATM jackpotting and SWIFT manipulation. Runs a fake cybersecurity company (Bastion Secure) to recruit unwitting pentesters. Uses Carbanak, BIRDWATCH, Robinhood.' },
   ];
 
   const KILL_CHAIN = [
-    { phase:'Reconnaissance',   icon:'🔍', desc:'Target research, OSINT, scanning (Shodan, LinkedIn, DNS enum)' },
-    { phase:'Weaponization',    icon:'⚙️', desc:'Payload creation, CVE exploitation, macro-laced document' },
-    { phase:'Delivery',         icon:'📨', desc:'Spearphishing, drive-by download, supply chain, USB' },
-    { phase:'Exploitation',     icon:'💥', desc:'Code execution via CVE, macro, or credential abuse' },
-    { phase:'Installation',     icon:'🏠', desc:'Persistence: Run key, scheduled task, WMI, DLL side-load' },
-    { phase:'C2',               icon:'📡', desc:'Beacon over HTTPS/DNS, Cobalt Strike, custom C2 protocols' },
-    { phase:'Actions on Obj.',  icon:'🎯', desc:'Exfil, ransomware, credential theft, destructive wiper' },
+    { phase:'Reconnaissance',   icon:'🔭', desc:'OSINT, Shodan/Censys scans, LinkedIn enumeration, DNS recon (amass, subfinder). Building target profile before any contact.', ttps:['T1592','T1589','T1593'] },
+    { phase:'Weaponization',    icon:'⚙️', desc:'Macro-laced Office document, CVE weaponization, payload building. Operator configures C2 profile, generates signed dropper.', ttps:['T1587.001','T1588.006'] },
+    { phase:'Delivery',         icon:'📨', desc:'Spearphishing attachment/link, drive-by download, supply chain insertion, USB drop. Initial contact with victim environment.', ttps:['T1566','T1195','T1091'] },
+    { phase:'Exploitation',     icon:'💥', desc:'User opens doc (macro), browser visits page (CVE), admin clicks link (credential theft), or server receives malformed request (RCE).', ttps:['T1190','T1204','T1059'] },
+    { phase:'Installation',     icon:'🏠', desc:'Persistence: Run key, scheduled task, WMI subscription, DLL side-load, web shell. Goal is surviving reboots and user logoff.', ttps:['T1547','T1053','T1546','T1505'] },
+    { phase:'C2',               icon:'📡', desc:'Beacon over HTTPS/DNS. Cobalt Strike, Sliver, Havoc. Traffic blended via CDN/cloud. Jittered sleep to evade periodicity detection.', ttps:['T1071','T1573','T1090'] },
+    { phase:'Actions on Obj.',  icon:'🎯', desc:'Credential theft, lateral movement, data staging, exfiltration, ransomware deployment, or destructive wipe. The attacker\'s actual goal.', ttps:['T1003','T1021','T1041','T1486'] },
   ];
 
   const IOCS = [
-    { type:'IP',      desc:'IP address of C2 or scanner', format:'185.220.101.47', source:'SIEM, firewall, EDR' },
-    { type:'Domain',  desc:'Malicious or DGA domain',     format:'cdn-telemetry.xyz', source:'DNS logs, proxy' },
-    { type:'Hash',    desc:'SHA-256 of malware sample',   format:'64-char hex',    source:'EDR, AV, sandbox' },
-    { type:'URL',     desc:'Phishing or C2 URL',          format:'https://…',      source:'Proxy, email gateway' },
-    { type:'Email',   desc:'Sender address / domain',     format:'attacker@domain', source:'Mail logs, header' },
-    { type:'File',    desc:'Malicious filename/path',     format:'svchost32.exe',  source:'EDR, AV' },
-    { type:'Mutex',   desc:'Named mutex created by malware', format:'Global\\{GUID}', source:'Memory, EDR' },
-    { type:'Registry',desc:'Persistence key or value',    format:'HKCU\\Run\\…',   source:'Registry, EDR' },
+    { type:'IP',       desc:'C2 server or scanner source address',   format:'185.220.101.47',       source:'SIEM, firewall, EDR',       hunt:'Correlate with outbound HTTPS and DNS queries. Check against threat intel blocklists. Context: ASN, port, timing.' },
+    { type:'Domain',   desc:'Malicious C2 or DGA domain',            format:'cdn-telemetry.xyz',     source:'DNS logs, proxy logs',      hunt:'Look for NX response → success pattern (DGA). Long query labels (tunnelling). Newly registered domains (<30 days) in logs.' },
+    { type:'SHA-256',  desc:'Cryptographic hash of malware binary',  format:'64 hex chars',          source:'EDR, AV, sandbox',          hunt:'Compare against VirusTotal, MalwareBazaar. ImpHash for clustering. SSDeep for fuzzy matching across variants.' },
+    { type:'JA3',      desc:'TLS client fingerprint from ClientHello', format:'32 hex chars (MD5)',  source:'Network sensor, Zeek',      hunt:'Cobalt Strike default: 72a7c4d8... Stable across IP rotations. Zeek ssl.log or tshark tls.handshake.ja3 field.' },
+    { type:'URL',      desc:'Phishing page or C2 endpoint URL',      format:'https://cdn-x.io/up',   source:'Proxy, email gateway',      hunt:'Full URL including path — C2 URLs often have patterns (/updates, /check, /beacon). Proxy logs are the primary source.' },
+    { type:'Email',    desc:'Phishing sender address or domain',      format:'support@microsof-t.com', source:'Mail logs, message header', hunt:'Inspect SPF/DKIM/DMARC result. Lookalike domains, typosquats. Sender display name ≠ email address is a red flag.' },
+    { type:'Mutex',    desc:'Named mutex created at runtime',         format:'Global\\\\{GUID}',      source:'Memory (Volatility handles), EDR', hunt:'Stable across sandbox runs — same family always creates same mutex. Enumerate with Volatility windows.handles or ProcMon filter.' },
+    { type:'Registry', desc:'Persistence key or value name',         format:'HKCU\\\\Run\\\\...', source:'Registry, EDR, Autoruns',   hunt:'Monitor HKCU/HKLM Run keys, Services, and scheduled tasks. Event 4657 (Sysmon) for registry value modifications.' },
+    { type:'YARA',     desc:'Binary pattern rule matching sample',    format:'rule APT28_X-Agent {...}', source:'EDR, sandbox, manual',  hunt:'Author rules from unique strings, byte sequences, or PE characteristics. Test against benign corpus before deployment.' },
+    { type:'Sigma',    desc:'SIEM-agnostic detection rule',           format:'YAML detection rule',   source:'SIEM (Splunk, Elastic)',    hunt:'Convert Sigma to platform-specific query. Covers event log patterns for ATT&CK techniques. github.com/SigmaHQ/sigma' },
   ];
 
   const RULES = {
-    sigma: `title: Suspicious vssadmin Shadow Copy Deletion
-id: e0b06658-a8e8-4ee3-b04c-e2e4e8e39b5c
+    sigma: `title: Cobalt Strike Named Pipe — Default Pattern
+id: d5f2d2c0-5b23-4d2c-90b6-2e4c16e80f69
 status: stable
+description: Detects Cobalt Strike beacon default named pipe pattern
 logsource:
-  category: process_creation
+  category: pipe_created
   product: windows
 detection:
   selection:
-    Image|endswith: '\\vssadmin.exe'
-    CommandLine|contains|all:
-      - 'delete'
-      - 'shadows'
+    PipeName|re: '\\\\MSSE-[0-9a-f]+-server'
   condition: selection
+falsepositives:
+  - Unknown legitimate software using similar naming
 level: high
 tags:
-  - attack.impact
-  - attack.t1490`,
-    yara: `rule LockBit3_Ransom_Note {
+  - attack.execution
+  - attack.t1071
+  - attack.lateral_movement
+  - attack.t1021`,
+
+    sigma2: `title: Suspicious LSASS Access via MiniDump
+id: a7c21fc3-8481-4e5e-9b30-1fe782d5c3a2
+status: stable
+logsource:
+  product: windows
+  category: process_access
+detection:
+  selection:
+    TargetImage|endswith: '\\\\lsass.exe'
+    GrantedAccess|contains:
+      - '0x1fffff'
+      - '0x1410'
+      - '0x143a'
+  filter_legitimate:
+    SourceImage|contains:
+      - '\\\\Program Files\\\\Windows Defender\\\\'
+      - '\\\\System32\\\\werfault.exe'
+  condition: selection and not filter_legitimate
+level: critical
+tags:
+  - attack.credential_access
+  - attack.t1003.001`,
+
+    yara: `rule Cobalt_Strike_Beacon_Config {
   meta:
-    description = "Detects LockBit 3.0 ransom note"
-    author = "BLACKVAULT"
-    reference = "T1486"
+    description = "Detects Cobalt Strike beacon config block in memory or on disk"
+    author      = "BLACKVAULT"
+    reference   = "T1071.001"
+    tlp         = "WHITE"
   strings:
-    $note  = "LockBit 3.0" ascii nocase
-    $tor   = ".onion" ascii
-    $ext   = { 6C 6F 63 6B 62 69 74 }  // "lockbit"
+    $cfg1 = { 00 01 00 01 00 02 ?? ?? 00 02 00 01 00 02 }
+    $cfg2 = ".cobaltstrike.beacon_keys" ascii
+    $pipe = "\\\\pipe\\\\MSSE-" ascii wide
+    $sleep = { 00 00 00 00 00 00 00 00 ?? ?? ?? ?? 00 00 EA 60 }
   condition:
-    any of them
+    uint16(0) == 0x5A4D and
+    ($cfg1 at 0x400 or $pipe or ($cfg2 and $sleep))
 }`,
-    suricata: `alert http $HOME_NET any -> $EXTERNAL_NET any (
-  msg:"ET MALWARE Cobalt Strike Beacon Checkin";
-  flow:established,to_server;
-  content:"GET"; http_method;
-  content:"/updates"; http_uri;
-  content:"User-Agent|3a 20|"; http_header;
-  content:"Mozilla/5.0 (compatible|3b|"; within:80;
+
+    yara2: `rule Emotet_DLL_Dropper_2024 {
+  meta:
+    description = "Detects Emotet DLL dropper (2024 wave)"
+    author      = "BLACKVAULT"
+    reference   = "T1566.001"
+    hash        = "f8e3a9b1c5d2e8f4a2b7c9d0e1f3a4b5"
+  strings:
+    $s1 = "RunDLL32.EXE" wide nocase
+    $s2 = { 48 8B 05 ?? ?? ?? ?? 48 8B 08 FF 51 ?? }  // indirect call
+    $s3 = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run" wide
+    $onion = ".onion" ascii
+    $mz    = { 4D 5A }
+  condition:
+    $mz at 0 and
+    filesize < 600KB and
+    2 of ($s1, $s2, $s3) and not $onion
+}`,
+
+    suricata: `# Cobalt Strike default HTTPS beacon (malleable default profile)
+alert tls $HOME_NET any -> $EXTERNAL_NET 443 (
+  msg:"ET MALWARE Cobalt Strike Beacon Default TLS Cert CN";
+  tls.cert_subject; content:"CN=Major Cobalt Strike";
   reference:url,attack.mitre.org/techniques/T1071/001/;
-  sid:2023560; rev:1;
+  sid:2036369; rev:1; classtype:trojan-activity;
+)
+
+# DNS tunnelling — long subdomain labels
+alert dns $HOME_NET any -> any 53 (
+  msg:"ET HUNTING Possible DNS Tunneling Long Query";
+  byte_test:1,>,40,0,relative,string;
+  dns.query; pcre:"/[a-f0-9]{32,}\\./"i;
+  reference:url,attack.mitre.org/techniques/T1048/003/;
+  sid:2030201; rev:2;
+)
+
+# LSASS dump via comsvcs.dll MiniDump
+alert process_creation $HOME_NET any (
+  msg:"ET ATTACK_RESPONSE LSASS Dump via comsvcs MiniDump";
+  content:"comsvcs.dll"; nocase;
+  content:"MiniDump"; nocase; within:40;
+  reference:url,attack.mitre.org/techniques/T1003/001/;
+  sid:2040101; rev:1;
 )`,
   };
 
   let activeRule = 'sigma';
+  let activeSigma = 'sigma';
+  let activeYara = 'yara';
+  let ruleView = 'sigma';
 </script>
 
 <svelte:head><title>Intel — BLACKVAULT</title></svelte:head>
@@ -86,7 +158,7 @@ tags:
 
   <!-- Kill Chain -->
   <section class="intel-section">
-    <h2 class="is-hd">Cyber Kill Chain</h2>
+    <h2 class="is-hd">Unified Kill Chain</h2>
     <div class="kc-grid">
       {#each KILL_CHAIN as kc, i}
         <div class="kc-item">
@@ -94,23 +166,7 @@ tags:
           <div class="kc-icon">{kc.icon}</div>
           <div class="kc-phase">{kc.phase}</div>
           <div class="kc-desc">{kc.desc}</div>
-        </div>
-      {/each}
-    </div>
-  </section>
-
-  <!-- ATT&CK quick ref -->
-  <section class="intel-section">
-    <h2 class="is-hd">ATT&amp;CK Techniques</h2>
-    <div class="attack-table">
-      <div class="at-head">
-        <span>ID</span><span>Name</span><span>Tactic</span>
-      </div>
-      {#each ATTACK as t}
-        <div class="at-row">
-          <span class="at-id">{t.id}</span>
-          <span class="at-name">{t.name}</span>
-          <span class="at-tactic">{t.tactic}</span>
+          <div class="kc-ttps">{kc.ttps.join(' · ')}</div>
         </div>
       {/each}
     </div>
@@ -126,6 +182,24 @@ tags:
           <div class="ac-meta"><span class="ac-lbl">Origin</span> {a.origin}</div>
           <div class="ac-meta"><span class="ac-lbl">Targets</span> {a.targets}</div>
           <div class="ac-ttps">{a.ttps}</div>
+          <div class="ac-notes">{a.notes}</div>
+        </div>
+      {/each}
+    </div>
+  </section>
+
+  <!-- ATT&CK quick ref -->
+  <section class="intel-section">
+    <h2 class="is-hd">ATT&amp;CK Techniques ({ATTACK.length})</h2>
+    <div class="attack-table">
+      <div class="at-head">
+        <span>ID</span><span>Name</span><span>Tactic</span>
+      </div>
+      {#each ATTACK as t}
+        <div class="at-row">
+          <span class="at-id">{t.id}</span>
+          <span class="at-name">{t.name}</span>
+          <span class="at-tactic">{t.tactic}</span>
         </div>
       {/each}
     </div>
@@ -133,13 +207,16 @@ tags:
 
   <!-- IOC taxonomy -->
   <section class="intel-section">
-    <h2 class="is-hd">IOC Taxonomy</h2>
+    <h2 class="is-hd">IOC Taxonomy &amp; Hunting Notes</h2>
     <div class="ioc-table">
-      <div class="ioc-head"><span>Type</span><span>Description</span><span>Example Format</span><span>Source</span></div>
+      <div class="ioc-head"><span>Type</span><span>Description</span><span>Example</span><span>Source</span></div>
       {#each IOCS as ioc}
         <div class="ioc-row">
           <span class="ioc-type">{ioc.type}</span>
-          <span class="ioc-desc">{ioc.desc}</span>
+          <span class="ioc-desc">
+            {ioc.desc}
+            <div class="ioc-hunt">{ioc.hunt}</div>
+          </span>
           <span class="ioc-fmt">{ioc.format}</span>
           <span class="ioc-src">{ioc.source}</span>
         </div>
@@ -151,13 +228,22 @@ tags:
   <section class="intel-section">
     <h2 class="is-hd">Detection Rule Templates</h2>
     <div class="rule-tabs">
-      {#each ['sigma','yara','suricata'] as r}
-        <button class="rtab" class:active={activeRule === r} on:click={() => activeRule = r}>
-          {r.toUpperCase()}
+      {#each [['sigma','Sigma (LSASS)'],['sigma2','Sigma (CS Pipe)'],['yara','YARA (CS)'],['yara2','YARA (Emotet)'],['suricata','Suricata']] as [k,label]}
+        <button class="rtab" class:active={ruleView === k} on:click={() => ruleView = k}>
+          {label}
         </button>
       {/each}
     </div>
-    <pre class="rule-block"><code>{RULES[activeRule]}</code></pre>
+    <pre class="rule-block"><code>{RULES[ruleView]}</code></pre>
+    <div class="rule-note">
+      {#if ruleView === 'sigma' || ruleView === 'sigma2'}
+        Convert to your platform: <code>sigma convert -t splunk {ruleView}.yml</code> or <code>sigma convert -t elastic {ruleView}.yml</code>
+      {:else if ruleView === 'yara' || ruleView === 'yara2'}
+        Test rule: <code>yara -r {ruleView}.yar /path/to/samples/</code> — always validate FP rate against clean corpus
+      {:else}
+        Load into Suricata: <code>suricata -c suricata.yaml --rule-files=custom.rules -r cap.pcap -l /logs/</code>
+      {/if}
+    </div>
   </section>
 
 </main>
@@ -173,44 +259,46 @@ tags:
   }
   .page { padding: 28px; flex: 1; }
 
-  .intel-section { margin-bottom: 40px; }
+  .intel-section { margin-bottom: 44px; }
   .is-hd { font-size: 16px; font-weight: 700; color: var(--bone); margin-bottom: 16px; letter-spacing: -.01em; }
 
   /* Kill Chain */
   .kc-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
   .kc-item {
     background: var(--panel); border: 1px solid var(--line);
-    border-radius: var(--rad); padding: 14px 12px; text-align: center;
+    border-radius: var(--rad); padding: 14px 10px; text-align: center;
   }
-  .kc-n { font-family: var(--mono); font-size: 10px; color: var(--volt); margin-bottom: 6px; }
-  .kc-icon { font-size: 20px; margin-bottom: 6px; }
-  .kc-phase { font-size: 11px; font-weight: 700; color: var(--bone); margin-bottom: 6px; }
-  .kc-desc { font-size: 10px; color: var(--ash); line-height: 1.4; }
+  .kc-n { font-family: var(--mono); font-size: 10px; color: var(--volt); margin-bottom: 4px; }
+  .kc-icon { font-size: 18px; margin-bottom: 5px; }
+  .kc-phase { font-size: 10px; font-weight: 700; color: var(--bone); margin-bottom: 5px; }
+  .kc-desc { font-size: 9px; color: var(--ash); line-height: 1.4; margin-bottom: 6px; }
+  .kc-ttps { font-family: var(--mono); font-size: 8px; color: var(--dim); line-height: 1.4; }
 
   /* ATT&CK table */
-  .attack-table { background: var(--panel); border: 1px solid var(--line); border-radius: var(--rad); overflow: hidden; }
+  .attack-table { background: var(--panel); border: 1px solid var(--line); border-radius: var(--rad); overflow: hidden; max-height: 420px; overflow-y: auto; }
   .at-head, .at-row {
     display: grid; grid-template-columns: 110px 1fr 160px;
-    padding: 10px 16px; gap: 16px;
+    padding: 9px 16px; gap: 16px;
     border-bottom: 1px solid var(--line);
   }
   .at-row:last-child { border-bottom: none; }
-  .at-head { background: var(--panel2); font-size: 10px; font-weight: 700; color: var(--ash); letter-spacing: .08em; text-transform: uppercase; }
+  .at-head { background: var(--panel2); font-size: 10px; font-weight: 700; color: var(--ash); letter-spacing: .08em; text-transform: uppercase; position: sticky; top: 0; }
   .at-row:hover { background: var(--panel2); }
-  .at-id { font-family: var(--mono); font-size: 12px; color: var(--volt); }
-  .at-name { font-size: 13px; color: var(--bone); }
+  .at-id { font-family: var(--mono); font-size: 11px; color: var(--volt); }
+  .at-name { font-size: 12px; color: var(--bone); }
   .at-tactic { font-size: 11px; color: var(--ash); }
 
   /* Actors */
-  .actor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .actor-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .actor-card {
     background: var(--panel); border: 1px solid var(--line);
     border-radius: var(--rad); padding: 18px;
   }
-  .ac-name { font-size: 14px; font-weight: 700; color: var(--bone); margin-bottom: 10px; }
-  .ac-meta { font-size: 12px; color: var(--ash); margin-bottom: 4px; }
+  .ac-name { font-size: 13px; font-weight: 700; color: var(--bone); margin-bottom: 8px; }
+  .ac-meta { font-size: 12px; color: var(--ash); margin-bottom: 3px; }
   .ac-lbl { color: var(--dim); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-right: 4px; }
-  .ac-ttps { margin-top: 10px; font-family: var(--mono); font-size: 11px; color: var(--volt); }
+  .ac-ttps { margin-top: 8px; font-family: var(--mono); font-size: 10px; color: var(--volt); line-height: 1.5; }
+  .ac-notes { margin-top: 8px; font-size: 11px; color: var(--ash); line-height: 1.55; border-top: 1px solid var(--line); padding-top: 8px; }
 
   /* IOC table */
   .ioc-table { background: var(--panel); border: 1px solid var(--line); border-radius: var(--rad); overflow: hidden; }
@@ -223,34 +311,43 @@ tags:
   .ioc-head { background: var(--panel2); font-size: 10px; font-weight: 700; color: var(--ash); letter-spacing: .08em; text-transform: uppercase; }
   .ioc-row:hover { background: var(--panel2); }
   .ioc-type { font-weight: 700; color: var(--volt); font-family: var(--mono); font-size: 11px; }
-  .ioc-desc, .ioc-src { color: var(--ash); }
+  .ioc-desc { color: var(--ash); }
+  .ioc-hunt { font-size: 10px; color: var(--dim); margin-top: 4px; line-height: 1.4; }
   .ioc-fmt { font-family: var(--mono); color: var(--bone); font-size: 11px; }
+  .ioc-src { font-size: 11px; color: var(--ash); }
 
   /* Detection rules */
-  .rule-tabs { display: flex; gap: 1px; margin-bottom: 0; background: var(--line); border-radius: var(--rad) var(--rad) 0 0; overflow: hidden; width: fit-content; }
+  .rule-tabs { display: flex; gap: 1px; margin-bottom: 0; background: var(--line); border-radius: var(--rad) var(--rad) 0 0; overflow: hidden; width: fit-content; flex-wrap: wrap; }
   .rtab {
-    padding: 9px 18px; background: var(--panel2);
+    padding: 8px 14px; background: var(--panel2);
     border: none; cursor: pointer;
-    font-size: 12px; font-weight: 700; color: var(--ash);
-    letter-spacing: .06em; transition: background .15s, color .15s;
+    font-size: 11px; font-weight: 700; color: var(--ash);
+    letter-spacing: .05em; transition: background .15s, color .15s;
   }
   .rtab:hover { color: var(--bone); }
   .rtab.active { background: var(--panel3); color: var(--volt); }
   .rule-block {
     background: var(--panel3); border: 1px solid var(--line);
     border-top: none; border-radius: 0 var(--rad) var(--rad) var(--rad);
-    padding: 20px 24px; overflow-x: auto;
+    padding: 20px 24px; overflow-x: auto; margin-bottom: 0;
   }
   .rule-block code { font-family: var(--mono); font-size: 12px; color: var(--volt); line-height: 1.6; }
-
-  @media (max-width: 900px) {
-    .kc-grid { grid-template-columns: repeat(4, 1fr); }
-    .actor-grid { grid-template-columns: 1fr 1fr; }
+  .rule-note {
+    background: color-mix(in srgb, var(--volt) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--volt) 15%, transparent);
+    border-top: none; border-radius: 0 0 var(--rad) var(--rad);
+    padding: 10px 20px; font-size: 12px; color: var(--ash);
   }
-  @media (max-width: 600px) {
+  .rule-note code { font-family: var(--mono); color: var(--volt); font-size: 11px; }
+
+  @media (max-width: 1100px) {
+    .kc-grid { grid-template-columns: repeat(4, 1fr); }
+    .actor-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 700px) {
     .at-head, .at-row { grid-template-columns: 90px 1fr; }
     .at-tactic { display: none; }
-    .ioc-head, .ioc-row { grid-template-columns: 70px 1fr; }
+    .ioc-head, .ioc-row { grid-template-columns: 60px 1fr; }
     .ioc-fmt, .ioc-src { display: none; }
   }
 </style>
