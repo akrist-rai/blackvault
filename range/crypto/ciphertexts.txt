@@ -1,0 +1,5 @@
+# decode each line to a BV{...} flag. Tools: CyberChef, python, or the browser Crypto Workbench.
+caesar(+7) : IC{y0a_huk_y0ss}
+base64x2   : UWxaN1lqUnpaVjl6ZERSamEzMD0=
+xor 0x42(hex): 0014393a72301d2f271d76703f
+reversed   : }rorr1m_rorr1m{VB

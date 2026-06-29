@@ -1,0 +1,1328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BLACKVAULT // Security Study Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#050706; --panel:#0b0f0d; --panel2:#101512; --bone:#e9e7dc; --ash:#878d85;
+  --blood:#fb3640; --volt:#2de2e6; --amber:#f4b740; --line:rgba(233,231,220,.13);
+  --grot:'Space Grotesk',-apple-system,BlinkMacSystemFont,sans-serif;
+  --mono:'Space Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--void); color:var(--bone); font-family:var(--grot);
+  font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  background-image:
+    linear-gradient(rgba(45,226,230,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(45,226,230,.025) 1px,transparent 1px);
+  background-size:44px 44px; min-height:100vh;
+}
+body::after{content:""; position:fixed; inset:0; pointer-events:none; z-index:9;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);
+  opacity:.35; mix-blend-mode:multiply;}
+a{color:inherit}
+::selection{background:var(--blood); color:var(--void)}
+
+.topbar{position:sticky; top:0; z-index:20; background:rgba(5,7,6,.92); backdrop-filter:blur(6px); border-bottom:2px solid var(--bone);}
+.topbar__in{max-width:1180px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:18px; flex-wrap:wrap}
+.brand{display:flex; align-items:baseline; gap:10px; cursor:pointer; user-select:none}
+.brand b{font-weight:700; letter-spacing:-.02em; font-size:20px}
+.brand b i{color:var(--blood); font-style:normal}
+.brand span{font-family:var(--mono); font-size:10px; letter-spacing:.32em; color:var(--ash); text-transform:uppercase}
+.nav{display:flex; gap:6px; flex-wrap:wrap; margin-left:auto}
+.nav button{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ash); background:transparent; border:1.5px solid transparent; padding:7px 11px; cursor:pointer; transition:.12s;}
+.nav button:hover{color:var(--bone); border-color:var(--line)}
+.nav button[aria-current="true"]{color:var(--void); background:var(--bone); border-color:var(--bone)}
+.meter{display:flex; align-items:center; gap:9px; font-family:var(--mono); font-size:10px; color:var(--ash); letter-spacing:.1em}
+.meter__bar{width:90px; height:8px; border:1.5px solid var(--bone); position:relative}
+.meter__fill{position:absolute; inset:0; width:0%; background:var(--blood); transition:width .5s}
+
+main{max-width:1180px; margin:0 auto; padding:32px 20px 90px}
+.eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.3em; text-transform:uppercase; color:var(--volt)}
+.h1{font-size:clamp(28px,5vw,46px); font-weight:700; letter-spacing:-.03em; line-height:1.02; margin:8px 0 0}
+.lede{color:var(--ash); max-width:64ch; margin:14px 0 0}
+.btn{font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; background:var(--bone); color:var(--void); border:2px solid var(--bone); padding:10px 16px; box-shadow:5px 5px 0 var(--blood); transition:.12s;}
+.btn:hover{transform:translate(-2px,-2px); box-shadow:7px 7px 0 var(--blood)}
+.btn:active{transform:translate(2px,2px); box-shadow:2px 2px 0 var(--blood)}
+.btn--ghost{background:transparent; color:var(--bone); box-shadow:5px 5px 0 rgba(45,226,230,.5)}
+.btn--ghost:hover{box-shadow:7px 7px 0 var(--volt)}
+
+.chip{font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; padding:2px 7px; border:1.5px solid; display:inline-block}
+.t-DF{color:var(--amber); border-color:var(--amber)}
+.t-RE{color:var(--volt); border-color:var(--volt)}
+.t-MA{color:var(--blood); border-color:var(--blood)}
+.dot{width:9px; height:9px; display:inline-block; border-radius:50%}
+.d-DF{background:var(--amber)} .d-RE{background:var(--volt)} .d-MA{background:var(--blood)}
+
+.maphead{display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; margin-bottom:26px}
+.legend{display:flex; gap:16px; font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ash); flex-wrap:wrap}
+.legend i{display:inline-flex; align-items:center; gap:7px; font-style:normal}
+.spine{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+.node{position:relative; background:var(--panel); border:2px solid var(--line); padding:16px 16px 14px; cursor:pointer; transition:.14s; overflow:hidden; min-height:148px; display:flex; flex-direction:column;}
+.node:hover{transform:translateY(-3px); border-color:var(--bone); box-shadow:6px 6px 0 rgba(45,226,230,.32)}
+.node::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--accent,var(--ash))}
+.node__n{font-family:var(--mono); font-size:11px; color:var(--ash); letter-spacing:.18em}
+.node__t{font-weight:600; font-size:17px; letter-spacing:-.01em; margin:6px 0 8px; line-height:1.12}
+.node__tags{font-family:var(--mono); font-size:10.5px; color:var(--ash); line-height:1.5; margin-top:auto}
+.node__chips{display:flex; gap:5px; margin:10px 0 0; flex-wrap:wrap}
+.node__mast{height:6px; border:1.5px solid var(--line); margin-top:11px; position:relative}
+.node__mast i{position:absolute; inset:0; width:0%; background:var(--accent,var(--ash)); transition:width .5s}
+.node[data-done="1"]{border-color:var(--accent)}
+.node__check{position:absolute; top:12px; right:13px; font-family:var(--mono); font-size:11px; color:var(--accent); opacity:0}
+.node[data-done="1"] .node__check{opacity:1}
+
+.crumb{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ash); margin-bottom:18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.crumb a{cursor:pointer; color:var(--volt)}
+.studyhead{border-bottom:2px solid var(--bone); padding-bottom:18px; margin-bottom:24px}
+.idea{border-left:4px solid var(--accent,var(--blood)); background:var(--panel); padding:14px 18px; margin:0 0 24px; font-size:17px;}
+.idea b{color:var(--accent,var(--blood))}
+.deepbox{border:2px solid var(--accent,var(--volt)); background:var(--panel2); padding:16px 20px; margin:0 0 30px; box-shadow:5px 5px 0 rgba(45,226,230,.18)}
+.deepbox .lbl{font-family:var(--mono); font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--accent,var(--volt))}
+.deepbox p{margin:9px 0 0; font-size:15.5px; line-height:1.6}
+.sec{margin:0 0 30px}
+.sec__h{font-family:var(--mono); font-size:12px; letter-spacing:.22em; text-transform:uppercase; color:var(--ash); display:flex; align-items:center; gap:10px; margin:0 0 14px}
+.sec__h::after{content:""; flex:1; height:1px; background:var(--line)}
+.concept{border:2px solid var(--line); background:var(--panel); padding:14px 16px; margin-bottom:10px; display:flex; gap:14px; align-items:flex-start; transition:.12s}
+.concept:hover{border-color:var(--accent)}
+.concept__b{flex:1}
+.concept__t{font-weight:600; font-size:15.5px; margin:0 0 4px}
+.concept__d{color:var(--ash); font-size:14.5px; margin:0}
+.learnbtn{flex:none; font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; background:transparent; color:var(--ash); border:1.5px solid var(--line); padding:6px 9px; transition:.12s; white-space:nowrap; margin-top:2px;}
+.learnbtn:hover{color:var(--bone); border-color:var(--bone)}
+.learnbtn[data-on="1"]{background:var(--accent); color:var(--void); border-color:var(--accent)}
+.cmd{display:flex; gap:14px; align-items:baseline; padding:9px 0; border-bottom:1px dashed var(--line); flex-wrap:wrap}
+.cmd:last-child{border-bottom:0}
+.cmd code{font-family:var(--mono); font-size:13px; color:var(--volt); background:var(--panel2); padding:3px 8px; border:1px solid var(--line); white-space:pre-wrap; cursor:pointer}
+.cmd code:hover{border-color:var(--volt)}
+.cmd span{color:var(--ash); font-size:13.5px}
+.tlist,.rlist{list-style:none; padding:0; margin:0}
+.tlist li{border-left:3px solid var(--blood); padding:7px 0 7px 14px; margin-bottom:8px; color:var(--ash); font-size:14.5px}
+.rlist li{border-left:3px solid var(--volt); padding:7px 0 7px 14px; margin-bottom:8px; color:var(--bone); font-size:14.5px}
+.feeds{font-family:var(--mono); font-size:12px; color:var(--ash); border:1.5px dashed var(--line); padding:12px 14px}
+.feeds b{color:var(--amber)}
+.studynav{display:flex; justify-content:space-between; gap:12px; margin-top:30px; flex-wrap:wrap}
+
+.modehead{margin-bottom:24px}
+.deckpick,.casepick{display:flex; gap:8px; flex-wrap:wrap; margin:18px 0 26px}
+.deckpick button,.casepick button{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; background:transparent; color:var(--ash); border:1.5px solid var(--line); padding:7px 11px; transition:.12s}
+.deckpick button:hover,.casepick button:hover{color:var(--bone); border-color:var(--bone)}
+.deckpick button[aria-current="true"]{background:var(--volt); color:var(--void); border-color:var(--volt)}
+.casepick button[aria-current="true"]{background:var(--blood); color:var(--void); border-color:var(--blood)}
+.cardstage{display:flex; flex-direction:column; align-items:center; gap:20px}
+.flashcard{width:min(620px,100%); height:300px; perspective:1600px; cursor:pointer}
+.flashcard__in{position:relative; width:100%; height:100%; transition:transform .5s; transform-style:preserve-3d}
+.flashcard[data-flip="1"] .flashcard__in{transform:rotateY(180deg)}
+.face{position:absolute; inset:0; backface-visibility:hidden; border:2px solid var(--bone); background:var(--panel); padding:28px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center}
+.face--front{box-shadow:8px 8px 0 var(--blood)}
+.face--back{transform:rotateY(180deg); box-shadow:8px 8px 0 var(--volt); border-color:var(--volt)}
+.face small{position:absolute; top:14px; left:16px; font-family:var(--mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--ash)}
+.face .q{font-size:22px; font-weight:600; line-height:1.25}
+.face .a{font-size:16.5px; color:var(--bone); line-height:1.45}
+.face .hint{position:absolute; bottom:14px; font-family:var(--mono); font-size:9.5px; letter-spacing:.15em; text-transform:uppercase; color:var(--ash)}
+.cardctl{display:flex; align-items:center; gap:12px; font-family:var(--mono); font-size:12px; color:var(--ash); flex-wrap:wrap; justify-content:center}
+.iconbtn{font-family:var(--mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; background:transparent; color:var(--bone); border:1.5px solid var(--bone); padding:8px 13px; transition:.12s}
+.iconbtn:hover{background:var(--bone); color:var(--void)}
+.iconbtn--know{border-color:var(--amber); color:var(--amber)}
+.iconbtn--know:hover{background:var(--amber); color:var(--void)}
+.counter{min-width:70px; text-align:center; letter-spacing:.12em}
+
+.quizwrap{max-width:760px}
+.qcard{border:2px solid var(--line); background:var(--panel); padding:20px 22px; margin-bottom:16px}
+.qcard__meta{font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ash); display:flex; justify-content:space-between; margin-bottom:10px; gap:10px; align-items:center}
+.qcard__q{font-weight:600; font-size:17px; margin:0 0 14px; line-height:1.3}
+.opt{display:block; width:100%; text-align:left; font-family:var(--grot); font-size:15px; color:var(--bone); background:var(--panel2); border:1.5px solid var(--line); padding:11px 14px; margin-bottom:8px; cursor:pointer; transition:.1s}
+.opt:hover:not(:disabled){border-color:var(--bone)}
+.opt:disabled{cursor:default}
+.opt[data-state="selected"]{border-color:var(--bone); background:rgba(233,231,220,.07)}
+.opt[data-state="correct"]{border-color:var(--amber); background:rgba(244,183,64,.12); color:var(--bone)}
+.opt[data-state="wrong"]{border-color:var(--blood); background:rgba(251,54,64,.1)}
+.opt b{font-family:var(--mono); margin-right:8px; color:var(--ash)}
+.explain{font-size:14px; color:var(--ash); border-left:3px solid var(--amber); padding:8px 0 8px 14px; margin-top:6px}
+.explain b{color:var(--amber); font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase}
+.miniretry{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; background:transparent; color:var(--volt); border:1.5px solid var(--volt); padding:5px 9px; transition:.12s}
+.miniretry:hover{background:var(--volt); color:var(--void)}
+.score{font-family:var(--mono); border:2px solid var(--bone); padding:14px 18px; margin-bottom:22px; display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap}
+.score b{font-size:24px; color:var(--blood)}
+.emptybox{border:2px dashed var(--line); padding:28px; text-align:center; color:var(--ash)}
+.emptybox b{color:var(--bone); font-size:18px; display:block; margin-bottom:8px; font-family:var(--grot)}
+
+.search{width:100%; font-family:var(--mono); font-size:14px; background:var(--panel); color:var(--bone); border:2px solid var(--bone); padding:12px 14px; margin-bottom:22px}
+.search:focus{outline:none; border-color:var(--volt); box-shadow:4px 4px 0 var(--volt)}
+.arsenal{display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:14px}
+.tool{border:2px solid var(--line); background:var(--panel); padding:14px 16px}
+.tool code{font-family:var(--mono); font-size:13.5px; color:var(--volt); cursor:pointer}
+.tool p{margin:5px 0 0; color:var(--ash); font-size:13.5px}
+.tool small{font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ash)}
+
+.threadgrid{display:grid; grid-template-columns:1fr; gap:18px}
+.thread{border:2px solid var(--line); background:var(--panel); padding:20px 22px}
+.thread__h{display:flex; align-items:center; gap:12px; margin-bottom:6px}
+.thread__h h3{margin:0; font-size:20px; letter-spacing:-.01em}
+.thread__blurb{color:var(--ash); margin:0 0 16px; max-width:72ch}
+.pyramid{display:flex; flex-direction:column; gap:6px; align-items:center}
+.ptier{border:2px solid; padding:9px 14px; text-align:center; cursor:pointer; transition:.12s; font-family:var(--mono); font-size:12.5px; letter-spacing:.04em; position:relative}
+.ptier:hover{transform:scale(1.015)}
+.ptier b{display:block; font-family:var(--grot); font-size:15px; letter-spacing:0; text-transform:none}
+.ptier .note{display:none; font-family:var(--grot); font-size:13px; color:var(--bone); margin-top:6px; letter-spacing:0; text-transform:none}
+.ptier[data-open="1"] .note{display:block}
+.kc{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px}
+.kcstage{border:1.5px solid var(--line); padding:11px 13px; cursor:pointer; transition:.12s}
+.kcstage:hover{border-color:var(--volt)}
+.kcstage b{font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--volt); display:block}
+.kcstage span{font-size:13px; color:var(--bone)}
+.kcstage .map{display:none; font-family:var(--mono); font-size:11px; color:var(--ash); margin-top:6px}
+.kcstage[data-open="1"] .map{display:block}
+.xv{width:100%; border-collapse:collapse; font-size:13.5px}
+.xv th,.xv td{border:1px solid var(--line); padding:9px 11px; text-align:left}
+.xv th{font-family:var(--mono); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--ash)}
+.xv code{font-family:var(--mono); color:var(--volt); font-size:12.5px}
+.loop{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+.loopstep{border:2px solid var(--accent,var(--amber)); padding:10px 14px; font-family:var(--mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase}
+.looparr{color:var(--ash); font-family:var(--mono)}
+
+.casewrap{max-width:780px}
+.casebar{display:flex; justify-content:space-between; align-items:center; gap:14px; font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ash); border:1.5px dashed var(--line); padding:10px 14px; margin-bottom:18px; flex-wrap:wrap}
+.casebar b{color:var(--amber)}
+.casenode{border:2px solid var(--bone); background:var(--panel); padding:22px 24px; box-shadow:7px 7px 0 var(--blood)}
+.casenode .clock{font-family:var(--mono); font-size:12px; letter-spacing:.16em; color:var(--blood)}
+.casenode p{font-size:16.5px; line-height:1.5}
+.choice{display:block; width:100%; text-align:left; font-family:var(--grot); font-size:15px; color:var(--bone); background:var(--panel2); border:1.5px solid var(--line); padding:13px 16px; margin-top:10px; cursor:pointer; transition:.1s}
+.choice:hover{border-color:var(--volt); transform:translateX(3px)}
+.fb{border-left:3px solid; padding:10px 0 10px 14px; margin-top:14px; font-size:14.5px}
+.fb--good{border-color:var(--amber)} .fb--good b{color:var(--amber)}
+.fb--bad{border-color:var(--blood)} .fb--bad b{color:var(--blood)}
+.fb b{font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; display:block; margin-bottom:3px}
+
+footer{max-width:1180px; margin:0 auto; padding:26px 20px 40px; border-top:1px solid var(--line); font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:var(--ash); display:flex; justify-content:space-between; gap:14px; flex-wrap:wrap}
+.toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0; background:var(--bone); color:var(--void); font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:9px 16px; border:2px solid var(--void); z-index:50; transition:.25s; pointer-events:none}
+.toast[data-show="1"]{opacity:1; transform:translateX(-50%) translateY(0)}
+
+@media(max-width:780px){
+  .spine{grid-template-columns:1fr 1fr}
+  .nav{width:100%; order:3; overflow-x:auto; padding-bottom:2px; flex-wrap:nowrap}
+  .meter{order:2; margin-left:auto}
+}
+@media(max-width:520px){ .spine{grid-template-columns:1fr} .flashcard{height:264px} }
+@media(prefers-reduced-motion:reduce){ *{transition:none!important; animation:none!important} body::after{display:none} }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar__in">
+    <div class="brand" data-go="map"><b>BLACK<i>VAULT</i></b><span>Study Console · 12 Phases</span></div>
+    <div class="meter" title="Overall mastery">
+      <span>MASTERY</span><div class="meter__bar"><div class="meter__fill" id="meterFill"></div></div><span id="meterPct">0%</span>
+    </div>
+    <nav class="nav" id="nav">
+      <button data-go="map">Map</button>
+      <button data-go="study">Study</button>
+      <button data-go="drill">Drill</button>
+      <button data-go="quiz">Quiz</button>
+      <button data-go="review">Review</button>
+      <button data-go="exam">Exam</button>
+      <button data-go="threads">Threads</button>
+      <button data-go="arsenal">Arsenal</button>
+      <button data-go="case">Case</button>
+    </nav>
+  </div>
+</div>
+
+<main id="app"></main>
+
+<footer>
+  <span>BLACKVAULT // self-directed RE · MA · DFIR track</span>
+  <span id="footstat">progress saved locally</span>
+</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================ DATA ============================================================ */
+const TRACKS={DF:{name:'Digital Forensics',accent:'var(--amber)'},RE:{name:'Reverse Engineering',accent:'var(--volt)'},MA:{name:'Malware Analysis',accent:'var(--blood)'}};
+const accentOf=t=>t.length>1?'var(--bone)':TRACKS[t[0]].accent;
+
+const PHASES=[
+{n:1,id:'disk',title:'Disk & File Systems',tracks:['DF'],tag:'MBR · GPT · NTFS/ext4 · inodes · raw hex',
+ idea:`Storage is just <b>bytes</b>. A file system is the agreed map saying which bytes belong to which file — and forensics lives <i>below</i> that map, where deleted and hidden data still sit.`,
+ deep:`Walk a deletion on NTFS. The file's $MFT record gets a single flag flipped to "not in use," and the $Bitmap marks its clusters free — but neither the record nor the clusters are wiped. Until the OS reuses that MFT slot and those clusters, the whole file (resident metadata plus non-resident data runs) is recoverable. This is why "delete" is never "erase," why forensic imaging must happen before the system keeps running (every write risks reusing freed clusters), and why secure-delete tools must explicitly overwrite rather than just unlink. The same logic governs ext4 with inodes instead of MFT records. Master this one mechanism and recovery, anti-forensics, and the order of volatility all follow.`,
+ concepts:[
+  {t:`MBR vs GPT`,d:`MBR: legacy 512-byte boot sector, max 4 primary partitions, ~2 TiB ceiling (32-bit LBA). GPT: GUID-based, redundant primary+backup headers, 128 partitions by default, paired with UEFI.`},
+  {t:`NTFS & the $MFT`,d:`NTFS stores everything as a file, including its own metadata. The $MFT holds one record per file; a small enough file lives entirely inside its record — "resident" data.`},
+  {t:`ext4 & inodes`,d:`An inode holds a file's metadata plus pointers to its data blocks. The filename is only a directory entry pointing at an inode, so deleting a file unlinks the name while inode and blocks may linger.`},
+  {t:`Slack & unallocated space`,d:`Deleted content survives in unallocated space and file slack until overwritten. This persistence is the entire basis of file carving and recovery.`},
+  {t:`Journaling ($LogFile / $UsnJrnl)`,d:`NTFS and ext4 journal pending metadata changes for crash recovery — and incidentally hand forensics a change history. The USN journal is gold for "which files changed, and when."`},
+  {t:`File carving`,d:`Recovering files from raw bytes by header/footer signatures alone, ignoring the file system — how you pull deleted or fragmented data out of unallocated space (foremost, scalpel, photorec).`},
+  {t:`Reading raw hex`,d:`Magic bytes are visible directly in a hex view: MZ for PE, 7F 45 4C 46 for ELF, 50 4B for ZIP. Identity before tools.`},
+ ],
+ commands:[
+  {c:`xxd file | head`,d:`raw hex + ASCII of the first bytes (magic check)`},
+  {c:`fdisk -l disk.img`,d:`list the partition table`},
+  {c:`mmls disk.img`,d:`Sleuth Kit partition layout`},
+  {c:`fls -r -m / disk.img`,d:`recursive file listing → timeline body`},
+  {c:`istat disk.img 12345`,d:`inode / MFT-record detail for one file`},
+  {c:`photorec disk.img`,d:`signature-based file carving`},
+ ],
+ cards:[
+  {f:`How many primary partitions can MBR hold, and its size ceiling?`,b:`4 primary partitions; ~2 TiB (32-bit LBA × 512-byte sectors).`},
+  {f:`What is a "resident" file in NTFS?`,b:`A file small enough to be stored entirely inside its own $MFT record — no separate data run.`},
+  {f:`What survives a Linux \`rm\` until reuse?`,b:`The inode and its data blocks. \`rm\` only removes the directory entry (the link).`},
+  {f:`Magic bytes of an ELF binary?`,b:`7F 45 4C 46  ("\\x7FELF").`},
+  {f:`Why does file carving work at all?`,b:`Deleted data stays in unallocated space / slack until overwritten, so headers+content can be recovered by signature.`},
+  {f:`What does the USN journal ($UsnJrnl) give an investigator?`,b:`A change log of which files were created/modified/deleted and when — a ready-made timeline source.`},
+  {f:`File carving recovers data using what, ignoring the file system?`,b:`Header/footer byte signatures (magic bytes) in raw unallocated space.`},
+ ],
+ quiz:[
+  {q:`A file was deleted on ext4 minutes ago. Best recovery chance?`,o:[`Reinstall the OS`,`Carve unallocated space / recover the inode before blocks are reused`,`Check the Recycle Bin`,`Nothing — it's gone`],a:1,e:`rm only unlinks the name; the inode and blocks persist until overwritten, so carve/recover fast.`},
+  {q:`Which scheme keeps a redundant backup of its partition header?`,o:[`MBR`,`GPT`,`FAT16`,`None`],a:1,e:`GPT stores a primary header at the start and a backup at the end of the disk.`},
+  {q:`Tiny config file stored with no separate data blocks on NTFS — where does its content live?`,o:[`$Bitmap`,`Inside its $MFT record (resident)`,`Pagefile`,`$LogFile`],a:1,e:`Small files are resident: the content sits inside the ~1 KB MFT record itself.`},
+  {q:`You must image a powered-on suspect disk. Why image before continued use?`,o:[`Faster`,`Every write risks reusing freed clusters and destroying recoverable deleted data`,`Looks professional`,`No reason`],a:1,e:`Ongoing writes can overwrite unallocated clusters holding deleted evidence.`},
+ ],
+ traps:[
+  `Analyzing a live disk in place — mounting read-write alters timestamps and can reuse freed space. Image first, work on the copy.`,
+  `Trusting a single timestamp source — $SI is editable; corroborate with $FN and the USN journal.`,
+  `Forgetting slack space — the tail of a file's last cluster can hold remnants of a previous file.`,
+ ],
+ reflect:[
+  `Trace exactly what changes on disk when you rm a file on ext4 vs delete one on NTFS — what is and isn't recoverable in each?`,
+  `Why is order-of-volatility relevant even for a "dead" disk image?`,
+ ],
+ feeds:`Feeds Phase 8 (the same structures, now in RAM) and Phase 11 (MFT/registry artifacts).`},
+
+{n:2,id:'asm',title:'x86 / x64 Assembly',tracks:['RE'],tag:'registers · stack frames · calling conventions',
+ idea:`Every program — any source language — becomes machine instructions over <b>registers and memory</b>. Reverse engineering is reading that lowest layer fluently.`,
+ deep:`Read a function call at the metal. Arguments are loaded into rdi/rsi/rdx… (or pushed), then \`call target\` pushes the return address onto the stack and jumps. Inside, the prologue saves rbp and carves stack space for locals; the body does work; the epilogue (\`leave\` = mov rsp,rbp; pop rbp) tears the frame down and \`ret\` pops the saved return address back into rip. Once you can see the return address sitting on the stack waiting to be popped, stack-based exploits, ROP chains, and "why does this crash" all become legible — the same mental model that makes shellcode and unpacking readable later.`,
+ concepts:[
+  {t:`Registers`,d:`General-purpose: rax rbx rcx rdx, rsi rdi, r8–r15. Special: rsp (stack pointer), rbp (frame pointer), rip (instruction pointer), rflags. 32-bit views (eax) are the low half of the 64-bit register (rax).`},
+  {t:`The stack`,d:`Grows downward; push/pop move rsp. Holds locals, saved registers, and return addresses. A function's stack frame is anchored by rbp.`},
+  {t:`Calling conventions`,d:`System V AMD64 (Linux): integer args in rdi, rsi, rdx, rcx, r8, r9, then stack; return in rax. Windows x64: rcx, rdx, r8, r9 plus 32-byte shadow space. Know both.`},
+  {t:`Control flow`,d:`cmp/test set flags; conditional jumps (jz/jnz/jg/jl…) read those flags; call pushes a return address, ret pops it. This is how if/loops/functions look in asm.`},
+  {t:`Prologue & epilogue`,d:`Typical prologue: push rbp; mov rbp,rsp; sub rsp,N. Epilogue: leave; ret. Recognizing these instantly frames where functions begin and end.`},
+  {t:`Endianness`,d:`x86/x64 is little-endian: the least-significant byte is stored first. 0x12345678 sits in memory as 78 56 34 12 — get this wrong and every multi-byte field you read is reversed.`},
+  {t:`Addressing modes`,d:`Operands can be immediate (mov rax,5), register, or memory with base+index*scale+displacement ([rbp-8], [rax+rcx*4+16]) — the last is how arrays and structs are accessed.`},
+ ],
+ commands:[
+  {c:`objdump -d -M intel bin`,d:`disassemble in Intel syntax`},
+  {c:`gdb -q ./bin`,d:`then: disas main, layout asm`},
+  {c:`info registers`,d:`(gdb) dump all register values`},
+  {c:`x/20i $rip`,d:`(gdb) show the next 20 instructions`},
+  {c:`ndisasm -b64 shellcode.bin`,d:`flat disassembly of raw bytes`},
+ ],
+ cards:[
+  {f:`System V AMD64 integer argument order?`,b:`rdi, rsi, rdx, rcx, r8, r9 — then the stack.`},
+  {f:`Where is a function's return value placed?`,b:`rax (low half eax for 32-bit values).`},
+  {f:`Standard x64 function prologue?`,b:`push rbp ; mov rbp, rsp ; sub rsp, N.`},
+  {f:`What does rsp always point to?`,b:`The top of the stack (lowest in-use address, since the stack grows down).`},
+  {f:`First 4 integer args under Windows x64?`,b:`rcx, rdx, r8, r9 (plus 32 bytes of shadow space).`},
+  {f:`Is x86/x64 big- or little-endian?`,b:`Little-endian — least-significant byte first (0x12345678 → 78 56 34 12).`},
+  {f:`What does \`call\` physically do?`,b:`Pushes the return address onto the stack, then jumps to the target.`},
+ ],
+ quiz:[
+  {q:`In a Linux x64 call, the first integer/pointer argument is in:`,o:[`rax`,`rdi`,`rsp`,`rbx`],a:1,e:`System V AMD64 passes arg1 in rdi.`},
+  {q:`"push rbp ; mov rbp, rsp" at a function's start is the:`,o:[`epilogue`,`prologue (frame setup)`,`syscall stub`,`interrupt handler`],a:1,e:`It saves the caller's frame pointer and establishes a new frame — the prologue.`},
+  {q:`Which register decides which conditional jump is taken?`,o:[`rip`,`rflags`,`rbp`,`r15`],a:1,e:`cmp/test write flags into rflags; jz/jg/etc. read them.`},
+  {q:`Bytes 01 00 00 00 read as a little-endian 32-bit int are:`,o:[`0x01000000`,`0x00000001 (= 1)`,`0x10`,`undefined`],a:1,e:`Little-endian: 01 is the least-significant byte → value 1.`},
+  {q:`\`leave\` before \`ret\` does what?`,o:[`Nothing`,`Tears down the stack frame (mov rsp,rbp; pop rbp)`,`Calls a function`,`Sets a flag`],a:1,e:`leave restores rsp and rbp — the standard epilogue.`},
+ ],
+ traps:[
+  `Forgetting little-endian when reading hex dumps of integers or pointers.`,
+  `Confusing the 32-bit view (eax) with a separate register — it's the low half of rax.`,
+  `Assuming arguments are always on the stack — in x64 the first several are in registers.`,
+ ],
+ reflect:[
+  `Sketch the stack right after \`call\`: where is the return address, and how does overwriting a local reach it?`,
+  `Why does the same C function compile differently under System V vs Windows x64?`,
+ ],
+ feeds:`Feeds every later phase — Ghidra (5), unpacking (7), and shellcode you pull from memory (8) all bottom out here.`},
+
+{n:3,id:'binfmt',title:'PE & ELF Binary Format',tracks:['RE','MA'],tag:'headers · sections · imports · entropy',
+ idea:`An executable is a <b>structured container</b> telling the loader how to map code/data into memory and wire up imports. Packing, injection, and imports all live in this format.`,
+ deep:`Follow what the loader does with a dynamically-linked binary: it maps the PT_LOAD segments, walks the dynamic info to find needed libraries, maps them, and resolves imported symbols by filling the import table — lazily via the PLT on first call (ELF) or eagerly with BIND_NOW. The IAT (PE) / GOT (ELF) is therefore the seam between "the binary" and "the system." It's what reveals capability statically, what breaks when you dump a packed process from memory (the loader's fix-ups are gone), and what you reconstruct to make a dump runnable again. Understanding this single seam ties Phases 3, 7, and 10 together.`,
+ concepts:[
+  {t:`ELF layout`,d:`ELF header → program headers (segments, used by the loader) → section headers (used by linkers/analysis). PT_LOAD segments are what get mapped; .text/.data/.bss are sections.`},
+  {t:`p_filesz vs p_memsz`,d:`.bss occupies zero bytes on disk but nonzero bytes in memory — the gap (p_memsz − p_filesz) is zero-filled at load. A favourite spot for runtime-only data.`},
+  {t:`PE layout`,d:`DOS header (legacy "MZ" + stub) → NT headers (PE signature, File header, Optional header) → section table (.text/.rdata/.data/.idata). AddressOfEntryPoint is an RVA relative to ImageBase.`},
+  {t:`Imports & the IAT`,d:`The Import Address Table lists external functions the binary calls; the loader fills it with resolved addresses. It both reveals capability and is the thing you rebuild after unpacking.`},
+  {t:`Relocations & ASLR`,d:`Position-independent code lets the loader place the image at a random base (ASLR). Relocation entries tell the loader which addresses to patch when the actual base differs from the preferred ImageBase.`},
+  {t:`Dynamic linking (PLT/GOT)`,d:`Calls to shared-library functions go through the PLT stub and the GOT (a table of resolved addresses), often resolved lazily on first call — the machinery ltrace hooks and that malware sometimes abuses.`},
+  {t:`Entropy`,d:`High entropy in a section (near 8 bits/byte) signals compression or encryption — a strong packing tell, though not proof of malice.`},
+ ],
+ commands:[
+  {c:`readelf -a ./bin`,d:`full ELF header / segments / sections`},
+  {c:`objdump -h ./bin`,d:`section headers and sizes`},
+  {c:`rabin2 -I ./bin`,d:`binary identity + properties`},
+  {c:`rabin2 -i ./bin`,d:`imports (the IAT/GOT picture)`},
+  {c:`ent section.bin`,d:`measure entropy of a blob`},
+ ],
+ cards:[
+  {f:`.bss file size vs memory size?`,b:`0 bytes on disk, >0 in memory — zero-initialised at load.`},
+  {f:`What does the IAT contain at runtime?`,b:`Resolved addresses of every imported external function the loader filled in.`},
+  {f:`Segments vs sections — which does the OS loader use?`,b:`Segments (program headers). Sections are for the linker and for analysis.`},
+  {f:`Purpose of the PE DOS header?`,b:`Legacy MZ compatibility plus a stub before the real PE header.`},
+  {f:`Near-8.0 bits/byte entropy in a section suggests…?`,b:`Compression/encryption → likely packed (suggestive, not proof).`},
+  {f:`What is the GOT/PLT pair for?`,b:`PLT = per-import stub; GOT = table the loader fills with resolved library-function addresses (often lazily).`},
+  {f:`Why does a memory-dumped packed binary have a broken import table?`,b:`The loader/stub already resolved imports at runtime; the dump lacks the original import structure and fix-ups.`},
+ ],
+ quiz:[
+  {q:`You see a tiny import table and one huge high-entropy section. Most likely:`,o:[`Debug build`,`The binary is packed/encrypted`,`It's a driver`,`Corruption`],a:1,e:`Few imports + high-entropy section is the classic packed-binary signature.`},
+  {q:`In ELF, which structure does the kernel consult to map the file into memory?`,o:[`Section headers`,`Program headers (segments)`,`Symbol table`,`.comment`],a:1,e:`The loader maps PT_LOAD segments described by program headers.`},
+  {q:`AddressOfEntryPoint in a PE is expressed relative to:`,o:[`File offset 0`,`ImageBase (an RVA)`,`The stack`,`The IAT`],a:1,e:`It's an RVA — added to ImageBase to get the virtual entry address.`},
+  {q:`A binary calls printf via a stub that jumps through a table filled at runtime. That table is the:`,o:[`MFT`,`GOT (via the PLT stub)`,`Stack`,`$Bitmap`],a:1,e:`PLT stub → GOT entry resolved by the dynamic loader.`},
+  {q:`ASLR randomizes the load base. What makes that safe to do?`,o:[`Entropy`,`Relocations / position-independent code`,`Big sections`,`The DOS stub`],a:1,e:`Relocation info lets the loader patch absolute references for the chosen base.`},
+ ],
+ traps:[
+  `Reading sections when you should read segments (or vice versa) — the loader uses segments.`,
+  `Assuming a small on-disk size means a small program — packed images expand in memory.`,
+  `Ignoring the difference between RVAs and file offsets when navigating a PE by hand.`,
+ ],
+ reflect:[
+  `Explain why the IAT/GOT is simultaneously a capability map (for static analysis) and a problem (for unpacking).`,
+  `What in the headers would tip you off that a sample is packed before you ever run it?`,
+ ],
+ feeds:`Feeds static analysis (4), Ghidra typing (5), and is the map you fix when unpacking (7).`},
+
+{n:4,id:'static',title:'Static Malware Analysis',tracks:['MA'],tag:'strings · YARA · packing detection · hashing',
+ idea:`Learn everything you can <b>without running it</b> — identity, capability, indicators — fast and safe. Packing is the wall that eventually forces you into dynamic analysis.`,
+ deep:`Static analysis is hypothesis generation under a constraint: you never run the sample, so everything is inference from artifacts. A high-entropy section plus four imports plus a UPX0 section name doesn't tell you what the malware does — it tells you it's packed and that your static questions won't be answered until you unpack or detonate. The skill is knowing which signals are conclusive (a hardcoded .onion URL in strings is real intel) versus which only redirect your method (empty strings → escalate to FLOSS, then dynamic). Good analysts treat static output as a to-do list of hypotheses, each tagged "confirmed," "needs dynamic," or "dead end."`,
+ concepts:[
+  {t:`Hashing & similarity`,d:`SHA-256 for identity and lookup. imphash (a hash of the import table) and ssdeep (fuzzy/CTPH hashing) cluster related samples even when bytes differ.`},
+  {t:`Strings`,d:`ASCII + Unicode strings expose URLs, IPs, paths, commands, mutex names, error text. The cheapest, fastest signal — always first.`},
+  {t:`YARA`,d:`A rule language matching strings, byte patterns, and conditions across samples. The analyst's signature workhorse for detection and hunting.`},
+  {t:`Packing detection`,d:`Entropy, odd section names (UPX0/UPX1), a near-empty import table, and a tiny on-disk footprint that balloons in memory all flag packing.`},
+  {t:`Capability detection (capa)`,d:`Beyond strings, capa matches patterns of code/API use to named capabilities ("encrypt data," "spawn a process," "persist via Run key") and maps them to ATT&CK — a static behaviour preview.`},
+  {t:`Triage workflow`,d:`A repeatable order: hash → known? → file type/format → entropy/packing → strings/FLOSS → imports/capa → decide static-vs-dynamic. Discipline beats poking.`},
+  {t:`IOC provenance & the Pyramid of Pain`,d:`Record where every indicator came from. Hashes are trivial for an adversary to change; behaviours/TTPs are painful — that ranking guides what's worth extracting.`},
+ ],
+ commands:[
+  {c:`sha256sum sample`,d:`identity hash for lookup`},
+  {c:`strings -a -el sample`,d:`ASCII (-a) and 16-bit Unicode (-el) strings`},
+  {c:`yara rules.yar sample`,d:`run signature rules`},
+  {c:`capa sample`,d:`detect capabilities → ATT&CK/MBC`},
+  {c:`floss sample`,d:`recover obfuscated/stack-built strings`},
+  {c:`ssdeep -b sample`,d:`fuzzy hash for clustering`},
+ ],
+ cards:[
+  {f:`What is an imphash used for?`,b:`Clustering samples by their import-table fingerprint (same toolchain/family).`},
+  {f:`What three things can a YARA rule match on?`,b:`Strings, byte/hex patterns, and a boolean condition over them.`},
+  {f:`A near-empty import table hints at…?`,b:`Packing — the real imports are resolved at runtime by the unpacking stub.`},
+  {f:`What does FLOSS do that \`strings\` can't?`,b:`Deobfuscates encoded / stack-constructed strings that plain strings misses.`},
+  {f:`Why are file hashes low on the Pyramid of Pain?`,b:`A single byte change yields a new hash — trivial for an adversary to evade.`},
+  {f:`What does capa add over \`strings\`?`,b:`It infers named capabilities from code/API patterns and maps them to ATT&CK — a behaviour preview.`},
+  {f:`First step of a static triage workflow?`,b:`Hash the sample (identity + known-sample lookup) before anything else.`},
+ ],
+ quiz:[
+  {q:`Two samples share an imphash but have different SHA-256 values. Best interpretation:`,o:[`Identical files`,`Likely same family/toolchain, repacked or tweaked`,`Unrelated`,`Hash collision`],a:1,e:`Matching imphash with differing SHA-256 strongly suggests related builds of the same family.`},
+  {q:`\`strings\` returns almost nothing useful. Likely reason + next step:`,o:[`Benign; stop`,`Packed/obfuscated → try FLOSS, then dynamic analysis`,`It's a text file`,`Wrong tool`],a:1,e:`Empty strings output usually means packing/obfuscation — escalate to FLOSS and dynamic analysis.`},
+  {q:`Which indicator, if burned, costs an adversary the MOST to replace?`,o:[`File hash`,`C2 IP`,`Their TTPs (how they operate)`,`A registered domain`],a:2,e:`TTPs sit at the top of the Pyramid of Pain — changing behaviour is hardest.`},
+  {q:`capa reports "encrypt data using RC4" and "persist via Run key" without running anything. This is:`,o:[`Proof of detonation`,`Statically-inferred capabilities mapped to ATT&CK`,`Always a false positive`,`Dynamic analysis`],a:1,e:`capa infers capabilities from code/API patterns statically.`},
+ ],
+ traps:[
+  `Treating absence of bad strings as proof of safety — packing hides them.`,
+  `Quoting a YARA match as "it does X" when the rule only matched a string.`,
+  `Skipping provenance — an IOC you can't trace back is hard to defend later.`,
+ ],
+ reflect:[
+  `For your last sample, which static findings were conclusive vs which only told you to go dynamic?`,
+  `How would you cluster a folder of 50 samples to find families fast?`,
+ ],
+ feeds:`Feeds dynamic analysis (6) — static recon forms the hypothesis you then confirm by detonation.`},
+
+{n:5,id:'ghidra',title:'Ghidra & Disassembly',tracks:['RE'],tag:'decompiler · P-code · xrefs · struct recovery',
+ idea:`Disassemblers turn machine code into readable assembly; <b>decompilers</b> turn it into pseudo-C so you can understand logic at scale. Ghidra is the free powerhouse.`,
+ deep:`The decompiler is doing something remarkable and fallible: it reconstructs high-level control flow (if/while/for) from jumps, recovers variables from register/stack usage, and infers types from how values are used — all heuristically, via lifted P-code and analysis passes. When it shows \`*(undefined4 *)(param_1 + 8)\`, it's telling you it sees a 4-byte read at offset 8 of some pointer but doesn't know the struct. The instant you define that struct, every access becomes \`param_1->field\` and the logic snaps into focus. So RE in Ghidra is a conversation: you supply ground truth (prototypes, types, names), it propagates and re-decompiles, you read the improved output, repeat. Stripped or obfuscated binaries just mean you supply more of that ground truth yourself.`,
+ concepts:[
+  {t:`Disassembly vs decompilation`,d:`Disassembly = bytes → assembly. Decompilation = assembly → C-like pseudocode (Ghidra's killer feature). P-code is Ghidra's IR that makes analysis architecture-independent.`},
+  {t:`Cross-references (xrefs)`,d:`"Who calls this function?" / "Who reads this string or global?" Xrefs are the backbone of navigation — jump straight to every place a C2 URL is used.`},
+  {t:`Function & struct recovery`,d:`Rename functions, define data types and structs so the decompiler output stops being soup. You iteratively rebuild the program's intended shape.`},
+  {t:`Listing vs decompiler views`,d:`The listing shows annotated assembly; the decompiler shows pseudo-C. You move between them, retyping and renaming until the logic reads clearly.`},
+  {t:`P-code & analysis passes`,d:`Ghidra lifts each instruction to P-code, then runs passes (constant propagation, data-flow). Knowing it's a model explains why decompiler output is sometimes wrong and needs your corrections.`},
+  {t:`Type & prototype propagation`,d:`Tell Ghidra a function's real prototype and types and it propagates them — turning undefined4 soup into named, typed variables across every caller.`},
+  {t:`Limits of static RE`,d:`Stripped binaries, obfuscation, and indirect/computed calls all blunt static analysis — which is exactly where dynamic (6) takes over.`},
+ ],
+ commands:[
+  {c:`ghidraRun`,d:`launch GUI; import → auto-analyze`},
+  {c:`analyzeHeadless proj X -import bin`,d:`scriptable, no-GUI analysis`},
+  {c:`objdump -d -j .text bin`,d:`quick disasm without a project`},
+  {c:`r2 -A bin ; pdf @ main`,d:`radare2 analyze + print main`},
+ ],
+ cards:[
+  {f:`What is Ghidra P-code?`,b:`Ghidra's architecture-independent intermediate representation used for analysis/decompilation.`},
+  {f:`What question does an xref answer?`,b:`Where a function/string/global is called or used from (and what it references).`},
+  {f:`Why retype/rename in the decompiler?`,b:`Defining structs and meaningful names turns pseudo-C soup into readable logic.`},
+  {f:`What does "stripped" mean for RE?`,b:`Symbol names are removed, so functions are just addresses — slower to navigate.`},
+  {f:`Why is the decompiler sometimes wrong?`,b:`It's a heuristic model (lifted P-code + passes); missing type info yields approximations you correct.`},
+  {f:`You define a struct over a parameter — what happens to callers?`,b:`Ghidra propagates the type, turning offset math into named field accesses across the codebase.`},
+  {f:`What does \`*(undefined4 *)(param_1 + 8)\` signal?`,b:`A 4-byte read at offset 8 of an unknown struct — define the type to make it readable.`},
+ ],
+ quiz:[
+  {q:`You need every place a hardcoded URL string is used. Fastest move:`,o:[`Read all functions top to bottom`,`Use cross-references (xrefs) on the string`,`Run the binary`,`Grep source you don't have`],a:1,e:`Xrefs jump you directly to each use site of that string.`},
+  {q:`Decompiler output is unreadable casts and undefined4s. Best next action:`,o:[`Give up`,`Define proper data types/structs and rename variables`,`Switch to MD5`,`Reboot`],a:1,e:`Recovering types/structs is what makes the pseudo-C legible.`},
+  {q:`RE in Ghidra is best described as:`,o:[`One-pass reading`,`Iterative annotation — you supply types/names, it re-decompiles`,`Brute force`,`Running the binary`],a:1,e:`It's a feedback loop of supplying ground truth and re-reading.`},
+  {q:`Ghidra shows messy offset math like param_1 + 0x10. Highest-leverage fix:`,o:[`Rename the function`,`Define the struct/types so offsets become named fields`,`Switch to MD5`,`Re-import`],a:1,e:`Type/struct definition propagates and clarifies all accesses.`},
+ ],
+ traps:[
+  `Believing the decompiler literally — it's a model; verify against the listing when it matters.`,
+  `Not renaming/typing as you go, so you re-derive the same logic repeatedly.`,
+  `Missing indirect/virtual calls that static analysis can't resolve — note them for dynamic.`,
+ ],
+ reflect:[
+  `Pick a function you reversed: which annotations unlocked the most understanding?`,
+  `When does the decompiler mislead, and how do you catch it?`,
+ ],
+ feeds:`Feeds unpacking (7 — analyse the dumped OEP code) and protocol RE (10 — locate the crypto/send routines).`},
+
+{n:6,id:'dynamic',title:'Dynamic Malware Analysis',tracks:['MA'],tag:'API hooks · syscalls · sandbox · behavioral sigs',
+ idea:`Watch it run in a <b>sealed lab</b>. Every meaningful action crosses the kernel boundary as a syscall — and the program can't lie to the kernel about what it asks it to do.`,
+ deep:`Dynamic analysis is controlled provocation: you give the sample just enough of a believable world to make it act, while instrumenting every boundary it crosses. The kernel boundary (strace) is un-lieable because the sample must ask the OS to open files, sockets, and processes. The catch is that "enough world" is sample-specific — some need a fake C2 reply (INetSim), some need a specific filename to encrypt, some need to believe they're not in a VM. So a "dormant" run isn't failure; it's the sample telling you a precondition isn't met. Your job is to read the syscall trace for the check that failed — a VM-detection read, a missing-file open returning ENOENT, a connect() to a dead host — supply what it wanted, and re-detonate from a clean snapshot.`,
+ concepts:[
+  {t:`The kernel boundary`,d:`File, network, process, and persistence actions all become syscalls. Obfuscation hides code, not the syscalls it issues — so you sit at that boundary and take notes.`},
+  {t:`strace vs ltrace`,d:`strace traces syscalls (the un-lieable layer); ltrace traces library calls. A statically-linked sample makes ltrace nearly useless — lean on strace.`},
+  {t:`Sandbox & snapshots`,d:`Isolate the network, kill shared folders/clipboard, and snapshot before every detonation so you can roll back to clean. Containment is the whole game.`},
+  {t:`API hooking`,d:`Intercept a call to read its arguments/returns. On Linux: LD_PRELOAD interposition or Frida. On Windows: Procmon / API Monitor. The core trick behind behavioural monitors.`},
+  {t:`Behavioral signatures`,d:`Instead of byte signatures, describe what a sample does: writes to a Run key, drops to TEMP, beacons every N seconds. These survive repacking — higher on the Pyramid of Pain.`},
+  {t:`Simulated services (INetSim/FakeNet)`,d:`Fake DNS/HTTP/etc. so an offline sample gets plausible responses and reveals its full behaviour — without ever touching the real internet.`},
+  {t:`Evasion & "dormant" runs`,d:`Anti-debug (ptrace self-attach), anti-VM checks, time bombs, and trigger conditions explain a sample that "does nothing" — it's checking whether it's being watched.`},
+ ],
+ commands:[
+  {c:`strace -f -e trace=file,network,process -o run.log ./s`,d:`syscall capture, follow forks`},
+  {c:`ltrace ./s`,d:`library-call trace (dynamic binaries)`},
+  {c:`sudo tcpdump -i any -w run.pcap`,d:`capture C2 traffic in the lab`},
+  {c:`inotifywait -mr ~/bait`,d:`live filesystem events`},
+  {c:`virsh snapshot-revert hermes clean`,d:`roll the VM back to clean`},
+ ],
+ cards:[
+  {f:`Why can't a packed binary hide its file/network activity from strace?`,b:`Those actions are syscalls; the kernel sees every request regardless of code obfuscation.`},
+  {f:`strace vs ltrace — one-line difference?`,b:`strace = kernel syscalls; ltrace = userland library calls.`},
+  {f:`Why snapshot before every detonation?`,b:`To roll back to a known-clean state — otherwise your "clean" VM becomes part of the experiment.`},
+  {f:`How does LD_PRELOAD hook a libc call?`,b:`Your .so loads first; your symbol shadows libc's, and you call the real one via dlsym(RTLD_NEXT,…).`},
+  {f:`Sample connects once then exits doing nothing — two explanations?`,b:`(1) Anti-analysis fired, or (2) it needs a live C2 response — simulate services (INetSim) and retry.`},
+  {f:`Why do behavioral signatures survive repacking?`,b:`They describe actions (drop, persist, beacon), not bytes — higher on the Pyramid of Pain.`},
+  {f:`What does INetSim/FakeNet provide and why?`,b:`Fake network services so an offline sample gets responses and reveals behaviour without real internet.`},
+ ],
+ quiz:[
+  {q:`Your target is statically linked. Which tool is most informative?`,o:[`ltrace`,`strace`,`readelf`,`file`],a:1,e:`Static linking removes the PLT calls ltrace hooks; strace still sees all syscalls.`},
+  {q:`A sample checks ptrace(PTRACE_TRACEME) at startup. This is:`,o:[`A crash`,`An anti-debugging self-attach`,`Normal logging`,`A syscall error`],a:1,e:`A process can be traced only once; TRACEME blocks a debugger from attaching later.`},
+  {q:`Best way to make a phone-home sample reveal its C2 behaviour in the lab:`,o:[`Give it real internet`,`Simulate services (INetSim/FakeNet) so it gets responses`,`Block all traffic`,`Run it twice`],a:1,e:`A live-looking response keeps the sample talking; a dead socket makes it give up.`},
+  {q:`strace shows the sample connect() to its C2, get RST, and exit. Best next step:`,o:[`Conclude benign`,`Run INetSim so connect() succeeds and it continues`,`Reboot`,`Delete it`],a:1,e:`A live-looking response keeps it talking.`},
+  {q:`Which is higher on the Pyramid of Pain for defenders to rely on?`,o:[`The sample's SHA-256`,`A behavioral signature (beacons every 60s + drops to TEMP)`,`Its file size`,`Its icon`],a:1,e:`Behaviors/TTPs are far costlier for adversaries to change than a hash.`},
+ ],
+ traps:[
+  `Detonating without a snapshot, contaminating your clean baseline.`,
+  `Giving the sample real internet and leaking/joining a botnet — simulate instead.`,
+  `Calling a dormant sample benign instead of finding the unmet trigger.`,
+ ],
+ reflect:[
+  `For your Encoder run, which boundary (file/net/process) gave the most signal, and why?`,
+  `List three preconditions a sample might check before acting, and how you'd satisfy each.`,
+ ],
+ feeds:`Feeds unpacking (7 — find OEP at runtime), memory (8 — same process in RAM), network (9 — that pcap).`},
+
+{n:7,id:'unpack',title:'Unpacking & Binary Patching',tracks:['MA','RE'],tag:'OEP hunting · IAT fix · NOP patching',
+ idea:`The file on disk is <b>never what runs</b>. The stub unwraps the real code in memory and jumps to the Original Entry Point — be standing there with a dump in hand.`,
+ deep:`Unpacking is a race to one instant. The packer's stub allocates memory, decompresses/decrypts the original into it, rebuilds enough of the import table to function, then performs the tail jump to the OEP. Dump one instruction too early and the payload is incomplete; one moment too late and the stub may have deleted its scratch buffers. Hardware breakpoints win because they trap on execute of the freshly-written region without modifying it — unlike software breakpoints, which patch a 0xCC byte that anti-tamper code can detect. After the dump you hold a snapshot of running memory pretending to be a file, so you must convert virtual layout back to file layout (sections, alignment) and replace the loader's runtime IAT fix-ups with a static, rebuildable import table. That conversion is the real craft of Phase 7.`,
+ concepts:[
+  {t:`What a packer does`,d:`Compresses/encrypts the original and prepends a stub that restores it at runtime. It's the wall that made static analysis (4) hit a dead end. Difficulty ladder: UPX → ASPack → Themida/VMProtect.`},
+  {t:`Finding the OEP`,d:`Watch for the "tail jump" — the stub's final jump into freshly-unpacked code. Hardware breakpoints on the written-then-executed region, or the pushad/popad stack-balance trick, land you on it.`},
+  {t:`Memory dump`,d:`At the OEP the real code is decrypted in RAM. Dump that image out — dumping before the OEP captures still-encrypted noise.`},
+  {t:`IAT reconstruction`,d:`A raw dump's imports are broken because the stub resolved them at runtime. Rebuild the Import Address Table (Scylla on Windows) so the dump is analysable and ideally runnable.`},
+  {t:`Binary patching`,d:`NOP out a check (anti-debug/license) or invert a conditional jump (jz↔jnz). Live patches in the debugger are temporary; on-disk patches must preserve size/alignment to stay valid.`},
+  {t:`Stolen bytes & IAT obfuscation`,d:`Advanced packers move the first OEP instructions into the stub ("stolen bytes") and scramble the IAT, so even a correct dump won't run until you restore both — a step beyond plain UPX.`},
+  {t:`Dump-then-rebuild pipeline`,d:`Break at OEP → dump image → fix the entry point → reconstruct imports → fix section sizes/alignment → validate it loads. Each step has its own failure mode.`},
+ ],
+ commands:[
+  {c:`upx -d packed -o out`,d:`trivial UPX unpack (the easy case)`},
+  {c:`ent packed ; ent original`,d:`see the entropy jump from packing`},
+  {c:`(gdb) hbreak *0xADDR`,d:`hardware breakpoint near the tail jump`},
+  {c:`(gdb) dump memory oep.bin $s $e`,d:`dump the unpacked region`},
+  {c:`x64dbg + Scylla`,d:`(Windows) dump at OEP + rebuild IAT`},
+ ],
+ cards:[
+  {f:`Why is the on-disk file "never what runs" when packed?`,b:`The stub decrypts/decompresses the real code into memory at runtime; disk only holds the wrapper.`},
+  {f:`What is the "tail jump"?`,b:`The stub's final jump into the unpacked code — it lands on (or right before) the OEP.`},
+  {f:`Why are imports broken in a raw memory dump?`,b:`The stub resolved them at runtime; the dump lost the original import structure → rebuild the IAT.`},
+  {f:`NOP vs jump-inversion to defeat a check — when each?`,b:`NOP to delete a call/comparison; invert (jz↔jnz) to force the other branch of a decision.`},
+  {f:`Entropy spikes on a packed section — does that prove malware?`,b:`No. Plenty of benign software is packed/compressed; entropy is suggestive, not proof.`},
+  {f:`What are "stolen bytes"?`,b:`OEP instructions relocated into the stub, so a naive dump is missing its real entry code until restored.`},
+  {f:`Why prefer hardware breakpoints for OEP hunting?`,b:`They trap on execute without patching memory (no 0xCC), so anti-tamper checks can't spot them.`},
+ ],
+ quiz:[
+  {q:`You dump the process too early, before the OEP. Result:`,o:[`Perfect unpack`,`You capture still-encrypted/partial code`,`Faster analysis`,`IAT auto-fixes`],a:1,e:`Before the OEP the payload isn't fully decrypted — you dump noise.`},
+  {q:`After dumping at OEP the binary won't resolve any APIs. You need to:`,o:[`Re-pack it`,`Reconstruct the IAT (e.g. Scylla)`,`Delete .text`,`Change the hash`],a:1,e:`Rebuilding the Import Address Table relinks the dump to its imports.`},
+  {q:`A sample is protected with VMProtect (virtualized). Smart move:`,o:[`Grind manually for days`,`Recognize the virtualized packer and switch to emulation/automation`,`NOP everything`,`Give up entirely`],a:1,e:`Virtualized packers defeat naive manual unpacking — change strategy.`},
+  {q:`A software breakpoint at the OEP gets detected and the sample bails. Switch to:`,o:[`A print statement`,`A hardware breakpoint (no memory patch)`,`MD5`,`A reboot`],a:1,e:`Hardware breakpoints don't write 0xCC, evading anti-tamper checks.`},
+ ],
+ traps:[
+  `Software breakpoints tripping anti-tamper — use hardware breakpoints.`,
+  `Dumping before the tail jump completes (incomplete payload).`,
+  `Stopping at "it dumped" without rebuilding imports / fixing layout so it loads.`,
+ ],
+ reflect:[
+  `Describe the exact instant of the tail jump and why being one instruction off ruins the dump.`,
+  `What distinguishes a packer you should unpack manually from one you should emulate?`,
+ ],
+ feeds:`Feeds memory forensics (8 — same dump-from-RAM instinct) and protocol RE (10 — analyse the unpacked payload).`},
+
+{n:8,id:'memory',title:'Memory Forensics',tracks:['DF'],tag:'EPROCESS · VAD trees · injected shellcode',
+ idea:`Disk lies; <b>RAM</b> doesn't. Fileless and packed malware sits fully decrypted in memory while it runs. Kernel structures turn raw bytes into "here are the processes."`,
+ deep:`Volatility is X-ray vision into a frozen kernel. Every plugin is really a structured walk of kernel objects: pslist follows EPROCESS.ActiveProcessLinks; pstree adds the parent PID to reconstruct lineage; ldrmodules compares three independent module lists (load/init/mem order) so a DLL present in memory but missing from a load list screams reflective injection. The recurring detection logic is the cross-view idea: malware can edit one bookkeeping list but rarely all of them consistently, and it certainly can't remove its code from the memory it needs to execute. So the instinct is never "does this list look clean?" but "do the lists that should agree, agree?" — and when they don't, dump the offending region and disassemble it back in Ghidra.`,
+ concepts:[
+  {t:`Acquisition & symbols`,d:`Capture with LiME (Linux) / WinPmem, or use a VM snapshot (.raw/.vmem). Volatility needs the exact OS build — Vol2 "profiles", Vol3 symbol tables. Wrong symbols → garbage output.`},
+  {t:`EPROCESS & ActiveProcessLinks`,d:`Each process is an EPROCESS record in a doubly-linked list. pslist walks the list; DKOM hides a process by unlinking its entry from that list.`},
+  {t:`pslist vs psscan (cross-view)`,d:`psscan scans memory for pool tags matching EPROCESS, so it finds processes that were unlinked. Anything in psscan but not pslist is your prime suspect.`},
+  {t:`VAD tree & injection`,d:`Virtual Address Descriptors describe memory regions. An executable private region with no backing file is the signature of injected code/shellcode — what malfind hunts.`},
+  {t:`Process hollowing & injection variants`,d:`Hollowing starts a legit process suspended, unmaps its image, writes malicious code, and resumes it — the name looks benign but memory doesn't match the on-disk file. ldrmodules' three-list cross-view exposes the mismatch.`},
+  {t:`Recovering artifacts from RAM`,d:`Beyond processes: cmdline (full command lines), netscan (connections), filescan/dumpfiles (cached files), hashdump/lsadump (credentials), clipboard and console history — RAM is a trove.`},
+  {t:`Extract & pivot`,d:`malfind dumps injected regions for disassembly, procdump pulls a process, netscan recovers C2 endpoints — bridging straight to network forensics.`},
+ ],
+ commands:[
+  {c:`vol -f mem.raw windows.info`,d:`identify the image / build`},
+  {c:`vol -f mem.raw windows.pslist`,d:`processes via the active list`},
+  {c:`vol -f mem.raw windows.psscan`,d:`processes via pool scan (catches hidden)`},
+  {c:`vol -f mem.raw windows.malfind`,d:`find injected RX private memory`},
+  {c:`vol -f mem.raw windows.netscan`,d:`recover network connections`},
+  {c:`vol -f mem.raw windows.cmdline`,d:`full command lines per process`},
+ ],
+ cards:[
+  {f:`Why can memory reveal malware disk analysis misses?`,b:`Fileless/packed/encrypted code is fully decrypted and resident in RAM while running.`},
+  {f:`pslist vs psscan — why does the difference catch hidden processes?`,b:`pslist walks the EPROCESS linked list (which DKOM can unlink); psscan scans pool tags and finds unlinked records.`},
+  {f:`What memory region screams "injected code"?`,b:`An executable (RX/RWX) private region with no mapped file behind it.`},
+  {f:`Why does Volatility demand the exact OS build/symbols?`,b:`It overlays kernel struct definitions on raw bytes — wrong definitions = meaningless output.`},
+  {f:`Does a clean pslist prove a machine is clean?`,b:`No — always cross-view with psscan; a hidden process won't appear in pslist.`},
+  {f:`How does process hollowing evade a glance at the process list?`,b:`A legit process is started then its image swapped for malicious code — name is benign but memory ≠ the on-disk file.`},
+  {f:`What does ldrmodules cross-view to catch injection?`,b:`Three independent module lists (load/init/memory order); a module in one but not the others flags reflective/hollowed code.`},
+ ],
+ quiz:[
+  {q:`A process appears in psscan but NOT in pslist. Most likely:`,o:[`Normal`,`Hidden via DKOM (EPROCESS unlinked)`,`A typo`,`Kernel bug`],a:1,e:`Pool-scan finding what the active list doesn't is the classic DKOM-hidden process.`},
+  {q:`malfind flags a region. Before calling it malware, remember:`,o:[`It's always malware`,`Legit JIT/.NET can also create RX private memory`,`Reboot first`,`Ignore it`],a:1,e:`malfind has false positives — JIT engines allocate executable private memory too.`},
+  {q:`You imaged RAM only AFTER rebooting. The volatile evidence is:`,o:[`Fine`,`Largely gone (order of volatility)`,`In the pagefile only`,`Recoverable from BIOS`],a:1,e:`Reboot wipes RAM — capture memory before powering down.`},
+  {q:`svchost.exe has memory that doesn't match svchost on disk. Most likely:`,o:[`Update`,`Process hollowing/injection`,`Normal`,`Corruption`],a:1,e:`Benign name + mismatched memory image is the hollowing signature.`},
+  {q:`The unifying detection logic across pslist/psscan, ldrmodules, modscan is:`,o:[`Bigger is better`,`Cross-view: compare sources that should agree`,`Trust one list`,`Reboot`],a:1,e:`Cross-view triangulation is the core memory-forensics instinct.`},
+ ],
+ traps:[
+  `Wrong symbols/profile → believable garbage. Verify with windows.info first.`,
+  `Treating every malfind hit as malicious (JIT/.NET false positives).`,
+  `Stopping at detection without dumping + disassembling the injected region.`,
+ ],
+ reflect:[
+  `Explain hollowing step by step and which Volatility plugin exposes each part.`,
+  `Why can't a running implant fully hide its own code from a memory scan?`,
+ ],
+ feeds:`Feeds rootkit detection (11 — same cross-view) and the capstone (12 — RAM is one pivot of many).`},
+
+{n:9,id:'network',title:'Network Forensics',tracks:['DF'],tag:'PCAP · C2 beaconing · JA3 · DNS tunneling',
+ idea:`Malware has to <b>talk</b> to get paid. Bytes on the wire are ground truth even when the code is obfuscated and memory is wiped — the skill is hearing the heartbeat in the noise.`,
+ deep:`The mental shift in network forensics is from packets to conversations and behaviours. A single packet is rarely interesting; the pattern is. Beaconing is a behaviour (periodicity in a time-series), JA3 is an identity (a fingerprint of how a client negotiates TLS), DNS tunneling is a statistical anomaly (entropy and volume of subdomains), and exfiltration is a flow shape (sustained outbound to one host). Zeek operationalizes this by pre-summarizing every connection into typed logs, so you stop reading bytes and start asking questions: which internal hosts talked to never-before-seen domains, which TLS connections share a JA3 with known C2, which DNS clients issued thousands of long TXT queries. Encryption removes payload but not metadata — and aggregated metadata is where the adversary's behaviour is impossible to hide.`,
+ concepts:[
+  {t:`Reading a PCAP`,d:`Start at Statistics → Protocol Hierarchy / Conversations, then drill in and Follow Stream. Export Objects recovers transferred files. Don't scroll packets — pivot from summaries.`},
+  {t:`Beaconing`,d:`C2 check-ins are periodic. Plot packets over time (IO graph): a steady interval — with or without jitter — is the implant's heartbeat, visible without any signature.`},
+  {t:`JA3 / JA3S`,d:`A hash of specific TLS ClientHello fields (versions, ciphers, extensions, curves). It fingerprints the handshake, so you identify tooling without decrypting.`},
+  {t:`DNS abuse`,d:`DNS tunneling hides C2/exfil in long, high-entropy subdomains and TXT records. High query volume + random-looking labels betray it despite DNS being "normal" everywhere.`},
+  {t:`Encrypted-traffic analysis`,d:`Even without decryption: packet sizes/timing, TLS record patterns, certificate oddities, and HTTP/2 fingerprints can identify tooling and separate human browsing from automated beacons.`},
+  {t:`Zeek for structured logs`,d:`Zeek turns a pcap into typed logs (conn/dns/ssl/http/files) — turning "scroll 2 GB of packets" into "query a database of connections," which is how pros triage at scale.`},
+  {t:`Extract & enrich`,d:`Carve a dropped payload from HTTP → hash → feed back into static/dynamic analysis. Suricata adds signatures as a force multiplier.`},
+ ],
+ commands:[
+  {c:`tshark -r cap.pcap -q -z conv,ip`,d:`IP conversation summary`},
+  {c:`tshark -r cap.pcap -Y "http.request"`,d:`filter HTTP requests`},
+  {c:`zeek -r cap.pcap`,d:`generate conn/dns/ssl protocol logs`},
+  {c:`suricata -r cap.pcap -S rules`,d:`run IDS signatures over a pcap`},
+  {c:`Wireshark: Export Objects → HTTP`,d:`carve transferred files`},
+ ],
+ cards:[
+  {f:`Why is a PCAP "ground truth" even against obfuscated malware?`,b:`Communication leaves the host as real bytes — obfuscation/memory-wiping can't change what was sent.`},
+  {f:`How do you spot a beacon with no signature?`,b:`Plot packets over time; a periodic interval (steady or jittered) is the heartbeat.`},
+  {f:`What does JA3 actually hash?`,b:`Selected TLS ClientHello fields (versions, ciphers, extensions, curves) — handshake metadata, not the payload.`},
+  {f:`What makes DNS tunneling visible?`,b:`Abnormal query volume + long, high-entropy subdomains / heavy TXT usage.`},
+  {f:`You carved a file from a pcap; VT shows nothing. Is it safe?`,b:`No — "unknown to VT" ≠ benign. Analyse it yourself (static + dynamic).`},
+  {f:`What does Zeek turn a pcap into, and why does that help?`,b:`Typed logs (conn/dns/ssl/http/files) — you query connections like a database instead of scrolling packets.`},
+  {f:`Two ways to ID tooling in encrypted traffic besides JA3?`,b:`Packet size/timing patterns and TLS/cert anomalies (also HTTP/2 fingerprints).`},
+ ],
+ quiz:[
+  {q:`Beacon at exactly 60s with zero jitter vs 60s ±30%. The jittered one implies:`,o:[`Broken malware`,`A more evasion-aware implant`,`Network lag only`,`Nothing`],a:1,e:`Randomized intervals are a deliberate detection-evasion feature of modern C2.`},
+  {q:`Traffic is all HTTPS, so you assume you're blind. You can still get:`,o:[`Nothing`,`JA3, SNI, cert details, timing`,`The plaintext`,`The private key`],a:1,e:`Encrypted ≠ opaque — handshake metadata and timing still talk.`},
+  {q:`Fastest way to begin triaging an unknown 2 GB pcap:`,o:[`Scroll packet by packet`,`Statistics → Protocol Hierarchy / Conversations, then drill`,`Export every packet`,`Random sampling`],a:1,e:`Start from summary statistics and pivot down — never scroll a large capture.`},
+  {q:`You have a 4 GB pcap; find hosts talking to new domains. Best approach:`,o:[`Scroll Wireshark`,`Zeek logs → query dns.log/conn.log`,`Export all packets`,`Guess`],a:1,e:`Zeek pre-summarizes into queryable typed logs for scale triage.`},
+ ],
+ traps:[
+  `Scrolling packets instead of starting from summaries / Zeek logs.`,
+  `Assuming encrypted = invisible — metadata still talks.`,
+  `Flagging any periodic traffic as C2 without excluding legit beacons (updates/telemetry).`,
+ ],
+ reflect:[
+  `How would you separate a 60s ±20% C2 beacon from a software update check?`,
+  `What questions would you ask Zeek logs first in an unknown-intrusion pcap?`,
+ ],
+ feeds:`Feeds protocol RE (10 — pair these bytes with the code) and the capstone (12 — the C2 timeline).`},
+
+{n:10,id:'protocol',title:'Protocol RE & C2 Analysis',tracks:['RE','MA'],tag:'custom binary protocols · Frida · PCAP+bin',
+ idea:`When malware speaks its own language, you <b>reverse the dictionary</b> — pairing wire bytes with the code that wrote them until you can read, and even speak, the protocol.`,
+ deep:`Protocol RE closes the loop between Phase 9 (what's on the wire) and Phase 5 (what the code does). The decisive move is finding the function that sits between plaintext and the socket — the encrypt-then-send routine — because hooking it with Frida hands you both the plaintext and, by reading its arguments, the key. From there you reconstruct the grammar: framing (how messages are bounded), opcodes (the command vocabulary), and session state (handshake, counters, key rotation). Done well, you can write a parser that turns a captured stream into a transcript of the operator's commands, extract the embedded config for intel, and derive network signatures (a magic byte sequence, a JA3, a beacon cadence) for detection. The artifact isn't just understanding — it's a decoder, IOCs, and rules a defender can deploy.`,
+ concepts:[
+  {t:`Pairing wire ↔ code`,d:`A captured packet is meaningless bytes until you find the function that built it. The pcap shows what was sent; the binary shows how. Neither half alone is enough.`},
+  {t:`Framing & message anatomy`,d:`Length-prefix vs delimiter vs fixed-size framing; headers, opcodes, sequence numbers, magic bytes, checksums. Get endianness wrong on a length field and every frame turns to garbage.`},
+  {t:`Frida (the live bridge)`,d:`Attach to the running process and hook the encrypt-before-send routine to capture plaintext-in → ciphertext-out. Interceptor.attach + reading argument memory hands you the key/algorithm by observation.`},
+  {t:`Writing a decoder`,d:`In Python: parse the captured stream into frames, decrypt, and print the commands. A 90%-then-desync decoder usually means a framing/padding/key-rotation mistake.`},
+  {t:`Config / key extraction`,d:`Many implants carry an embedded, often-encrypted config (C2 addresses, keys, campaign IDs). Extracting it — statically or by hooking the decrypt routine — yields high-value intel and detections.`},
+  {t:`State machines & sessions`,d:`Real protocols have handshakes, sequence numbers, and per-session keys. A decoder that ignores state desyncs; model the protocol as states/transitions, not just a frame format.`},
+  {t:`Recognition & active analysis`,d:`Learn the look of Cobalt Strike beacon, Metasploit, AsyncRAT, and Mirai's CNC. Stand up a contained fake C2 to observe how the client reacts to commands.`},
+ ],
+ commands:[
+  {c:`frida-trace -i "send" -p PID`,d:`auto-hook send() and log buffers`},
+  {c:`Interceptor.attach(addr,{onEnter(a){…}})`,d:`hook a function, read its args`},
+  {c:`frida -l hook.js -f ./sample`,d:`spawn + instrument a sample`},
+  {c:`python decode_c2.py cap.bin`,d:`your own frame parser/decryptor`},
+ ],
+ cards:[
+  {f:`A captured C2 packet is bytes — what two artifacts give it meaning?`,b:`The pcap (what was sent) + the binary/code (how it was built). Neither alone suffices.`},
+  {f:`Why is Frida-hooking the encrypt function stronger than offline crypto attacks?`,b:`You read plaintext and key directly from memory as the function runs — no need to break the cipher.`},
+  {f:`Length-prefix vs delimiter framing — how to tell from a pcap?`,b:`Length-prefix: a leading size field matches body length. Delimiter: a recurring terminator ends each message.`},
+  {f:`Your decoder parses 90% then desyncs — usual culprits?`,b:`Wrong framing/endianness, unaccounted padding, or per-session key rotation.`},
+  {f:`Why still disassemble Mirai when you have the source?`,b:`To practise pairing wire↔code and confirm a real build matches your reading — the skill, not the answer.`},
+  {f:`What high-value intel is often embedded in an implant?`,b:`An (often encrypted) config: C2 addresses, keys, campaign/builder IDs.`},
+  {f:`Where in the code is the highest-leverage hook for protocol RE?`,b:`The encrypt-before-send routine — it exposes plaintext and (via its args) the key.`},
+ ],
+ quiz:[
+  {q:`You hook the crypto routine too late in the call chain. You capture:`,o:[`Plaintext`,`Already-encrypted data`,`The key`,`Nothing useful — wrong vantage point`],a:1,e:`Hook position matters: too late and the buffer is already encrypted.`},
+  {q:`Parsing a length field gives absurd frame sizes. First thing to check:`,o:[`Re-download the pcap`,`Endianness of the length field`,`Your CPU`,`The hash`],a:1,e:`Big/little-endian mismatch on the length field is the classic cause of garbage frames.`},
+  {q:`Best way to see how a client reacts to specific C2 commands:`,o:[`Passive pcap only`,`Stand up a contained fake C2 and reply`,`Read the manual`,`Run on the internet`],a:1,e:`A fake C2 elicits behaviour passive capture can't — kept fully in the lab.`},
+  {q:`Your C2 decoder works for the first messages then produces garbage. Most likely:`,o:[`CPU`,`Per-session key rotation / unmodeled sequence state`,`Disk full`,`Endianness only`],a:1,e:`Real protocols rotate keys / use counters — model the session state.`},
+ ],
+ traps:[
+  `Guessing structure from the wire when the binary states it exactly.`,
+  `Modeling only the frame format and ignoring handshake/session state.`,
+  `Running active analysis (fake C2/replay) anywhere reachable outside the lab.`,
+ ],
+ reflect:[
+  `For a protocol you reversed, where exactly did plaintext exist in the call chain?`,
+  `Turn one finding into a Suricata rule — what bytes/behavior do you key on?`,
+ ],
+ feeds:`Feeds the capstone (12 — decode the operator's commands and turn them into detections).`},
+
+{n:11,id:'rootkit',title:'Rootkits & Forensic Artifacts',tracks:['MA','DF'],tag:'DKOM · MFT · registry · event logs',
+ idea:`A rootkit's job is to make you look in the <b>wrong place</b>. The counter is cross-view: no rootkit lies consistently <i>everywhere</i>, so triangulate sources that should agree.`,
+ deep:`Rootkits and anti-forensics share one assumption you exploit: that corrupting a single source of truth is enough. It never is, because the system maintains overlapping, independently-updated records. Timestomp the $SI timestamps and the kernel-set $FN still disagrees. Unlink an EPROCESS and the pool-tag scan still finds it. Clear the event log and event 1102 records the clear. Delete the file and AmCache/ShimCache still prove it executed. So the DFIR method is to enumerate the catalog of overlapping sources — memory lists, MFT attributes, registry execution stores, multiple log providers, the USN journal — and triangulate. The contradiction between sources that should agree is the fingerprint of tampering. Detection isn't one magic artifact; it's the disagreement across many.`,
+ concepts:[
+  {t:`What rootkits do`,d:`Stealth + persistence at high privilege. User-mode (API/inline hooks) vs kernel-mode (SSDT hooks, DKOM, drivers); bootkits like TDL4/LoJax survive below the OS. Each technique leaves a detectable inconsistency.`},
+  {t:`DKOM & detection`,d:`Direct Kernel Object Manipulation unlinks EPROCESS/driver records to hide them. Detect via cross-view: psscan vs pslist, modscan vs modules — the same pattern as Phase 8.`},
+  {t:`MFT & timestomping`,d:`Compare $STANDARD_INFORMATION vs $FILE_NAME timestamps. Common tools edit $SI but not the kernel-maintained $FN — a mismatch exposes the forgery.`},
+  {t:`Registry execution evidence`,d:`ShimCache (AppCompatCache) and AmCache record that a binary was present/executed — evidence that survives even after the file is deleted. Plus Run keys/services for persistence.`},
+  {t:`Event logs & timelines`,d:`EVTX IDs: 4624 logon, 4688 process creation, 7045 service install, 1102 log cleared. The clear itself is a finding. plaso fuses every artifact into one super-timeline.`},
+  {t:`Persistence taxonomy`,d:`Where malware hides to survive reboot: Run/RunOnce keys, services (7045), scheduled tasks, WMI subscriptions, startup folders, and (Linux) cron/systemd/.bashrc. Knowing the catalog is how you hunt it.`},
+  {t:`Anti-forensics & its residue`,d:`Timestomping, log clearing (1102), secure delete, and USN-journal wiping each remove one trace but leave another — a $FN/$SI mismatch, a cleared-log event, a gap. Tampering is itself evidence.`},
+ ],
+ commands:[
+  {c:`vol -f mem.raw windows.psscan`,d:`cross-view vs pslist for DKOM`},
+  {c:`MFTECmd -f $MFT --csv .`,d:`parse MFT (find $SI/$FN mismatch)`},
+  {c:`EvtxECmd -d C:\\evtx --csv .`,d:`parse Windows event logs`},
+  {c:`AppCompatCacheParser / AmcacheParser`,d:`execution evidence from registry`},
+  {c:`log2timeline.py out.plaso image`,d:`build a super-timeline`},
+ ],
+ cards:[
+  {f:`Why is cross-view the master anti-rootkit technique?`,b:`No rootkit can lie consistently across every independent source — a discrepancy reveals it.`},
+  {f:`$STANDARD_INFO vs $FILE_NAME timestamps — why does the gap expose timestomping?`,b:`Common anti-forensic tools edit $SI but not the kernel-maintained $FN, so they disagree.`},
+  {f:`How can you prove a deleted binary executed?`,b:`ShimCache/AmCache (and Prefetch) retain execution/presence evidence after the file is gone.`},
+  {f:`Event ID 1102 means what, and why does it matter?`,b:`The security log was cleared — the clear itself is a finding (the attacker tipping their hand).`},
+  {f:`Process hidden from \`ps\` on Linux — two sources to cross-check?`,b:`/proc enumeration vs ps, plus a memory image (psscan-style) — triangulate.`},
+  {f:`Name four common Windows persistence locations.`,b:`Run/RunOnce keys, services (7045), scheduled tasks, WMI subscriptions (also startup folder).`},
+  {f:`Anti-forensic techniques share what exploitable assumption?`,b:`That corrupting one source of truth suffices — overlapping records expose the contradiction.`},
+ ],
+ quiz:[
+  {q:`A file's $SI says 2019 but $FN says last week. Conclusion:`,o:[`Clock drift`,`Timestomping — $SI was forged`,`Normal`,`Corruption`],a:1,e:`$FN (kernel-set) disagreeing with $SI (tool-editable) is the timestomp signature.`},
+  {q:`Security log is empty and you find a 1102 event. This means:`,o:[`No activity occurred`,`Logs were cleared — treat the clear as evidence`,`Logging was off`,`A backup ran`],a:1,e:`Absence of logs ≠ absence of activity; 1102 shows deliberate clearing.`},
+  {q:`You suspect a kernel rootkit hiding a process. Best detection approach:`,o:[`Trust Task Manager`,`Cross-view psscan vs pslist (and modscan vs modules)`,`Reinstall`,`Check the desktop`],a:1,e:`Cross-view memory analysis catches DKOM-unlinked objects.`},
+  {q:`To hunt persistence broadly, you enumerate:`,o:[`Only Run keys`,`The full catalog: Run keys, services, tasks, WMI, startup (+Linux cron/systemd)`,`The desktop`,`Nothing`],a:1,e:`Persistence has many homes; knowing the catalog is the hunt.`},
+ ],
+ traps:[
+  `Trusting any single source the attacker could touch — triangulate.`,
+  `Reading only $SI (editable) and missing $FN.`,
+  `Reading "no logs" as "no activity" — clearing is the signal.`,
+ ],
+ reflect:[
+  `List five persistence spots and the artifact that reveals each.`,
+  `Why is a cleared log sometimes more useful than an intact one?`,
+ ],
+ feeds:`Feeds the capstone (12 — artifacts + timeline are the spine of the final reconstruction).`},
+
+{n:12,id:'capstone',title:'Full Investigation Scenario',tracks:['DF','RE','MA'],tag:'end-to-end attack reconstruction',
+ idea:`The <b>orchestra</b>. No single source tells the story — you pivot disk↔memory↔network↔binary, each finding raising the next question, and deliver a provenance-backed, ATT&CK-mapped narrative + detections.`,
+ deep:`The capstone is where the three tracks become one motion. You hold an IOC — say a process name from a memory image — and you walk it across every source: find its file via the MFT, its execution via AmCache, its persistence via a 7045 service-install event, its C2 via the pcap (beacon + JA3), and its intent via reversing the carved, unpacked binary. Each pivot answers a kill-chain question and raises the next. The discipline that separates a report from a guess is provenance: every claim cites the artifact it rests on, contradictions are surfaced rather than smoothed, and the narrative admits what the evidence does not prove. Then you close the loop — turning findings into Sigma/Suricata/YARA — because the point of understanding the intrusion is to detect the next one. That arc, IOC → cross-source reconstruction → provenance-backed narrative → deployable detections, is the job you've been building toward since Phase 1's raw hex.`,
+ concepts:[
+  {t:`Triage & evidence handling`,d:`Scope the question; honor order of volatility (memory before disk); hash everything; keep chain of custody. Then run your observation→inference loop at case scale.`},
+  {t:`Reconstruct the kill chain`,d:`Initial access → execution → persistence → priv-esc → defense evasion → C2 → lateral movement → collection → exfil. Map each found artifact to an ATT&CK technique, building the matrix from evidence.`},
+  {t:`Cross-source pivoting`,d:`Chase one IOC everywhere: a suspicious process (memory) → its file (MFT) → its persistence (registry) → its C2 (pcap) → its protocol (binary RE). Use each source to confirm or refute the others.`},
+  {t:`IOC provenance`,d:`Every indicator must trace back to exactly where you found it. An indicator without provenance weakens the whole report — and can't be defended under scrutiny.`},
+  {t:`Hypothesis-driven investigation`,d:`Lead with questions, not tools: how did they get in / what ran / how did it persist / where did data go — then pull the minimum evidence to answer each. Tool-driven investigations drown; question-driven ones converge.`},
+  {t:`Detection engineering from findings`,d:`Every confirmed behaviour should become a rule: YARA for the binary, Suricata for the C2, Sigma for the log pattern. No detections means the loop to defense isn't closed.`},
+  {t:`Two-audience reporting`,d:`Executive summary (what happened, impact) + technical appendix (timeline, IOCs, ATT&CK, honest limits). A report only analysts can read fails half its job.`},
+ ],
+ commands:[
+  {c:`log2timeline.py + psort.py`,d:`build and filter the super-timeline`},
+  {c:`vol … pslist|psscan|malfind|netscan`,d:`memory pivot`},
+  {c:`tshark / zeek / suricata`,d:`network pivot`},
+  {c:`MFTECmd / EvtxECmd / RegistryExplorer`,d:`disk-artifact pivot`},
+  {c:`write: Sigma + Suricata + YARA`,d:`turn findings into deployable detections`},
+ ],
+ cards:[
+  {f:`Why does no single source ever tell the whole story?`,b:`Each shows one facet; a memory C2 IP needs the pcap to prove the beacon and the binary to prove intent.`},
+  {f:`What is "IOC provenance" and why does it matter?`,b:`A traceable record of where each indicator came from — without it the finding isn't defensible.`},
+  {f:`Order of volatility — what does it dictate first?`,b:`Capture the most volatile evidence (RAM, live connections) before disk; reboot/shutdown destroys it.`},
+  {f:`Why write the same case for an exec AND an analyst?`,b:`Different needs: impact/decision vs evidence/repro. A report only analysts can read fails half its job.`},
+  {f:`An investigation that yields no detections is…?`,b:`Incomplete — you must close the loop to defense (Sigma/Suricata/YARA).`},
+  {f:`Question-driven vs tool-driven investigation — why does the former win?`,b:`Leading with kill-chain questions converges; running every tool drowns you in output.`},
+  {f:`What makes a finding "defensible"?`,b:`Provenance — every claim cites the specific artifact it rests on; contradictions surfaced, limits stated.`},
+ ],
+ quiz:[
+  {q:`You have one C2 IP from a memory image. The strongest single next pivot:`,o:[`Block it and stop`,`Find it in the pcap to characterise the beacon, then the binary that calls it`,`Reboot`,`Email the user`],a:1,e:`Pivoting the IOC across sources builds a defensible, characterised picture instead of a dead end.`},
+  {q:`Two sources contradict (timestomped MFT vs USN journal). You should:`,o:[`Pick one at random`,`Weigh source reliability and report the conflict honestly`,`Ignore both`,`Trust the malware`],a:1,e:`Resolve by source reliability and disclose the discrepancy — never hide it.`},
+  {q:`Your evidence fits two different intrusion stories. The right report:`,o:[`Forces one neat story`,`States both, with the evidence for each and what would disambiguate`,`Omits the ambiguity`,`Guesses`],a:1,e:`Honest reporting presents competing hypotheses rather than overfitting a tidy narrative.`},
+  {q:`An investigation produces a perfect timeline but no detection rules. It is:`,o:[`Complete`,`Incomplete — it hasn't closed the loop to defense`,`Ideal`,`Over-engineered`],a:1,e:`Findings must become deployable detections.`},
+ ],
+ traps:[
+  `Running every plugin instead of pivoting on hypotheses.`,
+  `Claims without cited artifacts (no provenance).`,
+  `Forcing one tidy story when evidence supports two; skipping the exec summary; never writing detections.`,
+ ],
+ reflect:[
+  `Take one IOC and write the five pivots you'd make and the question each answers.`,
+  `Draft the three detections (Sigma/Suricata/YARA) your last case would have yielded.`,
+ ],
+ feeds:`This is the synthesis of Phases 1–11 — and the template for real casework and your portfolio.`},
+];
+
+const THREADS={
+ pyramid:{name:'The Pyramid of Pain',accent:'var(--blood)',blurb:`How much it hurts an adversary when you burn each indicator type. The higher you push detection, the more expensive it is for them to adapt. Tap a tier.`,
+  tiers:[
+   {b:`TTPs`,pain:`TOUGH — change how they operate`,note:`Behaviours and techniques. The hardest thing to change — built in Phase 12.`,w:46,c:'var(--blood)'},
+   {b:`Tools`,pain:`Challenging — rebuild/replace tooling`,note:`Their malware/implants. Burned by Phases 6, 7, 10.`,w:58,c:'var(--amber)'},
+   {b:`Network / Host Artifacts`,pain:`Annoying`,note:`Files, registry keys, mutexes, C2 patterns. Phases 8, 9, 11.`,w:70,c:'var(--amber)'},
+   {b:`Domain Names`,pain:`Simple to rotate`,note:`Re-register or DGA. Phase 9.`,w:80,c:'var(--volt)'},
+   {b:`IP Addresses`,pain:`Easy to rotate`,note:`New infrastructure in minutes. Phase 9.`,w:90,c:'var(--volt)'},
+   {b:`Hash Values`,pain:`Trivial — one byte = new hash`,note:`Defeated by a single recompile/repack. Phase 4.`,w:100,c:'var(--ash)'},
+  ]},
+ crossview:{name:'Cross-view detection',accent:'var(--volt)',blurb:`The single idea that unifies the detection phases: stealth corrupts ONE source of truth, so you compare two views that should agree and read the gap. Same move, four phases.`,
+  rows:[
+   [`Hidden process`,`windows.pslist`,`windows.psscan`,`Phase 8 / 11`],
+   [`Timestomped file`,`$STANDARD_INFORMATION`,`$FILE_NAME`,`Phase 11`],
+   [`Hidden process (Linux)`,`ps / /proc`,`memory image scan`,`Phase 8 / 11`],
+   [`C2 intent`,`the pcap (what)`,`the binary (how/why)`,`Phase 9 / 10`],
+   [`Hidden kernel module`,`windows.modules`,`windows.modscan`,`Phase 11`],
+  ]},
+ sbd:{name:'Static before dynamic',accent:'var(--amber)',blurb:`The discipline that keeps analysis honest: form a hypothesis from static evidence, THEN confirm or break it dynamically. Skipping the prediction turns learning into rote.`,
+  loop:[`Static recon`,`Form hypothesis`,`Detonate / observe`,`Confirm or break`,`Refine`]},
+ oil:{name:'Observation → Inference → Skill',accent:'var(--volt)',blurb:`Your learning meta-loop. Don't memorize outputs — observe a behaviour, infer the mechanism, and turn that into a transferable skill you can apply to the next unknown.`,
+  loop:[`Observe`,`Infer mechanism`,`Generalize`,`Apply to new sample`]},
+ killchain:{name:'The kill chain',accent:'var(--blood)',blurb:`The attacker stages you reconstruct in Phase 12 — and the phase whose skills illuminate each one. Tap a stage.`,
+  stages:[
+   {b:`Initial Access`,s:`Delivery / exploit`,m:`Network 9 · Artifacts 11`},
+   {b:`Execution`,s:`Code runs`,m:`Dynamic 6 · Memory 8`},
+   {b:`Persistence`,s:`Survive reboot`,m:`Artifacts 11 (registry/WMI)`},
+   {b:`Priv-Esc`,s:`Gain rights`,m:`RE 5 · Memory 8`},
+   {b:`Defense Evasion`,s:`Hide`,m:`Unpacking 7 · Rootkits 11`},
+   {b:`C2`,s:`Phone home`,m:`Network 9 · Protocol 10`},
+   {b:`Lateral Movement`,s:`Spread`,m:`Network 9 · Artifacts 11`},
+   {b:`Collection`,s:`Gather data`,m:`Dynamic 6 · Memory 8`},
+   {b:`Exfiltration`,s:`Steal it out`,m:`Network 9 (DNS tunnel)`},
+  ]},
+};
+
+const CASES={
+ ransomware:{label:'HERMES-07 // Ransomware',start:'start',nodes:{
+  start:{clock:'07:14 — DETECTION',
+   text:`SOC alert: workstation <b>HERMES-07</b> is making periodic outbound connections to an unfamiliar host. A user reports files renamed with a strange extension and a <b>README</b> dropped on the desktop. You have console access. What's your FIRST move?`,
+   choices:[
+    {label:`Reboot the machine to "clear" the malware`,to:'reboot',good:false,fb:`You just destroyed every volatile artifact — running processes, injected memory, live connections, keys in RAM. Order of volatility: capture memory FIRST.`},
+    {label:`Capture a full RAM image before touching anything else`,to:'mem',good:true,fb:`Correct. Most volatile evidence first. The image freezes processes, injected code, and live C2 state.`},
+    {label:`Open the README and start reading for clues`,to:'mem',good:false,fb:`Tempting, but premature — and you risk interacting with the live host. Image RAM first; the note will still be there. (Proceeding to acquisition.)`},
+   ]},
+  reboot:{clock:'07:16 — EVIDENCE LOST',
+   text:`The box is back at the login screen. RAM is wiped. You've lost the injected payload, the live C2 socket, and any in-memory keys. Lesson logged — restart and capture memory first.`,
+   choices:[{label:`↻ Restart: capture RAM first this time`,to:'mem',good:true,fb:`Resetting with the right instinct.`}]},
+  mem:{clock:'07:22 — MEMORY',
+   text:`You have <code>hermes07.raw</code>. Volatility is ready. Where do you look to surface a hidden intruder?`,
+   choices:[
+    {label:`pslist only — trust the active process list`,to:'mem',good:false,fb:`pslist walks the EPROCESS linked list, which DKOM can unlink. On its own it proves nothing. Cross-view it.`},
+    {label:`Cross-view pslist vs psscan, then malfind + netscan`,to:'net',good:true,fb:`psscan reveals a process hidden from pslist; malfind flags an RX private region (injected shellcode); netscan recovers a C2 IP. Three leads in one pass.`},
+   ]},
+  net:{clock:'07:40 — NETWORK',
+   text:`netscan gave you a C2 IP. You also have a perimeter <code>capture.pcap</code> for HERMES-07. What do you extract?`,
+   choices:[
+    {label:`Block the IP at the firewall and close the ticket`,to:'net',good:false,fb:`You've stopped one beacon and learned nothing about scope, tooling, or what was taken. Characterise before you contain-and-forget.`},
+    {label:`Find the beacon cadence + JA3; carve any dropped file`,to:'disk',good:true,fb:`A 60s ±20% beacon (evasion-aware), a JA3 matching a known framework, and an HTTP-carved dropper you can hash. Now you know HOW it talks.`},
+   ]},
+  disk:{clock:'08:05 — DISK ARTIFACTS',
+   text:`You image the disk. To establish persistence, execution, and tampering, which artifacts do you parse?`,
+   choices:[
+    {label:`$MFT ($SI vs $FN), ShimCache/AmCache, EVTX (4688/7045/1102)`,to:'bin',good:true,fb:`$FN/$SI disagree → the dropper was timestomped. AmCache proves it executed. A 7045 shows a malicious service; a 1102 shows logs were cleared. The timeline takes shape.`},
+    {label:`Just check whether the dropper file still exists`,to:'bin',good:false,fb:`Presence/absence alone is weak — and the file may be deleted. Execution + persistence + tamper evidence is what builds the story. (Parsing artifacts anyway.)`},
+   ]},
+  bin:{clock:'08:40 — THE BINARY',
+   text:`You have the carved dropper. strings is nearly empty and one section is near-8.0 entropy. How do you analyse it?`,
+   choices:[
+    {label:`Run it on your own workstation to "see what it does"`,to:'bin',good:false,fb:`Never detonate on your host — that spreads the incident. Use the isolated lab with a snapshot.`},
+    {label:`It's packed → unpack at OEP, detonate in the sandbox, pair C2 with the code`,to:'report',good:true,fb:`You unpack, dump at OEP, confirm the ransomware behaviour dynamically, and pair the captured C2 with the send/crypto routine — closing the wire↔code loop.`},
+   ]},
+  report:{clock:'09:30 — RECONSTRUCTION',end:true,
+   text:`Full chain: phishing dropper (timestomped) → injected, packed payload → malicious service for persistence → evasion-aware C2 (known framework via JA3) → file encryption → log clearing. You write it up: a super-timeline where every claim cites an artifact, an ATT&CK matrix, IOCs with provenance, Sigma/Suricata/YARA detections — plus an honest note on what the evidence does NOT prove.`,
+   choices:[]},
+ }},
+
+ fileless:{label:'NItro // Fileless (LOLBin)',start:'start',nodes:{
+  start:{clock:'10:02 — EDR ALERT',
+   text:`EDR flags <b>winword.exe</b> spawning <b>powershell.exe</b> with a long encoded command. The user opened an "invoice" attachment. A disk scan finds <b>no malicious binary</b>. First move?`,
+   choices:[
+    {label:`Hunt the disk for the malware executable`,to:'logs',good:false,fb:`Fileless intrusions often drop nothing to disk — you'll burn time. The evidence lives in process lineage, script logs, and memory. (Pivoting there.)`},
+    {label:`Pull the PowerShell logs + the parent→child process tree`,to:'logs',good:true,fb:`Right call. The Office→PowerShell lineage and 4104 scriptblock logs are exactly where a fileless attack shows itself.`},
+    {label:`Reimage the machine immediately`,to:'logs',good:false,fb:`You'd destroy the only evidence and learn nothing about scope or C2. Investigate before you remediate. (Pulling logs instead.)`},
+   ]},
+  logs:{clock:'10:15 — LOGS',
+   text:`Scriptblock logging (EVTX 4104) shows a <code>-enc</code> base64 PowerShell command. What now?`,
+   choices:[
+    {label:`Decode the base64 and read the script`,to:'decode',good:true,fb:`Decoded: it uses a trusted system binary to fetch and run an in-memory payload from a URL — a living-off-the-land download cradle.`},
+    {label:`Dismiss it — encoded commands are normal noise`,to:'decode',good:false,fb:`Encoded one-liners spawned from Office are a classic execution technique, not noise. (Decoding it anyway.)`},
+   ]},
+  decode:{clock:'10:28 — THE CRADLE',
+   text:`The decoded script uses a LOLBin to pull and execute a payload <b>in memory</b> from hxxp://… Where does the payload live?`,
+   choices:[
+    {label:`On disk in the Temp folder`,to:'mem',good:false,fb:`No — "in memory" is the whole point of fileless. There's nothing in Temp to find. Capture RAM and hunt the injected region. (Doing that.)`},
+    {label:`In memory only — capture RAM and hunt the injected code`,to:'mem',good:true,fb:`Exactly. Fileless payloads are resident only in RAM, so memory forensics is the way to recover them.`},
+   ]},
+  mem:{clock:'10:45 — MEMORY',
+   text:`RAM capture: powershell.exe holds an RX private region (malfind) and a live connection (netscan). Next?`,
+   choices:[
+    {label:`Dump the injected region, ID the framework, pull the C2`,to:'persist',good:true,fb:`The dumped shellcode matches a known offensive framework; netscan + the dump give you the C2 endpoint and beacon. Now scope persistence.`},
+    {label:`Kill the process and stop`,to:'persist',good:false,fb:`Killing one process leaves persistence and scope unknown — it'll be back at reboot. Keep going. (Checking persistence.)`},
+   ]},
+  persist:{clock:'11:10 — PERSISTENCE',
+   text:`Fileless threats often persist without a file. Where do you look?`,
+   choices:[
+    {label:`WMI event subscriptions + registry-stored scripts + scheduled tasks`,to:'net',good:true,fb:`You find a WMI event-consumer subscription re-launching the cradle at logon — fileless persistence with nothing on disk.`},
+    {label:`Only the Startup folder`,to:'net',good:false,fb:`Too narrow — the Startup folder is empty here. WMI/registry/tasks are the fileless persistence homes. (Found a WMI subscription.)`},
+   ]},
+  net:{clock:'11:35 — SCOPE',
+   text:`C2 is HTTPS; JA3 matches the framework; beacon every 45s ±30%. How do you scope the rest of the fleet?`,
+   choices:[
+    {label:`Hunt the JA3 + beacon pattern across proxy/EDR fleet-wide`,to:'report',good:true,fb:`The JA3 + cadence surface two more beaconing hosts — the intrusion is broader than HERMES-07. Now report.`},
+    {label:`Assume it's a single isolated host`,to:'report',good:false,fb:`Assuming single-host scope is how intrusions get missed. The JA3/beacon pattern is exactly what scopes laterally. (Hunting fleet-wide anyway.)`},
+   ]},
+  report:{clock:'12:20 — RECONSTRUCTION',end:true,
+   text:`Chain: malicious macro (initial access) → encoded PowerShell via LOLBin (execution, defense evasion: fileless) → in-memory framework payload → WMI subscription (persistence) → HTTPS C2 by JA3 (command & control) → two more victims (lateral scope). Detections: a Sigma rule for Office→PowerShell + 4104 cradle patterns, a Suricata rule on the JA3/beacon, YARA on the dumped payload — plus honest limits on what memory alone can prove.`,
+   choices:[]},
+ }},
+};
+
+/* ============================================================ STATE / STORAGE ============================================================ */
+const store=(()=>{ let mem={}; let ok=false;
+  try{const k='__bv';localStorage.setItem(k,'1');localStorage.removeItem(k);ok=true;}catch(e){ok=false;}
+  return{get(k){try{return ok?localStorage.getItem(k):mem[k];}catch(e){return mem[k];}},
+    set(k,v){try{ok?localStorage.setItem(k,v):mem[k]=v;}catch(e){mem[k]=v;}}};
+})();
+let P=load();
+function load(){try{return JSON.parse(store.get('blackvault')||'{}');}catch(e){return{};}}
+function save(){store.set('blackvault',JSON.stringify(P));renderMeter();}
+P.learned=P.learned||{}; P.quiz=P.quiz||{}; P.cards=P.cards||{}; P.quizPick=P.quizPick||{};
+
+const state={mode:'map',phase:0,deck:'all',cardIdx:0,flip:false,quizPhase:null,search:'',
+  caseId:'ransomware',caseNode:'start',caseGood:0,caseBad:0,caseFb:null,
+  examSet:null,examPicks:{},examSubmitted:false};
+
+/* ============================================================ HELPERS ============================================================ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const app=()=>document.getElementById('app');
+let toastT;
+function toast(m){const t=$('#toast');t.textContent=m;t.dataset.show='1';clearTimeout(toastT);toastT=setTimeout(()=>t.dataset.show='0',1300);}
+function chips(tracks){return tracks.map(t=>`<span class="chip t-${t}">${t}</span>`).join('');}
+function phaseMastery(p){
+  const cTot=p.concepts.length,cDone=p.concepts.filter((_,i)=>P.learned[p.id+':'+i]).length;
+  const qTot=p.quiz.length,qDone=p.quiz.filter((_,i)=>P.quiz[p.id+':'+i]===1).length;
+  const tot=cTot+qTot, done=cDone+qDone; return tot?Math.round(done/tot*100):0;
+}
+function overall(){const a=PHASES.map(phaseMastery);return Math.round(a.reduce((x,y)=>x+y,0)/PHASES.length);}
+function renderMeter(){const v=overall();$('#meterFill').style.width=v+'%';$('#meterPct').textContent=v+'%';}
+
+/* ============================================================ VIEWS ============================================================ */
+function viewMap(){
+  return `
+  <div class="maphead">
+    <div>
+      <div class="eyebrow">Reverse Engineering · Malware Analysis · DFIR</div>
+      <h1 class="h1">Twelve phases.<br>One investigation reflex.</h1>
+      <p class="lede">Each node builds the next: bytes on disk → instructions → formats → behaviour → memory → wire → the full reconstruction. Tap a phase to study its mechanism, drill it, or jump into a live case. Use <b style="color:var(--bone)">Review</b> to hit only what you've missed and <b style="color:var(--bone)">Exam</b> to test cumulatively.</p>
+    </div>
+    <div class="legend">
+      <i><span class="dot d-DF"></span>Forensics</i><i><span class="dot d-RE"></span>Reverse Eng.</i><i><span class="dot d-MA"></span>Malware</i>
+    </div>
+  </div>
+  <div class="spine">
+    ${PHASES.map(p=>{const m=phaseMastery(p);const ac=accentOf(p.tracks);
+      return `<div class="node" data-phase="${p.n-1}" data-done="${m===100?1:0}" style="--accent:${ac}" tabindex="0" role="button" aria-label="Phase ${p.n}: ${esc(p.title)}">
+        <span class="node__check">✓ MASTERED</span>
+        <div class="node__n">PHASE ${String(p.n).padStart(2,'0')}</div>
+        <div class="node__t">${esc(p.title)}</div>
+        <div class="node__tags">${esc(p.tag)}</div>
+        <div class="node__chips">${chips(p.tracks)}</div>
+        <div class="node__mast"><i style="width:${m}%"></i></div>
+      </div>`}).join('')}
+  </div>`;
+}
+
+function viewStudy(){
+  const p=PHASES[state.phase];const ac=accentOf(p.tracks);
+  return `
+  <div class="crumb"><a data-go="map">◂ Map</a> <span>/</span> PHASE ${String(p.n).padStart(2,'0')} <span>/</span> ${esc(p.title)}</div>
+  <div class="studyhead">
+    <div class="node__chips" style="margin-bottom:10px">${chips(p.tracks)}</div>
+    <h1 class="h1" style="font-size:clamp(26px,4.5vw,40px)">${esc(p.title)}</h1>
+    <div class="node__tags" style="margin-top:8px">${esc(p.tag)}</div>
+  </div>
+  <p class="idea" style="--accent:${ac}">${p.idea}</p>
+  <div class="deepbox" style="--accent:${ac}"><div class="lbl">Mechanism · understand this one thing</div><p>${p.deep}</p></div>
+
+  <div class="sec">
+    <div class="sec__h">Core concepts <span style="color:${ac};font-family:var(--grot);letter-spacing:0;text-transform:none">— mark each once it clicks</span></div>
+    ${p.concepts.map((c,i)=>{const on=P.learned[p.id+':'+i]?1:0;
+      return `<div class="concept" style="--accent:${ac}">
+        <div class="concept__b"><p class="concept__t">${esc(c.t)}</p><p class="concept__d">${esc(c.d)}</p></div>
+        <button class="learnbtn" data-learn="${p.id+':'+i}" data-on="${on}" style="--accent:${ac}">${on?'✓ Got it':'Got it'}</button>
+      </div>`}).join('')}
+  </div>
+
+  <div class="sec">
+    <div class="sec__h">Command arsenal</div>
+    ${p.commands.map(c=>`<div class="cmd"><code data-copy>${esc(c.c)}</code><span>${esc(c.d)}</span></div>`).join('')}
+  </div>
+
+  <div class="sec">
+    <div class="sec__h">Traps that bite</div>
+    <ul class="tlist">${p.traps.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+  </div>
+
+  <div class="sec">
+    <div class="sec__h">Reflect (open-ended — answer out loud)</div>
+    <ul class="rlist">${p.reflect.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+  </div>
+
+  <div class="sec"><div class="feeds"><b>↳ Connects forward:</b> ${esc(p.feeds)}</div></div>
+
+  <div class="studynav">
+    <button class="btn--ghost btn" data-quizphase="${state.phase}">Quiz this phase →</button>
+    <div style="display:flex;gap:10px">
+      ${state.phase>0?`<button class="iconbtn" data-phase="${state.phase-1}">◂ Phase ${state.phase}</button>`:''}
+      ${state.phase<PHASES.length-1?`<button class="iconbtn" data-phase="${state.phase+1}">Phase ${state.phase+2} ▸</button>`:''}
+    </div>
+  </div>`;
+}
+
+function deckCards(){
+  if(state.deck==='weak')return PHASES.flatMap(p=>p.cards.map(c=>({...c,id:p.id,n:p.n,title:p.title}))).filter(c=>!P.cards[c.id+':'+c.f]);
+  if(state.deck==='all')return PHASES.flatMap(p=>p.cards.map(c=>({...c,id:p.id,n:p.n,title:p.title})));
+  const p=PHASES[+state.deck];return p.cards.map(c=>({...c,id:p.id,n:p.n,title:p.title}));
+}
+function viewDrill(){
+  const cards=deckCards();
+  if(cards.length===0){return `
+    <div class="modehead"><div class="eyebrow">Active recall</div><h1 class="h1" style="font-size:clamp(24px,4vw,34px)">Flashcards</h1></div>
+    <div class="deckpick">
+      <button data-deck="all" aria-current="${state.deck==='all'}">All decks</button>
+      ${PHASES.map((p,i)=>`<button data-deck="${i}" aria-current="${state.deck==String(i)}">P${p.n}</button>`).join('')}
+      <button data-deck="weak" aria-current="${state.deck==='weak'}">★ Unknown only</button>
+    </div>
+    <div class="emptybox"><b>Nothing here</b>${state.deck==='weak'?'You\'ve marked every card known. Switch decks or reset known flags from a card.':'This deck is empty.'}</div>`;}
+  if(state.cardIdx>=cards.length)state.cardIdx=0;
+  const c=cards[state.cardIdx];const known=P.cards[c.id+':'+c.f]?1:0;
+  return `
+  <div class="modehead">
+    <div class="eyebrow">Active recall</div>
+    <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">Flashcards</h1>
+    <p class="lede">Read the prompt, answer in your head, THEN flip. Mark known to thin the deck. <span style="color:var(--ash)">Keys: Space flip · ← → move · K know</span></p>
+  </div>
+  <div class="deckpick">
+    <button data-deck="all" aria-current="${state.deck==='all'}">All decks (${PHASES.reduce((a,p)=>a+p.cards.length,0)})</button>
+    ${PHASES.map((p,i)=>`<button data-deck="${i}" aria-current="${state.deck==String(i)}">P${p.n}</button>`).join('')}
+    <button data-deck="weak" aria-current="${state.deck==='weak'}">★ Unknown only</button>
+  </div>
+  <div class="cardstage">
+    <div class="flashcard" data-flip="${state.flip?1:0}" data-flipcard tabindex="0">
+      <div class="flashcard__in">
+        <div class="face face--front"><small>Phase ${c.n} · ${esc(c.title)}</small><div class="q">${esc(c.f)}</div><div class="hint">tap to reveal</div></div>
+        <div class="face face--back"><small>Answer</small><div class="a">${esc(c.b)}</div><div class="hint">tap to flip back</div></div>
+      </div>
+    </div>
+    <div class="cardctl">
+      <button class="iconbtn" data-card="prev">◂ Prev</button>
+      <span class="counter">${state.cardIdx+1} / ${cards.length}</span>
+      <button class="iconbtn" data-card="next">Next ▸</button>
+      <button class="iconbtn iconbtn--know" data-card="know">${known?'✓ Known':'Mark known'}</button>
+      <button class="iconbtn" data-card="shuffle">⤨ Shuffle</button>
+    </div>
+  </div>`;
+}
+
+function viewQuiz(){
+  const phaseFilter=state.quizPhase;
+  const list=(phaseFilter!=null?[PHASES[phaseFilter]]:PHASES);
+  let total=0,correct=0;
+  list.forEach(p=>p.quiz.forEach((_,i)=>{total++;if(P.quiz[p.id+':'+i]===1)correct++;}));
+  let html=`
+  <div class="modehead">
+    <div class="eyebrow">Knowledge check</div>
+    <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">Quiz${phaseFilter!=null?` · Phase ${PHASES[phaseFilter].n}`:''}</h1>
+    <p class="lede">Immediate feedback with the reasoning. Right answers count toward phase mastery. ${phaseFilter!=null?'<a data-go="quizall" style="color:var(--volt);cursor:pointer">Show all phases →</a>':''}</p>
+  </div>
+  <div class="score"><span>SCORE</span><b>${correct} / ${total}</b><span style="font-family:var(--mono);font-size:11px;color:var(--ash)">${total?Math.round(correct/total*100):0}% correct</span></div>
+  <div class="quizwrap">`;
+  list.forEach(p=>{p.quiz.forEach((q,i)=>{
+    const key=p.id+':'+i;const answered=P.quizPick[key]!=null;const pick=answered?P.quizPick[key]:null;
+    html+=`<div class="qcard"><div class="qcard__meta"><span>Phase ${p.n} · ${esc(p.title)}</span><span>Q${i+1}</span></div><p class="qcard__q">${esc(q.q)}</p>`;
+    q.o.forEach((opt,oi)=>{let st='';if(answered){if(oi===q.a)st='correct';else if(oi===pick)st='wrong';}
+      html+=`<button class="opt" ${answered?'disabled':''} data-quiz="${key}" data-opt="${oi}" data-state="${st}"><b>${String.fromCharCode(65+oi)}</b>${esc(opt)}</button>`;});
+    if(answered)html+=`<div class="explain"><b>Why</b><br>${esc(q.e)}</div>`;
+    html+=`</div>`;
+  });});
+  return html+`</div>`;
+}
+
+function weakItems(){
+  const missed=[];
+  PHASES.forEach(p=>p.quiz.forEach((q,i)=>{const k=p.id+':'+i;if(P.quiz[k]===0&&P.quizPick[k]!=null)missed.push({p,i,q,k});}));
+  const cards=PHASES.flatMap(p=>p.cards.map(c=>({...c,id:p.id,n:p.n,title:p.title}))).filter(c=>!P.cards[c.id+':'+c.f]);
+  return {missed,cards};
+}
+function viewReview(){
+  const {missed,cards}=weakItems();
+  let html=`
+  <div class="modehead">
+    <div class="eyebrow">Targeted remediation</div>
+    <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">Review · weak spots</h1>
+    <p class="lede">Only what you've gotten wrong or haven't locked in yet. Clear these and your mastery climbs fast.</p>
+  </div>`;
+  if(missed.length===0 && cards.length===0){
+    return html+`<div class="emptybox"><b>No weak spots logged</b>Answer some quizzes and drill some cards first — anything you miss or leave unmarked shows up here for focused review.</div>`;
+  }
+  html+=`<div class="score"><span>TO REVISIT</span><b>${missed.length}</b><span style="font-family:var(--mono);font-size:11px;color:var(--ash)">missed questions · ${cards.length} unmarked cards</span></div>`;
+  if(cards.length){
+    html+=`<div class="sec"><div class="sec__h">Cards you haven't marked known (${cards.length})</div>
+      <button class="btn" data-reviewdrill="1">Drill these ${cards.length} cards →</button></div>`;
+  }
+  if(missed.length){
+    html+=`<div class="sec"><div class="sec__h">Questions you missed — try again</div><div class="quizwrap">`;
+    missed.forEach(({p,i,q,k})=>{
+      const answered=P.quizPick[k]!=null;const pick=answered?P.quizPick[k]:null;
+      html+=`<div class="qcard"><div class="qcard__meta"><span>Phase ${p.n} · ${esc(p.title)}</span><button class="miniretry" data-retry="${k}">↻ Retry</button></div><p class="qcard__q">${esc(q.q)}</p>`;
+      q.o.forEach((opt,oi)=>{let st='';if(answered){if(oi===q.a)st='correct';else if(oi===pick)st='wrong';}
+        html+=`<button class="opt" disabled data-opt="${oi}" data-state="${st}"><b>${String.fromCharCode(65+oi)}</b>${esc(opt)}</button>`;});
+      html+=`<div class="explain"><b>Why</b><br>${esc(q.e)}</div></div>`;
+    });
+    html+=`</div></div>`;
+  }
+  return html;
+}
+
+function startExam(){
+  const pool=[];PHASES.forEach(p=>p.quiz.forEach((q,i)=>pool.push({pid:p.id,n:p.n,title:p.title,i})));
+  for(let j=pool.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[pool[j],pool[r]]=[pool[r],pool[j]];}
+  state.examSet=pool.slice(0,Math.min(15,pool.length));state.examPicks={};state.examSubmitted=false;
+}
+function viewExam(){
+  if(!state.examSet)startExam();
+  const set=state.examSet;
+  let html=`
+  <div class="modehead">
+    <div class="eyebrow">Cumulative assessment</div>
+    <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">Exam · ${set.length} mixed questions</h1>
+    <p class="lede">A randomized draw across all 12 phases. Answer everything, then submit to see your grade and the reasoning. ${state.examSubmitted?'':'<span style="color:var(--ash)">Selections aren\'t locked until you submit.</span>'}</p>
+  </div>
+  <div class="casepick"><button data-exam="new">↻ New exam</button>${state.examSubmitted?'':`<button data-exam="submit" style="border-color:var(--amber);color:var(--amber)">✓ Submit exam</button>`}</div>`;
+  if(state.examSubmitted){
+    let correct=0;set.forEach((item,idx)=>{const q=PHASES.find(p=>p.id===item.pid).quiz[item.i];if(state.examPicks[idx]===q.a)correct++;});
+    const pct=Math.round(correct/set.length*100);
+    const grade=pct>=90?'A':pct>=80?'B':pct>=70?'C':pct>=60?'D':'F';
+    html+=`<div class="score"><span>RESULT</span><b>${correct} / ${set.length}</b><span style="font-family:var(--mono);font-size:13px;color:${pct>=70?'var(--amber)':'var(--blood)'}">${pct}% · grade ${grade}</span></div>`;
+  }
+  html+=`<div class="quizwrap">`;
+  set.forEach((item,idx)=>{
+    const q=PHASES.find(p=>p.id===item.pid).quiz[item.i];const pick=state.examPicks[idx];
+    html+=`<div class="qcard"><div class="qcard__meta"><span>Q${idx+1} · Phase ${item.n} ${esc(item.title)}</span><span>${pick!=null?'answered':'—'}</span></div><p class="qcard__q">${esc(q.q)}</p>`;
+    q.o.forEach((opt,oi)=>{let st='';
+      if(state.examSubmitted){if(oi===q.a)st='correct';else if(oi===pick)st='wrong';}
+      else if(pick===oi)st='selected';
+      html+=`<button class="opt" ${state.examSubmitted?'disabled':''} data-exopt="${idx}" data-o="${oi}" data-state="${st}"><b>${String.fromCharCode(65+oi)}</b>${esc(opt)}</button>`;});
+    if(state.examSubmitted)html+=`<div class="explain"><b>Why</b><br>${esc(q.e)}</div>`;
+    html+=`</div>`;
+  });
+  return html+`</div>`;
+}
+
+function viewArsenal(){
+  const all=PHASES.flatMap(p=>p.commands.map(c=>({...c,n:p.n,title:p.title})));
+  const q=(state.search||'').toLowerCase();
+  const rows=all.filter(c=>!q||c.c.toLowerCase().includes(q)||c.d.toLowerCase().includes(q)||c.title.toLowerCase().includes(q));
+  return `
+  <div class="modehead">
+    <div class="eyebrow">Quick reference</div>
+    <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">Command arsenal</h1>
+    <p class="lede">Every command across all 12 phases, searchable. Tap any command to copy it.</p>
+  </div>
+  <input class="search" id="searchBox" placeholder="search: strace, volatility, ja3, mft, oep…" value="${esc(state.search||'')}">
+  <div class="arsenal">
+    ${rows.map(c=>`<div class="tool"><small>PHASE ${c.n} · ${esc(c.title)}</small><br><code data-copy>${esc(c.c)}</code><p>${esc(c.d)}</p></div>`).join('')||'<p style="color:var(--ash);font-family:var(--mono)">No commands match that search.</p>'}
+  </div>`;
+}
+
+function viewThreads(){
+  const T=THREADS;
+  return `
+  <div class="modehead">
+    <div class="eyebrow">Cross-cutting principles</div>
+    <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">Threads</h1>
+    <p class="lede">The ideas that run through every phase. Memorizing tools is fragile; these principles are what actually transfer to an unknown sample.</p>
+  </div>
+  <div class="threadgrid">
+    <div class="thread"><div class="thread__h"><span class="dot" style="background:${T.pyramid.accent}"></span><h3>${T.pyramid.name}</h3></div>
+      <p class="thread__blurb">${T.pyramid.blurb}</p>
+      <div class="pyramid">${T.pyramid.tiers.map((t,i)=>`<div class="ptier" data-ptier="${i}" data-open="0" style="width:${t.w}%;border-color:${t.c};color:${t.c}"><b>${esc(t.b)}</b>${esc(t.pain)}<div class="note">${esc(t.note)}</div></div>`).join('')}</div>
+    </div>
+    <div class="thread"><div class="thread__h"><span class="dot" style="background:${T.crossview.accent}"></span><h3>${T.crossview.name}</h3></div>
+      <p class="thread__blurb">${T.crossview.blurb}</p>
+      <table class="xv"><tr><th>To expose…</th><th>View A</th><th>vs View B</th><th>Phase</th></tr>
+        ${T.crossview.rows.map(r=>`<tr><td>${esc(r[0])}</td><td><code>${esc(r[1])}</code></td><td><code>${esc(r[2])}</code></td><td>${esc(r[3])}</td></tr>`).join('')}</table>
+    </div>
+    <div class="thread"><div class="thread__h"><span class="dot" style="background:${T.sbd.accent}"></span><h3>${T.sbd.name}</h3></div>
+      <p class="thread__blurb">${T.sbd.blurb}</p>
+      <div class="loop">${T.sbd.loop.map((s,i)=>`<span class="loopstep" style="--accent:${T.sbd.accent}">${esc(s)}</span>${i<T.sbd.loop.length-1?'<span class="looparr">→</span>':'<span class="looparr">↺</span>'}`).join('')}</div>
+    </div>
+    <div class="thread"><div class="thread__h"><span class="dot" style="background:${T.oil.accent}"></span><h3>${T.oil.name}</h3></div>
+      <p class="thread__blurb">${T.oil.blurb}</p>
+      <div class="loop">${T.oil.loop.map((s,i)=>`<span class="loopstep" style="--accent:${T.oil.accent}">${esc(s)}</span>${i<T.oil.loop.length-1?'<span class="looparr">→</span>':''}`).join('')}</div>
+    </div>
+    <div class="thread"><div class="thread__h"><span class="dot" style="background:${T.killchain.accent}"></span><h3>${T.killchain.name}</h3></div>
+      <p class="thread__blurb">${T.killchain.blurb}</p>
+      <div class="kc">${T.killchain.stages.map((s,i)=>`<div class="kcstage" data-kc="${i}" data-open="0"><b>${esc(s.b)}</b><span>${esc(s.s)}</span><div class="map">→ ${esc(s.m)}</div></div>`).join('')}</div>
+    </div>
+  </div>`;
+}
+
+function viewCase(){
+  const C=CASES[state.caseId];const node=C.nodes[state.caseNode];
+  return `
+  <div class="modehead">
+    <div class="eyebrow">Synthesis · live incident</div>
+    <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">The Case</h1>
+    <p class="lede">An intrusion with no narration. Make the call at each step — good pivots score, missteps cost. This is Phases 1–11 fused into one reflex. Two scenarios contrast disk-heavy vs fileless investigations.</p>
+  </div>
+  <div class="casepick">
+    ${Object.keys(CASES).map(k=>`<button data-caseid="${k}" aria-current="${state.caseId===k}">${esc(CASES[k].label)}</button>`).join('')}
+  </div>
+  <div class="casebar"><span>GOOD PIVOTS: <b>${state.caseGood}</b></span><span>MISSTEPS: <b style="color:var(--blood)">${state.caseBad}</b></span><span><a data-case="restart" style="cursor:pointer;color:var(--volt)">↻ Restart</a></span></div>
+  <div class="casewrap">
+    <div class="casenode">
+      <div class="clock">${esc(node.clock)}</div>
+      <p>${node.text}</p>
+      ${state.caseFb?`<div class="fb fb--${state.caseFb.good?'good':'bad'}"><b>${state.caseFb.good?'Good call':'Misstep'}</b>${esc(state.caseFb.msg)}</div>`:''}
+      ${node.end?`
+        <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:16px">
+          <div class="eyebrow" style="color:var(--amber)">Case closed</div>
+          <p style="font-size:15px;color:var(--ash)">You reconstructed the full chain by pivoting across sources, each finding driving the next. Score: <b style="color:var(--bone)">${state.caseGood} good pivots, ${state.caseBad} missteps</b>.</p>
+          <button class="btn" data-case="restart" style="margin-top:6px">Run it again ↻</button>
+          <button class="iconbtn" data-go="threads" style="margin-left:8px">Review the threads</button>
+        </div>`:
+        node.choices.map((c,i)=>`<button class="choice" data-choice="${i}">${esc(c.label)}</button>`).join('')}
+    </div>
+  </div>`;
+}
+
+/* ============================================================ RENDER + ROUTER ============================================================ */
+function render(){
+  const m=state.mode;let html='';
+  if(m==='map')html=viewMap();
+  else if(m==='study')html=viewStudy();
+  else if(m==='drill')html=viewDrill();
+  else if(m==='quiz')html=viewQuiz();
+  else if(m==='review')html=viewReview();
+  else if(m==='exam')html=viewExam();
+  else if(m==='arsenal')html=viewArsenal();
+  else if(m==='threads')html=viewThreads();
+  else if(m==='case')html=viewCase();
+  app().innerHTML=html;
+  document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current', b.dataset.go===m?'true':'false'));
+  if(m==='arsenal'){const s=$('#searchBox');if(s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}}
+  window.scrollTo(0,0);
+}
+function go(mode){state.mode=mode;render();}
+
+/* ============================================================ EVENTS ============================================================ */
+document.addEventListener('click',e=>{
+  const t=e.target;
+  const cp=t.closest('[data-copy]');
+  if(cp){navigator.clipboard&&navigator.clipboard.writeText(cp.textContent).then(()=>toast('copied'),()=>{});return;}
+  const goEl=t.closest('[data-go]');
+  if(goEl){const g=goEl.dataset.go;if(g==='quizall'){state.quizPhase=null;go('quiz');return;}go(g);return;}
+  const node=t.closest('[data-phase]');
+  if(node){state.phase=+node.dataset.phase;go('study');return;}
+  const learn=t.closest('[data-learn]');
+  if(learn){const k=learn.dataset.learn;P.learned[k]=!P.learned[k];save();render();return;}
+  const qp=t.closest('[data-quizphase]');
+  if(qp){state.quizPhase=+qp.dataset.quizphase;go('quiz');return;}
+
+  const fc=t.closest('[data-flipcard]'); if(fc){state.flip=!state.flip;render();return;}
+  const cd=t.closest('[data-card]');
+  if(cd){const a=cd.dataset.card;const cards=deckCards();const cur=cards[state.cardIdx];
+    if(a==='next'){state.cardIdx=(state.cardIdx+1)%cards.length;state.flip=false;}
+    if(a==='prev'){state.cardIdx=(state.cardIdx-1+cards.length)%cards.length;state.flip=false;}
+    if(a==='know'){P.cards[cur.id+':'+cur.f]=!P.cards[cur.id+':'+cur.f];save();}
+    if(a==='shuffle'){PHASES.forEach(p=>p.cards.sort(()=>Math.random()-.5));state.cardIdx=0;state.flip=false;toast('shuffled');}
+    render();return;}
+  const dk=t.closest('[data-deck]'); if(dk){state.deck=dk.dataset.deck;state.cardIdx=0;state.flip=false;render();return;}
+
+  const opt=t.closest('[data-quiz]');
+  if(opt){const key=opt.dataset.quiz;const pick=+opt.dataset.opt;
+    if(P.quizPick[key]!=null)return;P.quizPick[key]=pick;
+    const [pid,idx]=key.split(':');const p=PHASES.find(x=>x.id===pid);
+    P.quiz[key]=p.quiz[+idx].a===pick?1:0;save();render();return;}
+
+  const retry=t.closest('[data-retry]');
+  if(retry){const k=retry.dataset.retry;delete P.quizPick[k];delete P.quiz[k];save();render();return;}
+  const rd=t.closest('[data-reviewdrill]'); if(rd){state.deck='weak';state.cardIdx=0;state.flip=false;go('drill');return;}
+
+  const exo=t.closest('[data-exopt]');
+  if(exo&&!state.examSubmitted){state.examPicks[+exo.dataset.exopt]=+exo.dataset.o;render();return;}
+  const ex=t.closest('[data-exam]');
+  if(ex){if(ex.dataset.exam==='new'){startExam();render();}else if(ex.dataset.exam==='submit'){state.examSubmitted=true;render();}return;}
+
+  const pt=t.closest('[data-ptier]'); if(pt){pt.dataset.open=pt.dataset.open==='1'?'0':'1';return;}
+  const kc=t.closest('[data-kc]'); if(kc){kc.dataset.open=kc.dataset.open==='1'?'0':'1';return;}
+
+  const cid=t.closest('[data-caseid]');
+  if(cid){state.caseId=cid.dataset.caseid;state.caseNode=CASES[state.caseId].start;state.caseGood=0;state.caseBad=0;state.caseFb=null;render();return;}
+  const ch=t.closest('[data-choice]');
+  if(ch){const C=CASES[state.caseId];const node=C.nodes[state.caseNode];const choice=node.choices[+ch.dataset.choice];
+    if(choice.good)state.caseGood++;else state.caseBad++;state.caseFb={good:choice.good,msg:choice.fb};state.caseNode=choice.to;render();return;}
+  const cs=t.closest('[data-case]');
+  if(cs&&cs.dataset.case==='restart'){state.caseNode=CASES[state.caseId].start;state.caseGood=0;state.caseBad=0;state.caseFb=null;render();return;}
+});
+
+document.addEventListener('input',e=>{ if(e.target.id==='searchBox'){state.search=e.target.value;
+  const q=(state.search||'').toLowerCase();
+  const all=PHASES.flatMap(p=>p.commands.map(c=>({...c,n:p.n,title:p.title})));
+  const rows=all.filter(c=>!q||c.c.toLowerCase().includes(q)||c.d.toLowerCase().includes(q)||c.title.toLowerCase().includes(q));
+  const wrap=document.querySelector('.arsenal');
+  if(wrap)wrap.innerHTML=rows.map(c=>`<div class="tool"><small>PHASE ${c.n} · ${esc(c.title)}</small><br><code data-copy>${esc(c.c)}</code><p>${esc(c.d)}</p></div>`).join('')||'<p style="color:var(--ash);font-family:var(--mono)">No commands match that search.</p>';
+}});
+
+document.addEventListener('keydown',e=>{
+  if(state.mode!=='drill')return;const cards=deckCards();if(!cards.length)return;
+  if(e.code==='Space'){e.preventDefault();state.flip=!state.flip;render();}
+  else if(e.code==='ArrowRight'){state.cardIdx=(state.cardIdx+1)%cards.length;state.flip=false;render();}
+  else if(e.code==='ArrowLeft'){state.cardIdx=(state.cardIdx-1+cards.length)%cards.length;state.flip=false;render();}
+  else if(e.key.toLowerCase()==='k'){const cur=cards[state.cardIdx];P.cards[cur.id+':'+cur.f]=!P.cards[cur.id+':'+cur.f];save();render();}
+});
+
+renderMeter(); render();
+</script>
+</body>
+</html>
