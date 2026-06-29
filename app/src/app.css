@@ -54,6 +54,18 @@ code, pre, .mono { font-family: var(--mono); }
 /* utility */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 
+/* responsive base */
+@media (max-width: 860px) {
+  body { font-size: 14px; }
+}
+
+/* touch targets — all interactive elements at least 40px tall on mobile */
+@media (max-width: 860px) {
+  button, [role="button"], input[type="checkbox"], input[type="radio"], a.btn {
+    min-height: 40px;
+  }
+}
+
 /* chip / badge */
 .chip {
   display: inline-block;

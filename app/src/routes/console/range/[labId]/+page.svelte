@@ -3,7 +3,8 @@
   import { LABS } from '$lib/data';
   import { labs, showToast } from '$lib/stores';
   import { goto } from '$app/navigation';
-  import { browser } from '$app/environment';
+  import { SIM } from '$lib/lab-sim.js';
+  import TermSim from '$lib/components/TermSim.svelte';
 
   $: labId = $page.params.labId;
   $: lab   = LABS.find(l => l.id === labId);
@@ -28,6 +29,13 @@
   };
 
   $: objectives = OBJS[labId] ?? [];
+  $: labSim = SIM[labId] ?? {};
+
+  let termExpanded = null;
+
+  function toggleTerm(k) {
+    termExpanded = termExpanded === k ? null : k;
+  }
 
   function isDone(k) {
     return !!$labs[labId]?.done?.includes(k);
@@ -46,11 +54,17 @@
       showToast('Objective complete!', 'success');
     }
     if (next.length === objectives.length) {
-      showToast('Lab cleared! 🎯', 'badge');
+      showToast('Lab cleared!', 'badge');
     }
   }
 
-  $: progress = lab ? Math.round(((objectives.filter(o => isDone(o.k)).length) / objectives.length) * 100) : 0;
+  function onTermComplete(k) {
+    if (!isDone(k)) {
+      showToast('Run complete — mark objective done?', 'success');
+    }
+  }
+
+  $: progress = lab ? Math.round((objectives.filter(o => isDone(o.k)).length / objectives.length) * 100) : 0;
 </script>
 
 <svelte:head><title>{lab?.name ?? 'Lab'} — BLACKVAULT</title></svelte:head>
@@ -75,28 +89,80 @@
       <div class="lh-pbar">
         <div class="lh-pfill" style="width:{progress}%"></div>
       </div>
-      <div class="lh-pmeta">{progress}% · {objectives.filter(o => isDone(o.k)).length}/{objectives.length} objectives</div>
+      <div class="lh-pmeta">{progress}% · {objectives.filter(o => isDone(o.k)).length}/{objectives.length} objectives complete</div>
     </div>
 
     <div class="lab-body">
       <div class="obj-list">
-        <h2 class="obj-hd">Objectives</h2>
-        {#each objectives as obj}
+        <div class="obj-hd">
+          <span>Objectives</span>
+          <span class="obj-hd-hint">Click ▶ to simulate each step in the terminal</span>
+        </div>
+        {#each objectives as obj, i}
           {@const done = isDone(obj.k)}
-          <label class="obj-item" class:done>
-            <input type="checkbox" checked={done} on:change={() => toggleObj(obj.k)} />
-            <div class="obj-info">
-              <span class="obj-key">{obj.k}</span>
-              <span class="obj-text">{obj.t}</span>
+          {@const sim = labSim[obj.k]}
+          {@const termOpen = termExpanded === obj.k}
+
+          <div class="obj-wrap">
+            <div class="obj-row" class:done>
+              <button
+                class="obj-check"
+                class:checked={done}
+                title={done ? 'Mark incomplete' : 'Mark complete'}
+                on:click={() => toggleObj(obj.k)}
+                aria-label="Toggle objective {obj.k}"
+              >
+                {#if done}✓{:else}<span class="obj-num">{i + 1}</span>{/if}
+              </button>
+
+              <div class="obj-info">
+                <span class="obj-key">{obj.k}</span>
+                <span class="obj-text" class:strikethrough={done}>{obj.t}</span>
+              </div>
+
+              {#if sim}
+                <button
+                  class="obj-run"
+                  class:active={termOpen}
+                  on:click={() => toggleTerm(obj.k)}
+                  title={termOpen ? 'Hide terminal' : 'Open terminal simulation'}
+                >
+                  {termOpen ? '▼' : '▶'} {termOpen ? 'Hide' : 'Simulate'}
+                </button>
+              {/if}
             </div>
-          </label>
+
+            {#if termOpen && sim}
+              <div class="obj-term">
+                <TermSim
+                  cmd={sim.cmd}
+                  out={sim.out}
+                  onComplete={() => onTermComplete(obj.k)}
+                />
+              </div>
+            {/if}
+          </div>
         {/each}
       </div>
 
-      <div class="lab-hint">
-        <div class="hint-hd">Real Tool Practice</div>
-        <p>Complete this lab in the browser, then repeat on the actual artifacts in <code>range/{labId}/</code> using the real tools. That's the double-rep that builds muscle memory.</p>
-        <a href="/console/range" class="back-link">← Back to Range Hub</a>
+      <div class="lab-sidebar">
+        <div class="lab-hint">
+          <div class="hint-hd">How to use</div>
+          <ol class="hint-steps">
+            <li>Click <strong>▶ Simulate</strong> on each objective to run a real-output terminal simulation</li>
+            <li>Read the output — understand what each tool tells you</li>
+            <li>Check the objective once you understand the result</li>
+            <li>Repeat on real artifacts in <code>range/{labId}/</code></li>
+          </ol>
+        </div>
+
+        <div class="lab-meta">
+          <div class="hint-hd">Lab Info</div>
+          <div class="meta-row"><span class="meta-lbl">Track</span><span class="chip chip-{lab.track==='DF'?'df':lab.track==='RE'?'re':'ma'}">{lab.track}</span></div>
+          <div class="meta-row"><span class="meta-lbl">Tool</span><code class="meta-val">{lab.tool}</code></div>
+          <div class="meta-row"><span class="meta-lbl">Phase</span><span class="meta-val">{lab.phase}</span></div>
+          <a href="/console/range" class="back-link">← Back to Range Hub</a>
+        </div>
       </div>
     </div>
   </main>
@@ -115,61 +181,125 @@
   .topstrip a:hover { color: var(--volt); text-decoration: none; }
   .ts-right { color: var(--volt); }
 
-  .lab-main { padding: 28px; flex: 1; }
+  .lab-main { padding: 20px; flex: 1; }
 
   .lab-header {
     background: var(--panel); border: 1px solid var(--line);
-    border-radius: var(--rad); padding: 28px 32px; margin-bottom: 24px;
+    border-radius: var(--rad); padding: 24px 28px; margin-bottom: 20px;
   }
-  .lh-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .lh-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
   .lh-phase { font-size: 11px; color: var(--ash); font-family: var(--mono); }
-  .lh-tool { font-size: 11px; color: var(--volt); font-family: var(--mono); margin-left: auto; }
-  .lh-title { font-size: 22px; font-weight: 700; color: var(--bone); margin-bottom: 8px; }
-  .lh-blurb { font-size: 14px; color: var(--ash); line-height: 1.6; margin-bottom: 16px; }
-  .lh-pbar { height: 4px; background: var(--line2); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+  .lh-tool  { font-size: 11px; color: var(--volt); font-family: var(--mono); margin-left: auto; }
+  .lh-title { font-size: 20px; font-weight: 700; color: var(--bone); margin-bottom: 8px; }
+  .lh-blurb { font-size: 13px; color: var(--ash); line-height: 1.6; margin-bottom: 16px; }
+  .lh-pbar  { height: 4px; background: var(--line2); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
   .lh-pfill { height: 100%; background: var(--volt); border-radius: 2px; transition: width .4s ease; }
   .lh-pmeta { font-size: 11px; color: var(--ash); font-family: var(--mono); }
 
-  .lab-body { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+  .lab-body { display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
 
+  /* objective list */
   .obj-list {
     background: var(--panel); border: 1px solid var(--line);
     border-radius: var(--rad); overflow: hidden;
   }
   .obj-hd {
-    padding: 14px 20px;
+    padding: 12px 18px;
     background: var(--panel2); border-bottom: 1px solid var(--line);
     font-size: 11px; font-weight: 700; color: var(--ash); letter-spacing: .1em; text-transform: uppercase;
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    flex-wrap: wrap;
   }
-  .obj-item {
-    display: flex; align-items: flex-start; gap: 12px;
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--line);
-    cursor: pointer; transition: background .1s;
-  }
-  .obj-item:last-child { border-bottom: none; }
-  .obj-item:hover { background: var(--panel2); }
-  .obj-item.done { opacity: .55; }
-  .obj-item input[type="checkbox"] {
-    flex-shrink: 0; margin-top: 2px;
-    accent-color: var(--volt); width: 15px; height: 15px; cursor: pointer;
-  }
-  .obj-info { display: flex; flex-direction: column; gap: 3px; }
-  .obj-key { font-family: var(--mono); font-size: 10px; color: var(--volt); text-transform: uppercase; }
-  .obj-text { font-size: 13px; color: var(--ash); line-height: 1.4; }
-  .obj-item.done .obj-text { text-decoration: line-through; }
+  .obj-hd-hint { font-size: 10px; font-weight: 400; color: var(--dim); letter-spacing: .02em; text-transform: none; }
 
-  .lab-hint {
-    background: var(--panel); border: 1px solid var(--line);
-    border-radius: var(--rad); padding: 22px;
-    display: flex; flex-direction: column; gap: 12px;
-    height: fit-content;
+  .obj-wrap { border-bottom: 1px solid var(--line); }
+  .obj-wrap:last-child { border-bottom: none; }
+
+  .obj-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 18px;
+    transition: background .1s;
+    min-height: 52px;
   }
-  .hint-hd { font-size: 12px; font-weight: 700; color: var(--bone); letter-spacing: .06em; text-transform: uppercase; }
-  .lab-hint p { font-size: 13px; color: var(--ash); line-height: 1.6; }
-  .lab-hint code { font-family: var(--mono); color: var(--volt); font-size: 12px; }
-  .back-link { font-size: 13px; color: var(--ash); }
+  .obj-row:hover { background: var(--panel2); }
+  .obj-row.done { opacity: .6; }
+
+  .obj-check {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--line2);
+    background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: pointer;
+    font-size: 12px; font-weight: 700; color: var(--dim);
+    transition: border-color .15s, background .15s, color .15s;
+  }
+  .obj-check:hover { border-color: var(--volt); color: var(--volt); }
+  .obj-check.checked {
+    border-color: var(--volt);
+    background: color-mix(in srgb, var(--volt) 15%, transparent);
+    color: var(--volt);
+  }
+  .obj-num { font-family: var(--mono); font-size: 10px; }
+
+  .obj-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .obj-key  { font-family: var(--mono); font-size: 9px; color: var(--volt); text-transform: uppercase; letter-spacing: .08em; }
+  .obj-text { font-size: 13px; color: var(--ash); line-height: 1.4; }
+  .obj-text.strikethrough { text-decoration: line-through; }
+
+  .obj-run {
+    font-size: 10px; font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 4px; border: 1px solid var(--line2);
+    background: transparent; color: var(--ash);
+    cursor: pointer; flex-shrink: 0;
+    transition: border-color .15s, color .15s, background .15s;
+    white-space: nowrap;
+    min-height: 32px;
+  }
+  .obj-run:hover, .obj-run.active {
+    border-color: var(--volt);
+    color: var(--volt);
+    background: color-mix(in srgb, var(--volt) 8%, transparent);
+  }
+
+  .obj-term { padding: 0 18px 14px; }
+
+  /* sidebar */
+  .lab-sidebar { display: flex; flex-direction: column; gap: 14px; }
+
+  .lab-hint, .lab-meta {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--rad); padding: 18px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .hint-hd { font-size: 10px; font-weight: 700; color: var(--bone); letter-spacing: .08em; text-transform: uppercase; }
+
+  .hint-steps {
+    padding-left: 16px; margin: 0;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .hint-steps li { font-size: 12px; color: var(--ash); line-height: 1.5; }
+  .hint-steps strong { color: var(--bone); }
+  .hint-steps code { font-family: var(--mono); color: var(--volt); font-size: 11px; }
+
+  .meta-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .meta-lbl { font-size: 11px; color: var(--dim); }
+  .meta-val { font-family: var(--mono); font-size: 11px; color: var(--ash); }
+
+  .back-link { font-size: 12px; color: var(--ash); margin-top: 4px; }
   .back-link:hover { color: var(--volt); text-decoration: none; }
 
-  @media (max-width: 800px) { .lab-body { grid-template-columns: 1fr; } }
+  @media (max-width: 860px) {
+    .lab-main { padding: 14px; }
+    .lab-body { grid-template-columns: 1fr; }
+    .lab-sidebar { order: -1; }
+    .lh-title { font-size: 17px; }
+  }
+  @media (max-width: 540px) {
+    .obj-row { padding: 11px 14px; gap: 10px; }
+    .obj-run { font-size: 9px; padding: 4px 8px; }
+    .obj-term { padding: 0 14px 12px; }
+    .lab-header { padding: 18px 20px; }
+  }
 </style>

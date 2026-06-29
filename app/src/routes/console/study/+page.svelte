@@ -7,6 +7,43 @@
   $: selectedId = $page.url.searchParams.get('phase') ?? 'p01';
   $: selected   = PHASES.find(p => p.id === selectedId) ?? PHASES[0];
 
+  // Drill mode
+  let mode = 'read'; // 'read' | 'drill'
+  let cardIdx = 0;
+  let flipped = false;
+  let gotIt = new Set();
+  let reviewAgain = new Set();
+
+  $: drillCards = content?.concepts ?? [];
+  $: drillTotal = drillCards.length;
+  $: drillCard  = drillCards[cardIdx] ?? null;
+
+  function nextCard() {
+    flipped = false;
+    setTimeout(() => { cardIdx = (cardIdx + 1) % drillTotal; }, 100);
+  }
+  function prevCard() {
+    flipped = false;
+    setTimeout(() => { cardIdx = (cardIdx - 1 + drillTotal) % drillTotal; }, 100);
+  }
+  function markGot() {
+    gotIt.add(cardIdx);
+    reviewAgain.delete(cardIdx);
+    gotIt = gotIt;
+    nextCard();
+  }
+  function markReview() {
+    reviewAgain.add(cardIdx);
+    gotIt.delete(cardIdx);
+    reviewAgain = reviewAgain;
+    nextCard();
+  }
+  function resetDrill() {
+    cardIdx = 0; flipped = false; gotIt = new Set(); reviewAgain = new Set();
+  }
+
+  $: if (selectedId) { resetDrill(); }
+
   const CONTENT = {
     p01: {
       overview: `The Sleuth Kit (TSK) is the foundation of open-source disk forensics. Every disk analysis starts with understanding the partition layout, then navigating to the filesystem, then extracting specific files — even deleted ones.`,
@@ -359,9 +396,92 @@
 
 <div class="topstrip">
   <span>STUDY</span>
-  <span class="ts-right">Phase {selected.n} — {selected.name}</span>
+  <div class="ts-right">
+    <button class="mode-btn" class:active={mode==='read'} on:click={() => mode='read'}>READ</button>
+    <button class="mode-btn" class:active={mode==='drill'} on:click={() => { mode='drill'; resetDrill(); }}>DRILL</button>
+  </div>
 </div>
 
+{#if mode === 'drill'}
+  <div class="drill-layout">
+    <nav class="phase-nav">
+      {#each PHASES as p}
+        <button
+          class="pn-item"
+          class:active={p.id === selectedId}
+          on:click={() => goto('/console/study?phase='+p.id)}
+        >
+          <span class="pn-n">{p.n}</span>
+          <span class="pn-name">{p.name}</span>
+          <span class="chip chip-{p.track==='DF'?'df':p.track==='RE'?'re':'ma'}" style="font-size:9px;padding:1px 5px">{p.track}</span>
+        </button>
+      {/each}
+    </nav>
+
+    <main class="drill-main">
+      <div class="drill-header">
+        <h2 class="drill-phase-title">{selected.name}</h2>
+        <div class="drill-progress">
+          <span class="dp-card">Card {cardIdx + 1} / {drillTotal}</span>
+          <span class="dp-got">✓ {gotIt.size} got it</span>
+          <span class="dp-review">↺ {reviewAgain.size} review</span>
+        </div>
+        <div class="drill-bar">
+          <div class="drill-bar-fill" style="width:{drillTotal ? Math.round(((gotIt.size)/drillTotal)*100) : 0}%"></div>
+        </div>
+      </div>
+
+      {#if drillCard}
+        <div class="flashcard-wrap">
+          <button class="flashcard" class:flipped on:click={() => (flipped = !flipped)} aria-label="Flip card">
+            <div class="fc-front">
+              <div class="fc-label">TERM</div>
+              <div class="fc-term">{drillCard.term}</div>
+              <div class="fc-tap-hint">tap to reveal definition</div>
+            </div>
+            <div class="fc-back">
+              <div class="fc-label">DEFINITION</div>
+              <div class="fc-def">{drillCard.def}</div>
+              {#if drillCard.cmd}
+                <code class="fc-cmd">{drillCard.cmd}</code>
+              {/if}
+            </div>
+          </button>
+
+          <div class="drill-actions">
+            <button class="da-btn da-prev" on:click={prevCard} title="Previous">←</button>
+            {#if flipped}
+              <button class="da-btn da-review" on:click={markReview}>↺ Review Again</button>
+              <button class="da-btn da-got" on:click={markGot}>✓ Got It</button>
+            {:else}
+              <button class="da-btn da-flip" on:click={() => (flipped = true)}>Flip Card</button>
+            {/if}
+            <button class="da-btn da-next" on:click={nextCard} title="Next">→</button>
+          </div>
+
+          <div class="drill-deck-row">
+            {#each drillCards as _, i}
+              <button
+                class="deck-dot"
+                class:dot-current={i === cardIdx}
+                class:dot-got={gotIt.has(i)}
+                class:dot-review={reviewAgain.has(i)}
+                on:click={() => { cardIdx = i; flipped = false; }}
+                aria-label="Go to card {i+1}"
+              ></button>
+            {/each}
+          </div>
+
+          <button class="reset-drill" on:click={resetDrill}>Reset Deck</button>
+        </div>
+      {:else}
+        <div class="drill-empty">No concepts for this phase yet.</div>
+      {/if}
+    </main>
+  </div>
+{/if}
+
+{#if mode === 'read'}
 <div class="study-layout">
   <nav class="phase-nav">
     {#each PHASES as p}
@@ -437,6 +557,7 @@
     </div>
   </main>
 </div>
+{/if}
 
 <style>
   .topstrip {
@@ -444,10 +565,106 @@
     background: color-mix(in srgb, var(--panel) 85%, transparent);
     backdrop-filter: blur(6px);
     border-bottom: 1px solid var(--line);
-    padding: 10px 28px; font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--ash);
-    display: flex; justify-content: space-between; z-index: 10;
+    padding: 8px 20px; font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--ash);
+    display: flex; justify-content: space-between; align-items: center; z-index: 10;
   }
-  .ts-right { color: var(--volt); }
+  .ts-right { display: flex; gap: 4px; }
+  .mode-btn {
+    font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    padding: 4px 12px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--line2); background: transparent; color: var(--ash);
+    transition: all .15s;
+    min-height: 28px;
+  }
+  .mode-btn.active { border-color: var(--volt); color: var(--volt); background: color-mix(in srgb,var(--volt) 8%,transparent); }
+  .mode-btn:hover:not(.active) { border-color: var(--ash); color: var(--bone); }
+
+  /* drill layout mirrors study layout */
+  .drill-layout { display: flex; flex: 1; overflow: hidden; }
+  .drill-main { flex: 1; padding: 28px; overflow-y: auto; }
+
+  .drill-header {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--rad); padding: 20px 24px; margin-bottom: 24px;
+  }
+  .drill-phase-title { font-size: 18px; font-weight: 700; color: var(--bone); margin-bottom: 10px; }
+  .drill-progress { display: flex; gap: 16px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .dp-card   { font-family: var(--mono); font-size: 11px; color: var(--ash); }
+  .dp-got    { font-size: 11px; color: var(--volt); font-weight: 700; }
+  .dp-review { font-size: 11px; color: var(--amber); font-weight: 700; }
+  .drill-bar { height: 3px; background: var(--line2); border-radius: 2px; overflow: hidden; }
+  .drill-bar-fill { height: 100%; background: var(--volt); border-radius: 2px; transition: width .4s ease; }
+
+  .flashcard-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
+    max-width: 560px; margin: 0 auto;
+  }
+
+  .flashcard {
+    width: 100%; min-height: 220px;
+    background: var(--panel); border: 1px solid var(--line2);
+    border-radius: 10px; cursor: pointer;
+    perspective: 1000px;
+    position: relative;
+    transition: border-color .2s, box-shadow .2s;
+    padding: 0; /* button reset */
+  }
+  .flashcard:hover { border-color: var(--volt); box-shadow: 0 0 20px color-mix(in srgb,var(--volt) 12%,transparent); }
+
+  .fc-front, .fc-back {
+    position: absolute; inset: 0;
+    padding: 28px 32px;
+    display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+    border-radius: 10px;
+    backface-visibility: hidden;
+    transition: opacity .18s, transform .18s;
+  }
+  .fc-front { background: var(--panel); }
+  .fc-back  { background: var(--panel2); opacity: 0; transform: rotateY(10deg); pointer-events: none; }
+  .flashcard.flipped .fc-front { opacity: 0; transform: rotateY(-10deg); pointer-events: none; }
+  .flashcard.flipped .fc-back  { opacity: 1; transform: rotateY(0); pointer-events: auto; }
+  /* keep card height consistent */
+  .fc-front, .fc-back { min-height: 220px; }
+
+  .fc-label { font-size: 9px; font-weight: 700; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; margin-bottom: 16px; }
+  .fc-term  { font-size: 22px; font-weight: 700; color: var(--volt); font-family: var(--mono); }
+  .fc-tap-hint { font-size: 11px; color: var(--dim); margin-top: 14px; }
+  .fc-def   { font-size: 14px; color: var(--ash); line-height: 1.7; }
+  .fc-cmd   { display: block; margin-top: 12px; font-size: 11px; color: var(--bone); font-family: var(--mono); background: var(--panel3); padding: 5px 10px; border-radius: 4px; text-align: left; }
+
+  .drill-actions { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .da-btn {
+    font-size: 12px; font-weight: 700;
+    padding: 8px 18px; border-radius: var(--rad); cursor: pointer;
+    border: 1px solid var(--line2); background: transparent; color: var(--ash);
+    transition: all .15s; min-height: 40px;
+  }
+  .da-btn:hover { border-color: var(--ash); color: var(--bone); }
+  .da-prev, .da-next { padding: 8px 14px; }
+  .da-got    { border-color: color-mix(in srgb,var(--volt) 40%,transparent); color: var(--volt); }
+  .da-got:hover { background: color-mix(in srgb,var(--volt) 12%,transparent); border-color: var(--volt); }
+  .da-review { border-color: color-mix(in srgb,var(--amber) 40%,transparent); color: var(--amber); }
+  .da-review:hover { background: color-mix(in srgb,var(--amber) 10%,transparent); border-color: var(--amber); }
+  .da-flip   { border-color: color-mix(in srgb,var(--blue) 40%,transparent); color: var(--blue); }
+  .da-flip:hover { background: color-mix(in srgb,var(--blue) 10%,transparent); border-color: var(--blue); }
+
+  .drill-deck-row { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+  .deck-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 1px solid var(--line2); background: transparent; cursor: pointer;
+    padding: 0; transition: background .15s, border-color .15s;
+  }
+  .deck-dot.dot-current  { border-color: var(--bone);  background: var(--bone); }
+  .deck-dot.dot-got      { border-color: var(--volt);  background: var(--volt); }
+  .deck-dot.dot-review   { border-color: var(--amber); background: var(--amber); }
+
+  .reset-drill {
+    font-size: 11px; color: var(--dim); background: none; border: none; cursor: pointer;
+    text-decoration: underline; padding: 4px;
+  }
+  .reset-drill:hover { color: var(--ash); }
+
+  .drill-empty { color: var(--ash); padding: 40px; text-align: center; }
 
   .study-layout { display: flex; flex: 1; overflow: hidden; }
 
