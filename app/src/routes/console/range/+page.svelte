@@ -1,10 +1,15 @@
 <script>
   import { LABS } from '$lib/data';
-  import { labs, showToast } from '$lib/stores';
+  import { labs } from '$lib/stores';
   import { goto } from '$app/navigation';
 
-  const CHAPTER = LABS.filter(l => !['yara','timeline','threat_hunt','crypt_re'].includes(l.id));
-  const SKILL   = LABS.filter(l =>  ['yara','timeline','threat_hunt','crypt_re'].includes(l.id));
+  let trackFilter = 'ALL'; // ALL | DF | RE | MA
+
+  const ALL_CHAPTER = LABS.filter(l => !['yara','timeline','threat_hunt','crypt_re'].includes(l.id));
+  const ALL_SKILL   = LABS.filter(l =>  ['yara','timeline','threat_hunt','crypt_re'].includes(l.id));
+
+  $: CHAPTER = trackFilter === 'ALL' ? ALL_CHAPTER : ALL_CHAPTER.filter(l => l.track === trackFilter);
+  $: SKILL   = trackFilter === 'ALL' ? ALL_SKILL   : ALL_SKILL.filter(l => l.track === trackFilter);
 
   $: labsDone = $labs;
 
@@ -38,7 +43,14 @@
 
 <div class="topstrip">
   <span>RANGE LABS</span>
-  <span class="ts-right">{Object.keys(labsDone).length} / {LABS.length} cleared</span>
+  <div class="ts-right-group">
+    <span class="ts-count">{LABS.filter(l => (labsDone[l.id]?.done?.length ?? 0) > 0).length}/{LABS.length} started</span>
+    <div class="track-filters">
+      {#each ['ALL','DF','RE','MA'] as t}
+        <button class="tf" class:active={trackFilter === t} on:click={() => trackFilter = t}>{t}</button>
+      {/each}
+    </div>
+  </div>
 </div>
 
 <main class="range-main">
@@ -108,7 +120,17 @@
     display: flex; justify-content: space-between;
     z-index: 10;
   }
-  .ts-right { color: var(--volt); }
+  .ts-right-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .ts-count { color: var(--volt); font-size: 11px; }
+  .track-filters { display: flex; gap: 3px; }
+  .tf {
+    font-size: 10px; font-weight: 700; letter-spacing: .08em;
+    padding: 3px 9px; border-radius: 3px; cursor: pointer;
+    border: 1px solid var(--line2); background: transparent; color: var(--ash);
+    min-height: 26px; transition: all .15s;
+  }
+  .tf.active { border-color: var(--volt); color: var(--volt); background: color-mix(in srgb,var(--volt) 10%,transparent); }
+  .tf:hover:not(.active) { border-color: var(--ash); color: var(--bone); }
 
   .range-main { padding: 28px; flex: 1; }
 

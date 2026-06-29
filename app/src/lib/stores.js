@@ -46,5 +46,8 @@ export function showToast(msg, kind = 'info', ms = 2600) {
   setTimeout(() => toast.set(null), ms);
 }
 
+// ── drill progress  { phaseId: { got: number[], review: number[] } } ─────────
+export const drillProgress = persist('bv_drill', {});
+
 // ── current console mode ─────────────────────────────────────────────────────
 export const mode = writable('dashboard');

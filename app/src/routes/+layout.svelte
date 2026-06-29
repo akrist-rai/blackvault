@@ -60,8 +60,9 @@
     align-items: center;
     gap: 12px;
     padding: 0 16px;
-    height: 50px;
-    background: var(--panel);
+    height: 52px;
+    background: color-mix(in srgb, var(--panel) 92%, transparent);
+    backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
     position: sticky;
     top: 0;
@@ -70,8 +71,8 @@
   }
   .mobile-brand {
     font-size: 14px;
-    font-weight: 700;
-    letter-spacing: .1em;
+    font-weight: 800;
+    letter-spacing: .12em;
     color: var(--bone);
   }
   .mobile-brand em {
@@ -86,20 +87,21 @@
     gap: 4px;
     width: 36px;
     height: 36px;
-    padding: 6px;
+    padding: 7px 8px;
     border-radius: var(--rad);
     background: none;
     border: 1px solid var(--line2);
     cursor: pointer;
     flex-shrink: 0;
+    transition: border-color var(--tx), background var(--tx);
   }
   .hamburger:hover { border-color: var(--ash); background: var(--panel2); }
   .hamburger span {
     display: block;
-    height: 2px;
+    height: 1.5px;
     background: var(--ash);
     border-radius: 1px;
-    transition: background .15s;
+    transition: background var(--tx);
   }
   .hamburger:hover span { background: var(--bone); }
 

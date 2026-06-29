@@ -1,47 +1,89 @@
 <script>
+  import { onMount } from 'svelte';
+
   export let cmd = '';
   export let out = '';
+  export let autoRun = false;
   export let onComplete = () => {};
 
   let state = 'idle'; // idle | typing | printing | done
   let displayCmd = '';
   let displayLines = [];
   let termEl;
+  let cancelFlag = { cancelled: false };
+  let elapsed = 0;
+  let elapsedTimer;
 
   $: outLines = out ? out.trim().split('\n') : [];
+
+  onMount(() => { if (autoRun) execute(); });
 
   function sleep(ms) {
     return new Promise(r => setTimeout(r, ms));
   }
 
   async function execute() {
+    cancelFlag = { cancelled: false };
+    const flag = cancelFlag;
     state = 'typing';
     displayCmd = '';
     displayLines = [];
+    elapsed = 0;
+    elapsedTimer = setInterval(() => elapsed++, 1000);
 
     for (let i = 0; i < cmd.length; i++) {
+      if (flag.cancelled) return;
       displayCmd += cmd[i];
-      await sleep(16 + Math.random() * 22);
+      await sleep(16 + Math.random() * 20);
     }
 
-    await sleep(180);
+    if (flag.cancelled) return;
+    await sleep(160);
     state = 'printing';
 
     for (const line of outLines) {
+      if (flag.cancelled) return;
       displayLines = [...displayLines, line];
       if (termEl) termEl.scrollTop = termEl.scrollHeight;
-      await sleep(50 + Math.random() * 40);
+      await sleep(48 + Math.random() * 38);
     }
 
+    if (flag.cancelled) return;
+    finish();
+  }
+
+  function skip() {
+    cancelFlag.cancelled = true;
+    clearInterval(elapsedTimer);
+    displayCmd = cmd;
+    displayLines = outLines.slice();
+    state = 'done';
+    onComplete();
+  }
+
+  function finish() {
+    clearInterval(elapsedTimer);
     state = 'done';
     onComplete();
   }
 
   function reset() {
+    cancelFlag.cancelled = true;
+    clearInterval(elapsedTimer);
     state = 'idle';
     displayCmd = '';
     displayLines = [];
+    elapsed = 0;
   }
+
+  async function copyOutput() {
+    const text = `$ ${cmd}\n${displayLines.join('\n')}`;
+    await navigator.clipboard.writeText(text);
+    copyFlash = true;
+    setTimeout(() => copyFlash = false, 1200);
+  }
+
+  let copyFlash = false;
 
   function lineClass(line) {
     if (line.startsWith('[!]')) return 'ln-alert';
@@ -57,6 +99,9 @@
     <span class="dot dot-y"></span>
     <span class="dot dot-g"></span>
     <span class="term-title">BLACKVAULT — Terminal</span>
+    {#if state === 'done'}
+      <span class="term-elapsed">{elapsed}s</span>
+    {/if}
   </div>
 
   <div class="term-body" bind:this={termEl}>
@@ -85,8 +130,12 @@
       <span class="tf-cmd-preview">{cmd}</span>
     {:else if state === 'typing' || state === 'printing'}
       <span class="tf-running">● Running…</span>
+      <button class="tf-btn tf-skip" on:click={skip}>Skip ▶▶</button>
     {:else}
-      <span class="tf-done">✓ Command completed</span>
+      <span class="tf-done">✓ Done</span>
+      <button class="tf-btn tf-copy" on:click={copyOutput}>
+        {copyFlash ? '✓ Copied' : '⎘ Copy'}
+      </button>
       <button class="tf-btn tf-reset" on:click={reset}>↺ Reset</button>
     {/if}
   </div>
@@ -111,25 +160,22 @@
     background: #020e0b;
     border-bottom: 1px solid color-mix(in srgb, var(--volt) 12%, transparent);
   }
-  .dot {
-    width: 9px; height: 9px;
-    border-radius: 50%; flex-shrink: 0;
-  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
   .dot-r { background: #e53040; }
   .dot-y { background: #e0a020; }
   .dot-g { background: #00d4b8; }
   .term-title {
-    font-size: 9px;
-    color: var(--ash);
-    letter-spacing: .08em;
-    margin-left: 4px;
-    text-transform: uppercase;
+    font-size: 9px; color: var(--ash); letter-spacing: .08em;
+    margin-left: 4px; text-transform: uppercase; flex: 1;
+  }
+  .term-elapsed {
+    font-size: 9px; color: var(--dim); font-family: var(--mono);
   }
 
   .term-body {
     padding: 10px 14px;
     min-height: 80px;
-    max-height: 260px;
+    max-height: 280px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -137,15 +183,10 @@
   }
 
   .term-prompt-line {
-    display: flex;
-    gap: 6px;
-    line-height: 1.6;
-    flex-wrap: wrap;
+    display: flex; gap: 6px; line-height: 1.6; flex-wrap: wrap;
   }
   .term-idle-line {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    display: flex; align-items: center; gap: 4px;
   }
 
   .term-line {
@@ -174,7 +215,7 @@
   .term-footer {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 7px 12px;
     background: #020e0b;
     border-top: 1px solid color-mix(in srgb, var(--volt) 12%, transparent);
@@ -186,11 +227,12 @@
     font-family: var(--mono);
     font-size: 10px;
     font-weight: 700;
-    padding: 4px 12px;
+    padding: 4px 10px;
     border-radius: 4px;
     cursor: pointer;
     transition: background .15s;
     white-space: nowrap;
+    min-height: 28px;
   }
   .tf-exec {
     background: color-mix(in srgb, var(--volt) 12%, transparent);
@@ -198,6 +240,19 @@
     color: var(--volt);
   }
   .tf-exec:hover { background: color-mix(in srgb, var(--volt) 22%, transparent); }
+  .tf-skip {
+    background: transparent;
+    border: 1px solid var(--line2);
+    color: var(--ash);
+    margin-left: auto;
+  }
+  .tf-skip:hover { border-color: var(--amber); color: var(--amber); }
+  .tf-copy {
+    background: transparent;
+    border: 1px solid var(--line2);
+    color: var(--ash);
+  }
+  .tf-copy:hover { border-color: var(--blue); color: var(--blue); }
   .tf-reset {
     background: transparent;
     border: 1px solid var(--line2);
@@ -206,19 +261,13 @@
   .tf-reset:hover { border-color: var(--ash); color: var(--bone); }
 
   .tf-cmd-preview {
-    font-size: 10px;
-    color: var(--dim);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    min-width: 0;
+    font-size: 10px; color: var(--dim);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex: 1; min-width: 0;
   }
 
   .tf-running {
-    font-size: 10px;
-    color: var(--amber);
-    letter-spacing: .06em;
+    font-size: 10px; color: var(--amber); letter-spacing: .06em;
     animation: pulse 1.1s ease-in-out infinite;
   }
   @keyframes pulse {
@@ -226,9 +275,5 @@
     50%       { opacity: .35; }
   }
 
-  .tf-done {
-    font-size: 10px;
-    color: var(--volt);
-    letter-spacing: .04em;
-  }
+  .tf-done { font-size: 10px; color: var(--volt); letter-spacing: .04em; }
 </style>
