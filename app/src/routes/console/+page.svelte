@@ -1,11 +1,12 @@
 <script>
-  import { mastery, phases, labs, cases, badges } from '$lib/stores';
+  import { mastery, phases, labs, cases, badges, flagsCaptured, TOTAL_FLAGS } from '$lib/stores';
   import { FEED, PHASES, LABS } from '$lib/data';
   import { goto } from '$app/navigation';
 
   $: pct        = $mastery;
   $: badgeCount = $badges.length;
   $: caseCount  = Object.values($cases).filter(Boolean).length;
+  $: flagPct    = Math.round(($flagsCaptured / TOTAL_FLAGS) * 100);
 
   const LAB_OBJ_COUNTS = {
     disk:5, asm:4, peelf:4, static:5, ghidra:4, dynamic:4, unpack:4,
@@ -74,6 +75,16 @@
 
   <div class="dash-cols">
     <div class="dash-main">
+      <!-- Flags captured -->
+      <div class="card card-flags">
+        <div class="cf-top">
+          <div class="cf-label">Flags Captured Platform-Wide</div>
+          <div class="cf-count">{$flagsCaptured} <span class="cf-total">/ {TOTAL_FLAGS}</span></div>
+        </div>
+        <div class="cf-bar"><div class="cf-fill" style="width:{flagPct}%"></div></div>
+        <p class="cf-desc">Every phase, lab, case, playbook, and intel report ends in a real BV{'{'}...{'}'} challenge. {flagPct}% of the platform cleared.</p>
+      </div>
+
       <!-- Quick actions -->
       <div class="card">
         <div class="card-hd">Quick Actions</div>
@@ -229,6 +240,20 @@
     transition: color .15s;
   }
   .card-more:hover { color: var(--volt); text-decoration: none; }
+
+  /* flags captured banner */
+  .card-flags {
+    padding: 18px 20px;
+    border-top: 2px solid var(--volt);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--volt) 5%, var(--panel)), var(--panel));
+  }
+  .cf-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  .cf-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--ash); text-transform: uppercase; }
+  .cf-count { font-size: 22px; font-weight: 800; color: var(--volt); font-family: var(--mono); }
+  .cf-total { font-size: 13px; font-weight: 600; color: var(--dim); }
+  .cf-bar { height: 5px; background: var(--line2); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
+  .cf-fill { height: 100%; background: var(--volt); border-radius: 3px; box-shadow: var(--glow-volt); transition: width .5s ease; }
+  .cf-desc { font-size: 12px; color: var(--ash); line-height: 1.5; }
 
   /* quick actions */
   .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 14px; }

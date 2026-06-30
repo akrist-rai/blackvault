@@ -191,6 +191,11 @@
     { q: 'Which hashcat mode number is used for Kerberoast TGS-REP cracking?', flag: '13100' },
     { q: 'Which Windows Event ID indicates a new service was installed (common ransomware deployment artifact)?', flag: '7045' },
     { q: 'Which strace trace category isolates connect/bind/recv/send syscalls?', flag: 'network' },
+    { q: 'Which Volatility 3 plugin lists open handles (files, registry keys, mutants) for a specific PID?', flag: 'handles' },
+    { q: 'Which Sleuth Kit command dumps all unallocated blocks from a disk image for later carving?', flag: 'blkls' },
+    { q: 'Above what per-section Shannon entropy value (out of 8.0) is a PE section flagged as packed or encrypted?', flag: '7.2' },
+    { q: 'Which Windows Event ID fires when the Security log itself is cleared by an attacker?', flag: '1102' },
+    { q: 'Which tool reconstructs the Import Address Table after dumping a process at its OEP in x64dbg?', flag: 'scylla' },
   ];
 
   $: solvedFlags = $ctf;

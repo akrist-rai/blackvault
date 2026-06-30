@@ -19,6 +19,12 @@
     { q: 'Commands are sent as DNS TXT queries with responses returned in A/CNAME records, at roughly 3 KB/s. Submit the technique ID.', flag: 't1071.004' },
     { q: 'An attacker abuses DCOM\'s MMC20.Application to execute commands on a remote host without touching SMB or WMI. Submit the technique ID.', flag: 't1021.003' },
     { q: 'A trojanized build pipeline inserts a backdoor before distribution, signed with a legitimate certificate. Submit the technique ID.', flag: 't1195.002' },
+    { q: 'A WMI ActiveScriptEventConsumer survives reboots and is invisible to most EDR — almost exclusively used by sophisticated actors for persistence. Submit the technique ID.', flag: 't1546.003' },
+    { q: 'fodhelper.exe auto-elevates and reads a registry path before doing so; an attacker plants a malicious command there to bypass UAC. Submit the technique ID.', flag: 't1548.002' },
+    { q: 'An attacker runs ntdsutil IFM or DCSync (Mimikatz lsadump::dcsync) to pull every domain credential at once. Submit the technique ID.', flag: 't1003.003' },
+    { q: 'A golden ticket forged from the krbtgt hash is injected directly into LSASS via Mimikatz kerberos::ptt. Submit the technique ID.', flag: 't1550.003' },
+    { q: 'Before deploying ransomware, the actor stops backup agents and AV/SQL services via PsExec batch to unlock files for encryption. Submit the technique ID.', flag: 't1489' },
+    { q: 'An attacker runs wevtutil cl Security right before exiting — Event 1102 is the giveaway. Submit the technique ID.', flag: 't1070.001' },
   ];
 
   $: solvedFlags = $ctf;

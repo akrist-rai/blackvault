@@ -2,12 +2,19 @@
   import { PHASES, LABS } from '$lib/data';
 
   const STATS = [
+    { n: '130', label: 'Flags to Capture' },
     { n: '12',  label: 'Phases' },
     { n: '16',  label: 'Labs' },
     { n: '70+', label: 'ATT&CK TTPs' },
     { n: '130+', label: 'Arsenal Commands' },
     { n: '4',   label: 'IR Playbooks' },
-    { n: '22',  label: 'Badges' },
+    { n: '15',  label: 'Badges' },
+  ];
+
+  const HOW = [
+    { n: '01', t: 'Study the brief', d: 'Real-tool walkthroughs, case files, threat intel, and command references — taught before anything is tested.' },
+    { n: '02', t: 'Capture the flag', d: 'Every section ends in a real BV{...} challenge derived from what you just learned. No self-checked boxes, no self-reported completion.' },
+    { n: '03', t: 'Track mastery', d: 'Flags, cleared labs, closed cases, and badges roll up into a single mastery score across all three tracks.' },
   ];
 
   const TRACKS = [
@@ -135,6 +142,21 @@
       </div>
     {/each}
   </div>
+
+  <!-- ── How it works ── -->
+  <section class="section" id="how">
+    <div class="section-label">How It Works</div>
+    <h2 class="section-h">Learn the material, then prove it</h2>
+    <div class="how-grid">
+      {#each HOW as h}
+        <div class="how-card">
+          <div class="how-n">{h.n}</div>
+          <div class="how-t">{h.t}</div>
+          <div class="how-d">{h.d}</div>
+        </div>
+      {/each}
+    </div>
+  </section>
 
   <!-- ── Tracks ── -->
   <section class="section" id="tracks">
@@ -410,6 +432,26 @@
   }
   .section-cta { margin-top: 36px; display: flex; gap: 12px; }
 
+  /* ── How it works ── */
+  .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .how-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--rad-lg);
+    padding: 26px 22px;
+    transition: border-color var(--tx), box-shadow var(--tx);
+  }
+  .how-card:hover {
+    border-color: color-mix(in srgb, var(--volt) 35%, transparent);
+    box-shadow: var(--glow-volt);
+  }
+  .how-n {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: var(--volt); letter-spacing: .08em; margin-bottom: 14px;
+  }
+  .how-t { font-size: 16px; font-weight: 700; color: var(--bone); margin-bottom: 10px; }
+  .how-d { font-size: 13px; color: var(--ash); line-height: 1.7; }
+
   /* ── Tracks ── */
   .tracks-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .track-card {
@@ -537,6 +579,7 @@
     .hero-inner { grid-template-columns: 1fr; gap: 40px; }
     .hero { padding: 50px 20px 50px; }
     .tracks-grid { grid-template-columns: 1fr; }
+    .how-grid { grid-template-columns: 1fr; }
     .labs-grid { grid-template-columns: repeat(2, 1fr); }
     .section { padding: 50px 20px; }
     .ct-head, .ct-row { grid-template-columns: 40px 1fr 70px; }
