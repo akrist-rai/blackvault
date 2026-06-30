@@ -1,6 +1,7 @@
 <script>
   import { mastery, phases, badges, ctf, caseFlags, playbookFlags, flagsCaptured, TOTAL_FLAGS, operatorName, certifiedAt } from '$lib/stores';
   import { PHASES, LABS, BADGES } from '$lib/data';
+  import { base } from '$app/paths';
 
   $: pct = $mastery;
 
@@ -22,12 +23,14 @@
   $: intelCount  = ctfKeys.filter(k => k.startsWith('intel_')).length;
   $: attackCount = ctfKeys.filter(k => k.startsWith('attack_')).length;
   $: toolsCount  = ctfKeys.filter(k => k.startsWith('tools_')).length;
+  $: fieldCount  = ctfKeys.filter(k => k.startsWith('field_nightglass_') || k.startsWith('field_venomquill_')).length;
   $: caseCount   = Object.values($caseFlags).reduce((s, v) => s + Object.values(v).filter(Boolean).length, 0);
   $: pbCount     = Object.values($playbookFlags).reduce((s, v) => s + Object.values(v).filter(Boolean).length, 0);
 
   $: CATEGORIES = [
     { label: 'Study Phases',   sub: '/console/study',  got: studyCount,  total: 60, color: 'volt'   },
     { label: 'Range Labs',     sub: '/console/range',  got: rangeCount,  total: 16, color: 'blue'   },
+    { label: 'Field Exercises',sub: '/console/range',  got: fieldCount,  total: 6,  color: 'amber' },
     { label: 'Case Files',     sub: '/console/case',   got: caseCount,   total: 12, color: 'blood'  },
     { label: 'IR Playbooks',   sub: '/playbook',       got: pbCount,     total: 8,  color: 'blue'   },
     { label: 'Intel Reports',  sub: '/intel',          got: intelCount,  total: 12, color: 'purple' },
@@ -126,7 +129,7 @@
         </div>
       {/each}
     </div>
-    <a href="/console/badges" class="card-more">View all achievements →</a>
+    <a href="{base}/console/badges" class="card-more">View all achievements →</a>
   </div>
 
   {#if certified}

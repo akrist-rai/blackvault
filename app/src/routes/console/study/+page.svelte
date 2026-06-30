@@ -3,6 +3,7 @@
   import { phases, ctf } from '$lib/stores';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
 
   $: selectedId = $page.url.searchParams.get('phase') ?? 'p01';
   $: selected   = PHASES.find(p => p.id === selectedId) ?? PHASES[0];
@@ -454,7 +455,7 @@
         <button
           class="pn-item"
           class:active={p.id === selectedId}
-          on:click={() => goto('/console/study?phase='+p.id)}
+          on:click={() => goto(base + '/console/study?phase='+p.id)}
         >
           <span class="pn-n">{p.n}</span>
           <span class="pn-name">{p.name}</span>
@@ -606,7 +607,7 @@
       <button
         class="pn-item"
         class:active={p.id === selectedId}
-        on:click={() => goto('/console/study?phase='+p.id)}
+        on:click={() => goto(base + '/console/study?phase='+p.id)}
       >
         <span class="pn-n">{p.n}</span>
         <span class="pn-name">{p.name}</span>
@@ -625,7 +626,7 @@
 
       <div class="sc-section">
         <p class="sc-overview">{content.overview}</p>
-        <a href="/console/study?phase={selectedId}" class="briefing-cta" on:click={() => { mode='challenges'; loadSolved(); }}>
+        <a href="{base}/console/study?phase={selectedId}" class="briefing-cta" on:click={() => { mode='challenges'; loadSolved(); }}>
           ▶ {content.challenges?.length ?? 0} flag challenges waiting — start capturing →
         </a>
       </div>
@@ -663,7 +664,7 @@
             <li class="ref-item">{r}</li>
           {/each}
         </ul>
-        <a href="/console/range" class="btn-primary" style="display:inline-block;margin-top:24px">
+        <a href="{base}/console/range" class="btn-primary" style="display:inline-block;margin-top:24px">
           Open Lab for Phase {selected.n} →
         </a>
       </div>

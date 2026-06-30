@@ -2,6 +2,7 @@
   import { mastery, phases, labs, cases, badges, flagsCaptured, TOTAL_FLAGS } from '$lib/stores';
   import { FEED, PHASES, LABS } from '$lib/data';
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
 
   $: pct        = $mastery;
   $: badgeCount = $badges.length;
@@ -90,7 +91,7 @@
         <div class="card-hd">Quick Actions</div>
         <div class="quick-grid">
           {#each QUICK as q}
-            <a href={q.href} class="quick-btn quick-{q.color}">{q.label}</a>
+            <a href={base + q.href} class="quick-btn quick-{q.color}">{q.label}</a>
           {/each}
         </div>
       </div>
@@ -102,7 +103,7 @@
           <div class="resume-list">
             {#each inProgress as lab}
               {@const p = labProgress(lab.id)}
-              <button class="resume-item" on:click={() => goto('/console/range/'+lab.id)}>
+              <button class="resume-item" on:click={() => goto(base + '/console/range/'+lab.id)}>
                 <span class="chip chip-{trackClass(lab.track)}" style="font-size:9px;padding:1px 5px">{lab.track}</span>
                 <div class="ri-info">
                   <span class="ri-name">{lab.name}</span>
@@ -117,7 +118,7 @@
       {:else if nextLab}
         <div class="card">
           <div class="card-hd">Start Here</div>
-          <button class="next-lab-card" on:click={() => goto('/console/range/'+nextLab.id)}>
+          <button class="next-lab-card" on:click={() => goto(base + '/console/range/'+nextLab.id)}>
             <div class="nl-left">
               <span class="chip chip-{trackClass(nextLab.track)}" style="font-size:9px;padding:1px 5px">{nextLab.track}</span>
               <div class="nl-info">
@@ -138,7 +139,7 @@
             {@const ps = $phases[p.id]}
             {@const score = ps?.score ?? 0}
             {@const pass  = ps?.pass  ?? false}
-            <button class="ph-item" class:pass on:click={() => goto('/console/study?phase='+p.id)}>
+            <button class="ph-item" class:pass on:click={() => goto(base + '/console/study?phase='+p.id)}>
               <div class="ph-item-top">
                 <span class="ph-n">Ph.{p.n}</span>
                 <span class="chip chip-{trackClass(p.track)}" style="font-size:9px;padding:1px 5px">{p.track}</span>
@@ -159,20 +160,20 @@
       <div class="card">
         <div class="card-hd">Focus Next</div>
         {#each focusPhases as p}
-          <a href="/console/study?phase={p.id}" class="focus-item">
+          <a href="{base}/console/study?phase={p.id}" class="focus-item">
             <span class="chip chip-{trackClass(p.track)}" style="font-size:9px;padding:1px 5px">{p.track}</span>
             <div class="focus-name">Phase {p.n} — {p.name}</div>
             <div class="focus-score">{p.score}%</div>
           </a>
         {/each}
-        <a href="/console/study" class="card-more">Study all phases →</a>
+        <a href="{base}/console/study" class="card-more">Study all phases →</a>
       </div>
 
       <!-- Drill shortcut -->
       <div class="card card-drill">
         <div class="card-hd">Flag Challenges</div>
         <p class="drill-desc">Scenario-based capture-the-flag challenges for the current focus phase. Submit BV{'{'}...{'}'} flags, no flashcards.</p>
-        <a href="/console/study?phase={focusPhases[0]?.id ?? 'p01'}" class="drill-btn">Open Challenges →</a>
+        <a href="{base}/console/study?phase={focusPhases[0]?.id ?? 'p01'}" class="drill-btn">Open Challenges →</a>
       </div>
 
       <!-- Threat feed -->
@@ -185,7 +186,7 @@
             <div class="feed-detail">{f.detail}</div>
           </div>
         {/each}
-        <a href="/intel" class="card-more">Full intel dashboard →</a>
+        <a href="{base}/intel" class="card-more">Full intel dashboard →</a>
       </div>
     </div>
   </div>

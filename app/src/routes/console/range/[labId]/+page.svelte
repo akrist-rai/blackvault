@@ -1,5 +1,6 @@
 <script>
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
   import { LABS } from '$lib/data';
   import { labs, ctf, showToast } from '$lib/stores';
   import { SIM, LAB_FLAGS } from '$lib/lab-sim.js';
@@ -136,10 +137,10 @@
 <svelte:head><title>{lab?.name ?? 'Lab'} — BLACKVAULT</title></svelte:head>
 
 {#if !lab}
-  <div style="padding:40px;color:var(--ash)">Lab not found. <a href="/console/range">Back to Range</a></div>
+  <div style="padding:40px;color:var(--ash)">Lab not found. <a href="{base}/console/range">Back to Range</a></div>
 {:else}
   <div class="topstrip">
-    <span><a href="/console/range">Range</a> / {lab.name}</span>
+    <span><a href="{base}/console/range">Range</a> / {lab.name}</span>
     <div class="ts-right-group">
       {#if walkthroughActive}
         <span class="wt-badge">WALKTHROUGH — Step {walkthroughStep + 1}/{objectives.length}</span>
@@ -157,7 +158,7 @@
     <div class="celebrate-bar">
       <span class="cel-icon">★</span>
       Lab cleared! All {objectives.length} objectives complete.
-      <a href="/console/range" class="cel-link">Back to Range</a>
+      <a href="{base}/console/range" class="cel-link">Back to Range</a>
     </div>
   {/if}
 
@@ -295,10 +296,10 @@
             <span class="meta-lbl">Progress</span>
             <span class="meta-val" style="color:var(--volt)">{progress}%</span>
           </div>
-          <a href="/console/study?phase=p{String(lab.phase).padStart(2,'0')}" class="study-link">
+          <a href="{base}/console/study?phase=p{String(lab.phase).padStart(2,'0')}" class="study-link">
             Open Flag Challenges for Phase {lab.phase} →
           </a>
-          <a href="/console/range" class="back-link">← Back to Range Hub</a>
+          <a href="{base}/console/range" class="back-link">← Back to Range Hub</a>
         </div>
       </div>
     </div>

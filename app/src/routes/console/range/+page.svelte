@@ -2,6 +2,7 @@
   import { LABS } from '$lib/data';
   import { labs, ctf } from '$lib/stores';
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
 
   let trackFilter = 'ALL'; // ALL | DF | RE | MA
 
@@ -72,12 +73,39 @@
   </div>
 
   <section class="lab-section">
+    <h2 class="ls-hd">Malware Analysis Field Exercises <span class="ls-count">2</span></h2>
+    <p class="ls-sub">Real downloadable malware-analysis artifacts, worked with real tools on your own machine — no simulated terminal. Each one mirrors a specific stage of an actual analyst's triage workflow.</p>
+    <div class="field-grid">
+      <button class="field-card" on:click={() => goto(base + '/console/range/field/venomquill')}>
+        <div class="fc-top">
+          <span class="chip chip-ma">MA</span>
+          <span class="fc-tag">LIVE ARTIFACT</span>
+          {#if [0,1,2].every(i => flagsCaptured['field_venomquill_'+i])}<span class="lc-done">✓</span>{/if}
+        </div>
+        <div class="fc-name">Case VENOMQUILL — Packed Dropper, Static Triage</div>
+        <p class="fc-blurb">Compute real Shannon entropy on a raw section dump to confirm packing, then brute-force a single-byte XOR key across 256 candidates to recover a mutex string and decode the final config block.</p>
+        <div class="fc-stages">{[0,1,2].filter(i => flagsCaptured['field_venomquill_'+i]).length}/3 stages solved</div>
+      </button>
+      <button class="field-card" on:click={() => goto(base + '/console/range/field/nightglass')}>
+        <div class="fc-top">
+          <span class="chip chip-ma">MA</span>
+          <span class="fc-tag">LIVE ARTIFACT</span>
+          {#if [0,1,2].every(i => flagsCaptured['field_nightglass_'+i])}<span class="lc-done">✓</span>{/if}
+        </div>
+        <div class="fc-name">Case NIGHTGLASS — Memory-Resident PowerShell Stager</div>
+        <p class="fc-blurb">Download a real EDR triage log, decode a Base64/UTF-16LE <code>-EncodedCommand</code> payload, recover the XOR key, and carve a flag out of a memory dump — three real flags, zero simulation.</p>
+        <div class="fc-stages">{[0,1,2].filter(i => flagsCaptured['field_nightglass_'+i]).length}/3 stages solved</div>
+      </button>
+    </div>
+  </section>
+
+  <section class="lab-section">
     <h2 class="ls-hd">Chapter Labs <span class="ls-count">{CHAPTER.length}</span></h2>
     <div class="lab-grid">
       {#each CHAPTER as lab}
         {@const pct = progress(lab)}
         {@const done = pct === 100}
-        <button class="lab-card" class:done on:click={() => goto('/console/range/'+lab.id)}>
+        <button class="lab-card" class:done on:click={() => goto(base + '/console/range/'+lab.id)}>
           <div class="lc-top">
             <span class="chip chip-{lab.track==='DF'?'df':lab.track==='RE'?'re':'ma'}">{lab.track}</span>
             <span class="lc-phase">Phase {lab.phase}</span>
@@ -103,7 +131,7 @@
       {#each SKILL as lab}
         {@const pct = progress(lab)}
         {@const done = pct === 100}
-        <button class="lab-card" class:done on:click={() => goto('/console/range/'+lab.id)}>
+        <button class="lab-card" class:done on:click={() => goto(base + '/console/range/'+lab.id)}>
           <div class="lc-top">
             <span class="chip chip-{lab.track==='DF'?'df':lab.track==='RE'?'re':'ma'}">{lab.track}</span>
             <span class="lc-phase">Phase {lab.phase}</span>
@@ -179,6 +207,29 @@
     padding: 2px 8px; border-radius: 20px;
   }
   .ls-sub { font-size: 13px; color: var(--ash); margin-bottom: 16px; margin-top: -8px; }
+
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 800px) { .field-grid { grid-template-columns: 1fr; } }
+
+  .field-card {
+    display: block; width: 100%; text-align: left; cursor: pointer;
+    background: color-mix(in srgb, var(--amber) 5%, var(--panel));
+    border: 1px solid color-mix(in srgb, var(--amber) 25%, var(--line));
+    border-radius: var(--rad); padding: 20px 24px;
+    transition: border-color .15s, transform .15s;
+  }
+  .field-card:hover { border-color: var(--amber); transform: translateY(-1px); }
+  .fc-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .fc-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: .1em; color: var(--amber);
+    border: 1px solid color-mix(in srgb, var(--amber) 35%, transparent);
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
+    padding: 3px 9px; border-radius: 20px;
+  }
+  .fc-name { font-size: 15px; font-weight: 700; color: var(--bone); margin-bottom: 8px; }
+  .fc-blurb { font-size: 13px; color: var(--ash); line-height: 1.6; margin-bottom: 10px; }
+  .fc-blurb code { font-family: var(--mono); color: var(--volt); font-size: 12px; }
+  .fc-stages { font-size: 11px; color: var(--amber); font-family: var(--mono); }
 
   .lab-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 

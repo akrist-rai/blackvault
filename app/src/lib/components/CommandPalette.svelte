@@ -1,5 +1,6 @@
 <script>
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { tick } from 'svelte';
   import { PHASES, LABS, CASES } from '$lib/data';
   import { commandPaletteOpen } from '$lib/stores';
@@ -13,6 +14,8 @@
     { label: 'Dashboard',        sub: 'Mastery & progress',        href: '/console',           group: 'Pages', icon: '⬡' },
     { label: 'Flag Challenges',  sub: '12-phase curriculum',       href: '/console/study',     group: 'Pages', icon: '▣' },
     { label: 'Range Labs',       sub: '16 browser-based labs',     href: '/console/range',     group: 'Pages', icon: '◉' },
+    { label: 'Field Exercise: VENOMQUILL', sub: 'Static malware analysis, live artifact', href: '/console/range/field/venomquill', group: 'Pages', icon: '🦠' },
+    { label: 'Field Exercise: NIGHTGLASS', sub: 'Live downloadable artifact', href: '/console/range/field/nightglass', group: 'Pages', icon: '🧪' },
     { label: 'Case Files',       sub: 'Investigation scenarios',   href: '/console/case',      group: 'Pages', icon: '🗂' },
     { label: 'Intel Feed',       sub: 'Threat intelligence',       href: '/intel',             group: 'Pages', icon: '◧' },
     { label: 'Arsenal',          sub: 'Tool & command reference',  href: '/tools',             group: 'Pages', icon: '◈' },
@@ -59,7 +62,7 @@
 
   function choose(item) {
     closePalette();
-    goto(item.href);
+    goto(base + item.href);
   }
 
   function handleGlobalKey(e) {
