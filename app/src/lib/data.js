@@ -205,10 +205,11 @@ export const BADGES = [
   { id:'attack_master',name:'ATT&CK Master',      icon:'🧩', desc:'Identify all 12 ATT&CK techniques',     cond: (_l, _p, ctf={}) => Object.keys(ctf).filter(k => k.startsWith('attack_') && ctf[k]).length >= 12 },
   { id:'arsenal_master',name:'Arsenal Master',    icon:'🧰', desc:'Recall all 10 tool/command flags',      cond: (_l, _p, ctf={}) => Object.keys(ctf).filter(k => k.startsWith('tools_') && ctf[k]).length >= 10 },
   { id:'field_analyst',name:'Field Analyst',      icon:'🧪', desc:'Clear the NIGHTGLASS live-artifact field exercise', cond: (_l, _p, ctf={}) => [0,1,2].every(i => ctf['field_nightglass_'+i]) },
-  { id:'completionist',name:'Completionist',      icon:'🏆', desc:'Capture all 133 flags platform-wide',  cond: (_l, _p, ctf={}, cf={}, pf={}) => {
+  { id:'static_hunter',name:'Static Hunter',      icon:'🦠', desc:'Clear the VENOMQUILL live-artifact field exercise', cond: (_l, _p, ctf={}) => [0,1,2].every(i => ctf['field_venomquill_'+i]) },
+  { id:'completionist',name:'Completionist',      icon:'🏆', desc:'Capture all 136 flags platform-wide',  cond: (_l, _p, ctf={}, cf={}, pf={}) => {
       const flat = Object.values(ctf).filter(Boolean).length;
       const nested = obj => Object.values(obj).reduce((s, v) => s + Object.values(v).filter(Boolean).length, 0);
-      return flat + nested(cf) + nested(pf) >= 133;
+      return flat + nested(cf) + nested(pf) >= 136;
     } },
 ];
 

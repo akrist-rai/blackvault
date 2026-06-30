@@ -72,17 +72,30 @@
   </div>
 
   <section class="lab-section">
-    <h2 class="ls-hd">Field Exercises <span class="ls-count">1</span></h2>
-    <p class="ls-sub">Real downloadable artifacts, analyzed with real tools on your own machine — no simulated terminal.</p>
-    <button class="field-card" on:click={() => goto('/console/range/field/nightglass')}>
-      <div class="fc-top">
-        <span class="fc-tag">LIVE ARTIFACT</span>
-        {#if [0,1,2].every(i => flagsCaptured['field_nightglass_'+i])}<span class="lc-done">✓</span>{/if}
-      </div>
-      <div class="fc-name">Case NIGHTGLASS — Memory-Resident PowerShell Stager</div>
-      <p class="fc-blurb">Download a real EDR triage log, decode a Base64/UTF-16LE <code>-EncodedCommand</code> payload, recover the XOR key, and carve a flag out of a memory dump — three real flags, zero simulation.</p>
-      <div class="fc-stages">{[0,1,2].filter(i => flagsCaptured['field_nightglass_'+i]).length}/3 stages solved</div>
-    </button>
+    <h2 class="ls-hd">Malware Analysis Field Exercises <span class="ls-count">2</span></h2>
+    <p class="ls-sub">Real downloadable malware-analysis artifacts, worked with real tools on your own machine — no simulated terminal. Each one mirrors a specific stage of an actual analyst's triage workflow.</p>
+    <div class="field-grid">
+      <button class="field-card" on:click={() => goto('/console/range/field/venomquill')}>
+        <div class="fc-top">
+          <span class="chip chip-ma">MA</span>
+          <span class="fc-tag">LIVE ARTIFACT</span>
+          {#if [0,1,2].every(i => flagsCaptured['field_venomquill_'+i])}<span class="lc-done">✓</span>{/if}
+        </div>
+        <div class="fc-name">Case VENOMQUILL — Packed Dropper, Static Triage</div>
+        <p class="fc-blurb">Compute real Shannon entropy on a raw section dump to confirm packing, then brute-force a single-byte XOR key across 256 candidates to recover a mutex string and decode the final config block.</p>
+        <div class="fc-stages">{[0,1,2].filter(i => flagsCaptured['field_venomquill_'+i]).length}/3 stages solved</div>
+      </button>
+      <button class="field-card" on:click={() => goto('/console/range/field/nightglass')}>
+        <div class="fc-top">
+          <span class="chip chip-ma">MA</span>
+          <span class="fc-tag">LIVE ARTIFACT</span>
+          {#if [0,1,2].every(i => flagsCaptured['field_nightglass_'+i])}<span class="lc-done">✓</span>{/if}
+        </div>
+        <div class="fc-name">Case NIGHTGLASS — Memory-Resident PowerShell Stager</div>
+        <p class="fc-blurb">Download a real EDR triage log, decode a Base64/UTF-16LE <code>-EncodedCommand</code> payload, recover the XOR key, and carve a flag out of a memory dump — three real flags, zero simulation.</p>
+        <div class="fc-stages">{[0,1,2].filter(i => flagsCaptured['field_nightglass_'+i]).length}/3 stages solved</div>
+      </button>
+    </div>
   </section>
 
   <section class="lab-section">
@@ -193,6 +206,9 @@
     padding: 2px 8px; border-radius: 20px;
   }
   .ls-sub { font-size: 13px; color: var(--ash); margin-bottom: 16px; margin-top: -8px; }
+
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 800px) { .field-grid { grid-template-columns: 1fr; } }
 
   .field-card {
     display: block; width: 100%; text-align: left; cursor: pointer;

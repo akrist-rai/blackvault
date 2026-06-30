@@ -2,13 +2,13 @@
   import { PHASES, LABS } from '$lib/data';
 
   const STATS = [
-    { n: '133', label: 'Flags to Capture' },
+    { n: '136', label: 'Flags to Capture' },
     { n: '12',  label: 'Phases' },
     { n: '16',  label: 'Labs' },
     { n: '70+', label: 'ATT&CK TTPs' },
     { n: '130+', label: 'Arsenal Commands' },
     { n: '4',   label: 'IR Playbooks' },
-    { n: '16',  label: 'Badges' },
+    { n: '17',  label: 'Badges' },
   ];
 
   const HOW = [
