@@ -1,6 +1,6 @@
 <script>
   import { LABS } from '$lib/data';
-  import { labs } from '$lib/stores';
+  import { labs, ctf } from '$lib/stores';
   import { goto } from '$app/navigation';
 
   let trackFilter = 'ALL'; // ALL | DF | RE | MA
@@ -12,6 +12,8 @@
   $: SKILL   = trackFilter === 'ALL' ? ALL_SKILL   : ALL_SKILL.filter(l => l.track === trackFilter);
 
   $: labsDone = $labs;
+  $: flagsCaptured = $ctf;
+  $: flagCount = LABS.filter(l => flagsCaptured[l.id]).length;
 
   function progress(lab) {
     const done = labsDone[lab.id]?.done?.length ?? 0;
@@ -56,7 +58,17 @@
 <main class="range-main">
   <div class="range-hero">
     <h1 class="rh-title">Training Range</h1>
-    <p class="rh-sub">Browser-based labs with simulated tool output. Complete objectives in order. Pair with real artifacts in <code>range/</code> for the full experience.</p>
+    <p class="rh-sub">Browser-based labs with simulated tool output. Work each objective in order, then submit the lab's <code>BV{'{'}...{'}'}</code> flag to bank the capture. Pair with real artifacts in <code>range/</code> for the full experience.</p>
+    <div class="rh-stats">
+      <div class="rh-stat">
+        <div class="rh-stat-bar"><div class="rh-stat-fill rh-fill-volt" style="width:{Math.round(LABS.filter(l => (labsDone[l.id]?.done?.length ?? 0) > 0).length / LABS.length * 100)}%"></div></div>
+        <span class="rh-stat-label">{LABS.filter(l => (labsDone[l.id]?.done?.length ?? 0) > 0).length}/{LABS.length} labs started</span>
+      </div>
+      <div class="rh-stat">
+        <div class="rh-stat-bar"><div class="rh-stat-fill rh-fill-amber" style="width:{Math.round(flagCount / LABS.length * 100)}%"></div></div>
+        <span class="rh-stat-label">{flagCount}/{LABS.length} flags captured</span>
+      </div>
+    </div>
   </div>
 
   <section class="lab-section">
@@ -69,6 +81,7 @@
           <div class="lc-top">
             <span class="chip chip-{lab.track==='DF'?'df':lab.track==='RE'?'re':'ma'}">{lab.track}</span>
             <span class="lc-phase">Phase {lab.phase}</span>
+            {#if flagsCaptured[lab.id]}<span class="lc-flag" title="Flag captured">⚑</span>{/if}
             {#if done}<span class="lc-done">✓</span>{/if}
           </div>
           <div class="lc-name">{lab.name}</div>
@@ -94,6 +107,7 @@
           <div class="lc-top">
             <span class="chip chip-{lab.track==='DF'?'df':lab.track==='RE'?'re':'ma'}">{lab.track}</span>
             <span class="lc-phase">Phase {lab.phase}</span>
+            {#if flagsCaptured[lab.id]}<span class="lc-flag" title="Flag captured">⚑</span>{/if}
             {#if done}<span class="lc-done">✓</span>{/if}
           </div>
           <div class="lc-name">{lab.name}</div>
@@ -142,8 +156,16 @@
     margin-bottom: 32px;
   }
   .rh-title { font-size: 22px; font-weight: 700; color: var(--bone); margin-bottom: 8px; }
-  .rh-sub { font-size: 14px; color: var(--ash); line-height: 1.6; }
+  .rh-sub { font-size: 14px; color: var(--ash); line-height: 1.6; margin-bottom: 18px; }
   .rh-sub code { color: var(--volt); font-family: var(--mono); font-size: 13px; }
+
+  .rh-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+  .rh-stat { flex: 1; min-width: 200px; }
+  .rh-stat-bar { height: 4px; background: var(--line2); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+  .rh-stat-fill { height: 100%; border-radius: 2px; transition: width .5s ease; }
+  .rh-fill-volt { background: var(--volt); box-shadow: var(--glow-volt); }
+  .rh-fill-amber { background: var(--amber); box-shadow: var(--glow-amber); }
+  .rh-stat-label { font-size: 11px; color: var(--ash); letter-spacing: .04em; }
 
   .lab-section { margin-bottom: 36px; }
   .ls-hd {
@@ -174,6 +196,8 @@
   .lab-card.done { border-color: color-mix(in srgb, var(--volt) 30%, transparent); }
   .lc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
   .lc-phase { font-size: 10px; color: var(--dim); font-family: var(--mono); }
+  .lc-flag { margin-left: auto; color: var(--amber); font-size: 12px; }
+  .lc-flag + .lc-done { margin-left: 6px; }
   .lc-done { margin-left: auto; color: var(--volt); font-size: 13px; }
   .lc-name { font-size: 14px; font-weight: 600; color: var(--bone); margin-bottom: 4px; }
   .lc-tool { font-size: 11px; color: var(--volt); font-family: var(--mono); margin-bottom: 8px; }

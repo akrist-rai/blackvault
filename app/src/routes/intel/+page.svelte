@@ -1,5 +1,15 @@
 <script>
   import { ATTACK } from '$lib/data';
+  import { ctf, showToast } from '$lib/stores';
+
+  const INTEL_CHALS = [
+    { q: 'A Rust-based ransomware group that triple-extorts (encrypt + exfil + DDoS) and exit-scammed its affiliates in March 2024. Submit the actor\'s short name.', flag: 'alphv' },
+    { q: 'Which kill-chain phase covers beaconing over HTTPS/DNS with jittered sleep specifically to evade periodicity detection?', flag: 'c2' },
+    { q: 'A JA3 hash fingerprints which part of the TLS handshake?', flag: 'clienthello' },
+    { q: 'Per the Suricata DNS-tunnelling rule, queries are flagged when a label exceeds how many bytes?', flag: '40' },
+    { q: 'Which threat actor pre-positions in US critical infrastructure using zero custom malware — entirely living off the land?', flag: 'volt_typhoon' },
+    { q: 'Submit the ATT&CK technique ID for LSASS credential dumping via comsvcs.dll MiniDump.', flag: 't1003.001' },
+  ];
 
   const ACTORS = [
     { name:'APT28 / Fancy Bear',    origin:'Russia (GRU)', targets:'Government, Military, Energy, NATO',   ttps:'T1566.001 · T1059.001 · T1003.001 · T1071.001', notes:'Active since 2004. Responsible for DNC hack (2016), Bundestag breach (2015). Uses X-Agent implant, Sofacy, and LAPSUS-style credential theft. Often exploits 0-days in Outlook (CVE-2023-23397).' },
@@ -146,15 +156,43 @@ alert process_creation $HOME_NET any (
   let activeSigma = 'sigma';
   let activeYara = 'yara';
   let ruleView = 'sigma';
+
+  $: solvedFlags = $ctf;
+  let inputs = {};
+  let wrong = {};
+
+  function normalizeFlag(s) {
+    return (s ?? '').trim().toLowerCase().replace(/^bv\{/, '').replace(/\}$/, '');
+  }
+
+  function submitChal(i, flag) {
+    const key = `intel_${i}`;
+    const val = normalizeFlag(inputs[key]);
+    if (val === flag.toLowerCase()) {
+      wrong = { ...wrong, [key]: false };
+      ctf.update(s => ({ ...s, [key]: true }));
+      showToast('Flag captured', 'success');
+    } else {
+      wrong = { ...wrong, [key]: true };
+    }
+  }
 </script>
 
 <svelte:head><title>Intel — BLACKVAULT</title></svelte:head>
 
 <div class="topstrip">
   <span>THREAT INTELLIGENCE</span>
+  <span class="ts-right">{INTEL_CHALS.filter((_, i) => solvedFlags[`intel_${i}`]).length}/{INTEL_CHALS.length} flags captured</span>
 </div>
 
 <main class="page">
+
+  <div class="page-intro">
+    <h1>Threat Intelligence Feed</h1>
+    <p>Kill-chain phases, threat-actor profiles, and detection-rule templates drawn from real campaigns. Study the brief, then prove it with BV{'{'}...{'}'} flags in the challenge section below.</p>
+    <div class="intro-pbar"><div class="intro-pfill" style="width:{Math.round(INTEL_CHALS.filter((_, i) => solvedFlags[`intel_${i}`]).length / INTEL_CHALS.length * 100)}%"></div></div>
+    <div class="intro-plabel">{INTEL_CHALS.filter((_, i) => solvedFlags[`intel_${i}`]).length}/{INTEL_CHALS.length} flags captured</div>
+  </div>
 
   <!-- Kill Chain -->
   <section class="intel-section">
@@ -246,6 +284,39 @@ alert process_creation $HOME_NET any (
     </div>
   </section>
 
+  <!-- Flag challenges -->
+  <section class="intel-section">
+    <h2 class="is-hd">Flag Challenges — prove you read the brief</h2>
+    <div class="intel-challenges">
+      {#each INTEL_CHALS as chal, i}
+        {@const key = `intel_${i}`}
+        {@const got = !!solvedFlags[key]}
+        <div class="chal" class:chal-solved={got}>
+          <div class="chal-q"><span class="chal-num">{i + 1}.</span> {chal.q}</div>
+          {#if got}
+            <div class="chal-solved-row">
+              <span class="chal-icon">✓</span>
+              <code class="chal-flag">BV{'{'}{chal.flag}{'}'}</code>
+            </div>
+          {:else}
+            <form class="chal-form" on:submit|preventDefault={() => submitChal(i, chal.flag)}>
+              <input
+                class="chal-input"
+                type="text"
+                placeholder={'BV{...}'}
+                autocomplete="off"
+                spellcheck="false"
+                bind:value={inputs[key]}
+              />
+              <button class="chal-submit" type="submit">Submit</button>
+            </form>
+            {#if wrong[key]}<div class="chal-wrong">Incorrect — re-check the sections above.</div>{/if}
+          {/if}
+        </div>
+      {/each}
+    </div>
+  </section>
+
 </main>
 
 <style>
@@ -255,9 +326,21 @@ alert process_creation $HOME_NET any (
     backdrop-filter: blur(6px);
     border-bottom: 1px solid var(--line);
     padding: 10px 28px; font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--ash);
+    display: flex; justify-content: space-between;
     z-index: 10;
   }
+  .ts-right { color: var(--purple); }
   .page { padding: 28px; flex: 1; }
+
+  .page-intro {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--rad);
+    padding: 28px 32px; margin-bottom: 28px;
+  }
+  .page-intro h1 { font-size: 20px; font-weight: 700; color: var(--bone); margin-bottom: 10px; }
+  .page-intro p { font-size: 14px; color: var(--ash); line-height: 1.6; margin-bottom: 16px; }
+  .intro-pbar { height: 4px; background: var(--line2); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+  .intro-pfill { height: 100%; background: var(--purple); border-radius: 2px; transition: width .5s ease; box-shadow: 0 0 14px color-mix(in srgb, var(--purple) 30%, transparent); }
+  .intro-plabel { font-size: 11px; color: var(--ash); letter-spacing: .04em; }
 
   .intel-section { margin-bottom: 44px; }
   .is-hd { font-size: 16px; font-weight: 700; color: var(--bone); margin-bottom: 16px; letter-spacing: -.01em; }
@@ -339,6 +422,50 @@ alert process_creation $HOME_NET any (
     padding: 10px 20px; font-size: 12px; color: var(--ash);
   }
   .rule-note code { font-family: var(--mono); color: var(--volt); font-size: 11px; }
+
+  /* Flag challenges */
+  .intel-challenges {
+    background: color-mix(in srgb, var(--amber) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--amber) 20%, transparent);
+    border-radius: var(--rad); padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .chal {
+    border-top: 1px solid color-mix(in srgb, var(--amber) 14%, transparent);
+    padding-top: 12px;
+  }
+  .chal:first-of-type { border-top: none; padding-top: 0; }
+  .chal-q { font-size: 13px; color: var(--ash); line-height: 1.6; margin-bottom: 8px; }
+  .chal-num { color: var(--amber); font-weight: 700; margin-right: 2px; }
+
+  .chal-form { display: flex; gap: 8px; }
+  .chal-input {
+    flex: 1; min-width: 0;
+    background: var(--void); border: 1px solid var(--line);
+    color: var(--bone); font-family: var(--mono); font-size: 12px;
+    padding: 8px 10px; border-radius: var(--rad);
+    transition: border-color .15s;
+  }
+  .chal-input:focus { outline: none; border-color: var(--volt); }
+  .chal-submit {
+    padding: 8px 18px;
+    background: color-mix(in srgb, var(--volt) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--volt) 30%, transparent);
+    color: var(--volt); border-radius: var(--rad);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .15s; flex-shrink: 0;
+  }
+  .chal-submit:hover { background: color-mix(in srgb, var(--volt) 18%, transparent); }
+  .chal-wrong { font-size: 12px; color: var(--blood); margin-top: 6px; }
+
+  .chal-solved-row { display: flex; align-items: center; gap: 8px; }
+  .chal-icon { color: var(--volt); font-weight: 700; }
+  .chal-flag {
+    font-family: var(--mono); font-size: 12px; color: var(--volt);
+    background: color-mix(in srgb, var(--volt) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--volt) 20%, transparent);
+    padding: 4px 10px; border-radius: 3px;
+  }
 
   @media (max-width: 1100px) {
     .kc-grid { grid-template-columns: repeat(4, 1fr); }

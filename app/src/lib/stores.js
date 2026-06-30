@@ -19,6 +19,12 @@ export const labs = persist('bv_labs', {});
 // ── case completions  { caseId: true } ──────────────────────────────────────
 export const cases = persist('bv_cases', {});
 
+// ── case flag-challenge progress  { caseId: { chalIndex: true } } ───────────
+export const caseFlags = persist('bv_case_flags', {});
+
+// ── playbook flag-challenge progress  { pbId: { chalIndex: true } } ─────────
+export const playbookFlags = persist('bv_playbook_flags', {});
+
 // ── badge set  [ badgeId, ... ] ─────────────────────────────────────────────
 export const badges = persist('bv_badges', []);
 

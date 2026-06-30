@@ -1,5 +1,6 @@
 <script>
   import { browser } from '$app/environment';
+  import { playbookFlags, showToast } from '$lib/stores';
 
   const PLAYBOOKS = [
     {
@@ -70,6 +71,10 @@
         'Get-WinEvent -FilterHashtable @{LogName="Security";Id=4648} | Where-Object {$_.TimeCreated -gt (Get-Date).AddHours(-4)}',
       ],
       mitre: ['T1486','T1490','T1055.012','T1021.002','T1547.001'],
+      chals: [
+        { q: 'What is the target containment window for this playbook? (format: Nh)', flag: '72h' },
+        { q: 'Submit the ATT&CK technique ID for inhibiting system recovery via vssadmin delete shadows.', flag: 't1490' },
+      ],
     },
     {
       id: 'breach',
@@ -121,6 +126,10 @@
         'grep "POST\\|PUT" /var/log/nginx/access.log | awk \'$10 > 1000000\'',
       ],
       mitre: ['T1048.003','T1041','T1567','T1078'],
+      chals: [
+        { q: 'Under GDPR, you must notify the supervisory authority within how many hours of a breach with risk to individuals? (format: Nh)', flag: '72h' },
+        { q: 'Submit the ATT&CK technique ID for the DNS-based exfiltration channel covered in this playbook.', flag: 't1048.003' },
+      ],
     },
     {
       id: 'supply_chain',
@@ -172,6 +181,10 @@
         'find / -newer /opt/vendor/app.bin -name "*.zip" -o -name "*.rar" 2>/dev/null',
       ],
       mitre: ['T1195.002','T1027.002','T1071.001','T1547'],
+      chals: [
+        { q: 'The compromised software\'s dormancy period may extend back how many days at most?', flag: '14_days' },
+        { q: 'Submit the ATT&CK technique ID for this supply-chain compromise vector.', flag: 't1195.002' },
+      ],
     },
     {
       id: 'bec',
@@ -223,6 +236,10 @@
         'Search-UnifiedAuditLog -StartDate (Get-Date).AddDays(-30) -EndDate (Get-Date) -UserIds user@domain.com -Operations "MailboxLogin"',
       ],
       mitre: ['T1566.002','T1078','T1114','T1534'],
+      chals: [
+        { q: 'You must contact the sending bank\'s fraud line within what time window to have a chance at recall? (format: Nh)', flag: '24h' },
+        { q: 'Submit the ATT&CK technique ID for the spearphishing-link vector commonly used to set up AiTM phishing in BEC.', flag: 't1566.002' },
+      ],
     },
   ];
 
@@ -253,6 +270,27 @@
     return { id: pb.id, pct: keys.length ? Math.round(checked / keys.length * 100) : 0 };
   });
   $: activePct = pbProgress.find(p => p.id === activeId)?.pct ?? 0;
+
+  $: pbFlags = $playbookFlags;
+  $: activeFlagsGot = active ? active.chals.filter((_, i) => pbFlags[active.id]?.[i]).length : 0;
+  let inputs = {};
+  let wrong = {};
+
+  function normalizeFlag(s) {
+    return (s ?? '').trim().toLowerCase().replace(/^bv\{/, '').replace(/\}$/, '');
+  }
+
+  function submitChal(pbId, idx, flag) {
+    const key = `${pbId}_${idx}`;
+    const val = normalizeFlag(inputs[key]);
+    if (val === flag.toLowerCase()) {
+      wrong = { ...wrong, [key]: false };
+      playbookFlags.update(s => ({ ...s, [pbId]: { ...(s[pbId] || {}), [idx]: true } }));
+      showToast('Flag captured', 'success');
+    } else {
+      wrong = { ...wrong, [key]: true };
+    }
+  }
 </script>
 
 <svelte:head><title>Playbooks — BLACKVAULT</title></svelte:head>
@@ -287,6 +325,7 @@
         </div>
         <div class="pb-pmeta">
           <span>{activePct}% complete</span>
+          <span class="pb-flag-count">⚑ {activeFlagsGot}/{active.chals.length} flags captured</span>
           <div class="pb-mitre">
             {#each active.mitre as t}
               <span class="att-tag">{t}</span>
@@ -321,6 +360,36 @@
           <div class="cmd-line">
             <span class="cmd-pmt">$</span>
             <code>{cmd}</code>
+          </div>
+        {/each}
+      </div>
+
+      <div class="pb-challenges">
+        <div class="cmd-hd">Flag Challenges — prove you read the runbook</div>
+        {#each active.chals as chal, i}
+          {@const key = `${active.id}_${i}`}
+          {@const got = !!(pbFlags[active.id]?.[i])}
+          <div class="chal" class:chal-solved={got}>
+            <div class="chal-q"><span class="chal-num">{i + 1}.</span> {chal.q}</div>
+            {#if got}
+              <div class="chal-solved-row">
+                <span class="chal-icon">✓</span>
+                <code class="chal-flag">BV{'{'}{chal.flag}{'}'}</code>
+              </div>
+            {:else}
+              <form class="chal-form" on:submit|preventDefault={() => submitChal(active.id, i, chal.flag)}>
+                <input
+                  class="chal-input"
+                  type="text"
+                  placeholder={'BV{...}'}
+                  autocomplete="off"
+                  spellcheck="false"
+                  bind:value={inputs[key]}
+                />
+                <button class="chal-submit" type="submit">Submit</button>
+              </form>
+              {#if wrong[key]}<div class="chal-wrong">Incorrect — re-check the playbook above.</div>{/if}
+            {/if}
           </div>
         {/each}
       </div>
@@ -376,8 +445,9 @@
   .pb-meta strong { color: var(--bone); }
   .pb-pbar { height: 3px; background: var(--line2); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
   .pb-pfill { height: 100%; background: var(--volt); border-radius: 2px; transition: width .4s ease; }
-  .pb-pmeta { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--ash); }
-  .pb-mitre { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pb-pmeta { display: flex; align-items: center; gap: 16px; font-size: 11px; color: var(--ash); }
+  .pb-flag-count { color: var(--blue); font-weight: 600; letter-spacing: .02em; }
+  .pb-mitre { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
   .att-tag {
     font-family: var(--mono); font-size: 10px;
     background: color-mix(in srgb, var(--blue) 10%, transparent);
@@ -435,4 +505,46 @@
   .cmd-line code { font-size: 12px; color: var(--bone); font-family: var(--mono); word-break: break-all; }
 
   @media (max-width: 800px) { .phases-grid { grid-template-columns: 1fr; } }
+
+  .pb-challenges {
+    margin-top: 24px;
+    background: color-mix(in srgb, var(--amber) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--amber) 20%, transparent);
+    border-radius: var(--rad); overflow: hidden;
+  }
+  .pb-challenges .cmd-hd { background: none; border-bottom: 1px solid color-mix(in srgb, var(--amber) 16%, transparent); }
+  .pb-challenges .chal { padding: 14px 18px; border-top: 1px solid color-mix(in srgb, var(--amber) 14%, transparent); }
+  .pb-challenges .chal:first-of-type { border-top: none; }
+
+  .chal-q { font-size: 13px; color: var(--ash); line-height: 1.6; margin-bottom: 8px; }
+  .chal-num { color: var(--amber); font-weight: 700; margin-right: 2px; }
+
+  .chal-form { display: flex; gap: 8px; }
+  .chal-input {
+    flex: 1; min-width: 0;
+    background: var(--void); border: 1px solid var(--line);
+    color: var(--bone); font-family: var(--mono); font-size: 12px;
+    padding: 8px 10px; border-radius: var(--rad);
+    transition: border-color .15s;
+  }
+  .chal-input:focus { outline: none; border-color: var(--volt); }
+  .chal-submit {
+    padding: 8px 18px;
+    background: color-mix(in srgb, var(--volt) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--volt) 30%, transparent);
+    color: var(--volt); border-radius: var(--rad);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .15s; flex-shrink: 0;
+  }
+  .chal-submit:hover { background: color-mix(in srgb, var(--volt) 18%, transparent); }
+  .chal-wrong { font-size: 12px; color: var(--blood); margin-top: 6px; }
+
+  .chal-solved-row { display: flex; align-items: center; gap: 8px; }
+  .chal-icon { color: var(--volt); font-weight: 700; }
+  .chal-flag {
+    font-family: var(--mono); font-size: 12px; color: var(--volt);
+    background: color-mix(in srgb, var(--volt) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--volt) 20%, transparent);
+    padding: 4px 10px; border-radius: 3px;
+  }
 </style>

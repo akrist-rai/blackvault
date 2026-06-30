@@ -1,4 +1,6 @@
 <script>
+  import { ctf, showToast } from '$lib/stores';
+
   const TOOLS = [
     { cat: 'Memory Forensics', color: 'volt', items: [
       { name:'Volatility 3', cmd:'vol3 -f mem.raw windows.info', desc:'OS build, arch, time — confirm before analysis' },
@@ -183,6 +185,34 @@
     ]},
   ];
 
+  const RECALL_CHALS = [
+    { q: 'Which Volatility 3 plugin finds RWX anonymous regions containing PE headers (process injection)?', flag: 'malfind' },
+    { q: 'Which Sleuth Kit command extracts the raw content of a specific inode to a file?', flag: 'icat' },
+    { q: 'Which hashcat mode number is used for Kerberoast TGS-REP cracking?', flag: '13100' },
+    { q: 'Which Windows Event ID indicates a new service was installed (common ransomware deployment artifact)?', flag: '7045' },
+    { q: 'Which strace trace category isolates connect/bind/recv/send syscalls?', flag: 'network' },
+  ];
+
+  $: solvedFlags = $ctf;
+  let chalInputs = {};
+  let chalWrong = {};
+
+  function normalizeFlag(s) {
+    return (s ?? '').trim().toLowerCase().replace(/^bv\{/, '').replace(/\}$/, '');
+  }
+
+  function submitChal(i, flag) {
+    const key = `tools_${i}`;
+    const val = normalizeFlag(chalInputs[key]);
+    if (val === flag.toLowerCase()) {
+      chalWrong = { ...chalWrong, [key]: false };
+      ctf.update(s => ({ ...s, [key]: true }));
+      showToast('Flag captured', 'success');
+    } else {
+      chalWrong = { ...chalWrong, [key]: true };
+    }
+  }
+
   let search = '';
   $: filtered = TOOLS.map(cat => ({
     ...cat,
@@ -212,8 +242,10 @@
 <main class="page">
   <div class="page-intro">
     <h1>Tool Arsenal</h1>
-    <p>Command reference for every tool used across the BLACKVAULT curriculum. Click any command to copy it to the clipboard.</p>
+    <p>Command reference for every tool used across the BLACKVAULT curriculum. Click any command to copy it to the clipboard, then test recall with the flag challenges at the bottom of the page.</p>
     <input class="search-input" bind:value={search} placeholder="Search tools, commands, and descriptions…" type="search" />
+    <div class="intro-pbar"><div class="intro-pfill" style="width:{Math.round(RECALL_CHALS.filter((_, i) => solvedFlags[`tools_${i}`]).length / RECALL_CHALS.length * 100)}%"></div></div>
+    <div class="intro-plabel">{RECALL_CHALS.filter((_, i) => solvedFlags[`tools_${i}`]).length}/{RECALL_CHALS.length} flags captured</div>
   </div>
 
   {#each filtered as cat}
@@ -238,6 +270,39 @@
       </div>
     </section>
   {/each}
+
+  <section class="tool-section">
+    <h2 class="ts-hd"><span class="ts-dot ts-volt"></span>Flag Challenges — command recall</h2>
+    <p class="rc-sub">Recall the right tool/value from the cheat sheet above, then submit it as the flag.</p>
+    <div class="rc-list">
+      {#each RECALL_CHALS as chal, i}
+        {@const key = `tools_${i}`}
+        {@const got = !!solvedFlags[key]}
+        <div class="chal" class:chal-solved={got}>
+          <div class="chal-q"><span class="chal-num">{i + 1}.</span> {chal.q}</div>
+          {#if got}
+            <div class="chal-solved-row">
+              <span class="chal-icon">✓</span>
+              <code class="chal-flag">BV{'{'}{chal.flag}{'}'}</code>
+            </div>
+          {:else}
+            <form class="chal-form" on:submit|preventDefault={() => submitChal(i, chal.flag)}>
+              <input
+                class="chal-input"
+                type="text"
+                placeholder={'BV{...}'}
+                autocomplete="off"
+                spellcheck="false"
+                bind:value={chalInputs[key]}
+              />
+              <button class="chal-submit" type="submit">Submit</button>
+            </form>
+            {#if chalWrong[key]}<div class="chal-wrong">Incorrect — re-check the cheat sheet above.</div>{/if}
+          {/if}
+        </div>
+      {/each}
+    </div>
+  </section>
 </main>
 
 <style>
@@ -257,6 +322,9 @@
   }
   .page-intro h1 { font-size: 20px; font-weight: 700; color: var(--bone); margin-bottom: 8px; }
   .page-intro p { font-size: 14px; color: var(--ash); line-height: 1.6; margin-bottom: 16px; }
+  .intro-pbar { height: 4px; background: var(--line2); border-radius: 2px; overflow: hidden; margin-bottom: 6px; margin-top: 16px; }
+  .intro-pfill { height: 100%; background: var(--amber); border-radius: 2px; transition: width .5s ease; box-shadow: var(--glow-amber); }
+  .intro-plabel { font-size: 11px; color: var(--ash); letter-spacing: .04em; }
   .search-input {
     width: 100%; max-width: 480px;
     background: var(--panel2); border: 1px solid var(--line2);
@@ -295,4 +363,45 @@
   .tc-desc { font-size: 11px; color: var(--dim); line-height: 1.4; }
 
   @media (max-width: 900px) { .tool-grid { grid-template-columns: 1fr; } }
+
+  .rc-sub { font-size: 13px; color: var(--ash); margin: -2px 0 14px; }
+  .rc-list {
+    background: color-mix(in srgb, var(--amber) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--amber) 20%, transparent);
+    border-radius: var(--rad); padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .chal { border-top: 1px solid color-mix(in srgb, var(--amber) 14%, transparent); padding-top: 12px; }
+  .chal:first-of-type { border-top: none; padding-top: 0; }
+  .chal-q { font-size: 13px; color: var(--ash); line-height: 1.6; margin-bottom: 8px; }
+  .chal-num { color: var(--amber); font-weight: 700; margin-right: 2px; }
+
+  .chal-form { display: flex; gap: 8px; }
+  .chal-input {
+    flex: 1; min-width: 0;
+    background: var(--void); border: 1px solid var(--line);
+    color: var(--bone); font-family: var(--mono); font-size: 12px;
+    padding: 8px 10px; border-radius: var(--rad);
+    transition: border-color .15s;
+  }
+  .chal-input:focus { outline: none; border-color: var(--volt); }
+  .chal-submit {
+    padding: 8px 18px;
+    background: color-mix(in srgb, var(--volt) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--volt) 30%, transparent);
+    color: var(--volt); border-radius: var(--rad);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: background .15s; flex-shrink: 0;
+  }
+  .chal-submit:hover { background: color-mix(in srgb, var(--volt) 18%, transparent); }
+  .chal-wrong { font-size: 12px; color: var(--blood); margin-top: 6px; }
+
+  .chal-solved-row { display: flex; align-items: center; gap: 8px; }
+  .chal-icon { color: var(--volt); font-weight: 700; }
+  .chal-flag {
+    font-family: var(--mono); font-size: 12px; color: var(--volt);
+    background: color-mix(in srgb, var(--volt) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--volt) 20%, transparent);
+    padding: 4px 10px; border-radius: 3px;
+  }
 </style>
