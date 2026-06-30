@@ -2,6 +2,7 @@
   import '../app.css';
   import Sidebar from '$lib/components/Sidebar.svelte';
   import Toast from '$lib/components/Toast.svelte';
+  import CommandPalette from '$lib/components/CommandPalette.svelte';
   import { page } from '$app/stores';
   import { afterNavigate } from '$app/navigation';
 
@@ -41,6 +42,7 @@
 {/if}
 
 <Toast />
+<CommandPalette />
 
 <style>
   .shell {

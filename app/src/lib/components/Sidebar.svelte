@@ -1,6 +1,6 @@
 <script>
   import { page } from '$app/stores';
-  import { mastery } from '$lib/stores';
+  import { mastery, flagsCaptured, TOTAL_FLAGS, commandPaletteOpen } from '$lib/stores';
   import { createEventDispatcher } from 'svelte';
 
   export let open = false;
@@ -9,8 +9,9 @@
 
   const NAV = [
     { group: 'HOME', items: [
-      { href: '/',        label: 'Landing',    icon: '◈' },
-      { href: '/console', label: 'Dashboard',  icon: '⬡' },
+      { href: '/',                label: 'Landing',    icon: '◈' },
+      { href: '/console',         label: 'Dashboard',  icon: '⬡' },
+      { href: '/console/profile', label: 'Profile',    icon: '◎' },
     ]},
     { group: 'LEARN', items: [
       { href: '/console/study', label: 'Challenges',  icon: '▣' },
@@ -26,6 +27,7 @@
   $: pct = $mastery;
   $: meterColor = pct >= 75 ? 'var(--volt)' : pct >= 40 ? 'var(--amber)' : 'var(--blood)';
   $: meterGlow  = pct >= 75 ? 'var(--glow-volt)' : pct >= 40 ? 'var(--glow-amber)' : 'var(--glow-blood)';
+  $: flagPct = Math.round(($flagsCaptured / TOTAL_FLAGS) * 100);
 
   function active(href) {
     if (href === '/') return $page.url.pathname === '/';
@@ -59,7 +61,20 @@
     <div class="meter-bar">
       <div class="meter-fill" style="width:{pct}%; background:{meterColor}; box-shadow:{meterGlow}"></div>
     </div>
+    <div class="meter-header flags-header">
+      <span class="meter-lbl">⚑ FLAGS</span>
+      <span class="meter-pct flags-pct">{$flagsCaptured}<span class="flags-of">/{TOTAL_FLAGS}</span></span>
+    </div>
+    <div class="meter-bar">
+      <div class="meter-fill flags-fill" style="width:{flagPct}%"></div>
+    </div>
   </div>
+
+  <button class="sb-search" on:click={() => { commandPaletteOpen.set(true); close(); }}>
+    <span class="sb-search-icon">⌕</span>
+    <span class="sb-search-label">Jump to…</span>
+    <kbd class="sb-search-kbd">⌘K</kbd>
+  </button>
 
   <nav>
     {#each NAV as section}
@@ -187,6 +202,34 @@
     height: 100%;
     border-radius: 2px;
     transition: width .6s ease, background .4s ease, box-shadow .4s ease;
+  }
+  .flags-header { margin-top: 10px; }
+  .flags-pct { color: var(--volt); }
+  .flags-of { color: var(--dim); font-weight: 600; }
+  .flags-fill { background: var(--volt); box-shadow: var(--glow-volt); }
+
+  /* ── Search trigger ── */
+  .sb-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 18px 4px;
+    padding: 8px 10px;
+    background: var(--panel2);
+    border: 1px solid var(--line2);
+    border-radius: var(--rad);
+    color: var(--ash);
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color var(--tx), color var(--tx);
+    flex-shrink: 0;
+  }
+  .sb-search:hover { border-color: var(--volt-brd); color: var(--bone); }
+  .sb-search-icon { font-size: 12px; opacity: .7; }
+  .sb-search-label { flex: 1; text-align: left; }
+  .sb-search-kbd {
+    font-family: var(--mono); font-size: 9px; color: var(--dim);
+    border: 1px solid var(--line2); border-radius: 3px; padding: 1px 5px;
   }
 
   /* ── Nav ── */

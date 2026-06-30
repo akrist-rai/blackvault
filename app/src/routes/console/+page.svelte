@@ -1,20 +1,12 @@
 <script>
-  import { mastery, phases, labs, cases, badges, ctf, caseFlags, playbookFlags } from '$lib/stores';
+  import { mastery, phases, labs, cases, badges, flagsCaptured, TOTAL_FLAGS } from '$lib/stores';
   import { FEED, PHASES, LABS } from '$lib/data';
   import { goto } from '$app/navigation';
 
   $: pct        = $mastery;
   $: badgeCount = $badges.length;
   $: caseCount  = Object.values($cases).filter(Boolean).length;
-
-  const TOTAL_FLAGS = 113;
-  function flattenCount(obj) {
-    return Object.values(obj).reduce((sum, v) => sum + Object.values(v).filter(Boolean).length, 0);
-  }
-  $: flagsCaptured = Object.values($ctf).filter(Boolean).length
-    + flattenCount($caseFlags)
-    + flattenCount($playbookFlags);
-  $: flagPct = Math.round((flagsCaptured / TOTAL_FLAGS) * 100);
+  $: flagPct    = Math.round(($flagsCaptured / TOTAL_FLAGS) * 100);
 
   const LAB_OBJ_COUNTS = {
     disk:5, asm:4, peelf:4, static:5, ghidra:4, dynamic:4, unpack:4,
@@ -87,7 +79,7 @@
       <div class="card card-flags">
         <div class="cf-top">
           <div class="cf-label">Flags Captured Platform-Wide</div>
-          <div class="cf-count">{flagsCaptured} <span class="cf-total">/ {TOTAL_FLAGS}</span></div>
+          <div class="cf-count">{$flagsCaptured} <span class="cf-total">/ {TOTAL_FLAGS}</span></div>
         </div>
         <div class="cf-bar"><div class="cf-fill" style="width:{flagPct}%"></div></div>
         <p class="cf-desc">Every phase, lab, case, playbook, and intel report ends in a real BV{'{'}...{'}'} challenge. {flagPct}% of the platform cleared.</p>

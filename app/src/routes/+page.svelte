@@ -8,7 +8,7 @@
     { n: '70+', label: 'ATT&CK TTPs' },
     { n: '130+', label: 'Arsenal Commands' },
     { n: '4',   label: 'IR Playbooks' },
-    { n: '22',  label: 'Badges' },
+    { n: '9',   label: 'Badges' },
   ];
 
   const HOW = [
