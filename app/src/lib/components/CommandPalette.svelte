@@ -1,5 +1,6 @@
 <script>
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { tick } from 'svelte';
   import { PHASES, LABS, CASES } from '$lib/data';
   import { commandPaletteOpen } from '$lib/stores';
@@ -61,7 +62,7 @@
 
   function choose(item) {
     closePalette();
-    goto(item.href);
+    goto(base + item.href);
   }
 
   function handleGlobalKey(e) {

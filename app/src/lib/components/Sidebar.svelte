@@ -1,5 +1,6 @@
 <script>
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
   import { mastery, flagsCaptured, TOTAL_FLAGS, commandPaletteOpen } from '$lib/stores';
   import { createEventDispatcher } from 'svelte';
 
@@ -30,9 +31,10 @@
   $: flagPct = Math.round(($flagsCaptured / TOTAL_FLAGS) * 100);
 
   function active(href) {
-    if (href === '/') return $page.url.pathname === '/';
-    if (href === '/console') return $page.url.pathname === '/console';
-    return $page.url.pathname.startsWith(href);
+    const path = $page.url.pathname.slice(base.length) || '/';
+    if (href === '/') return path === '/';
+    if (href === '/console') return path === '/console';
+    return path.startsWith(href);
   }
 
   function close() { dispatch('close'); }
@@ -46,7 +48,7 @@
 <aside class="sidebar" class:sidebar-open={open} aria-label="Navigation">
 
   <div class="sb-top">
-    <a class="brand" href="/" on:click={handleNavClick}>
+    <a class="brand" href="{base}/" on:click={handleNavClick}>
       <div class="brand-logo">BLACK<em>VAULT</em></div>
       <div class="brand-sub">Security Training Range</div>
     </a>
@@ -81,7 +83,7 @@
       <div class="nav-group-lbl">{section.group}</div>
       {#each section.items as item}
         <a
-          href={item.href}
+          href={base + item.href}
           class="nav-item"
           class:active={active(item.href)}
           aria-current={active(item.href) ? 'page' : undefined}

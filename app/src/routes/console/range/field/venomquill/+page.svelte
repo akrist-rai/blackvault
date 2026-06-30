@@ -1,7 +1,8 @@
 <script>
   import { ctf, showToast } from '$lib/stores';
+  import { base } from '$app/paths';
 
-  const FILE_PATH = '/files/venomquill_static_report.log';
+  const FILE_PATH = `${base}/files/venomquill_static_report.log`;
   const FILE_SHA256 = 'b8a2d6602633c67debe6c4d178f1bd270c4226ae0008b327167e48e93b4bfacf';
 
   const STAGES = [
@@ -58,7 +59,7 @@
 <svelte:head><title>Field Exercise: VENOMQUILL — BLACKVAULT</title></svelte:head>
 
 <div class="topstrip">
-  <span><a href="/console/range">Range</a> / Field Exercise — VENOMQUILL</span>
+  <span><a href="{base}/console/range">Range</a> / Field Exercise — VENOMQUILL</span>
   <span class="ts-right">{solvedCount}/{STAGES.length} stages</span>
 </div>
 
@@ -153,7 +154,7 @@
       Case VENOMQUILL closed. You ran the same first-pass static analysis a real malware analyst runs on
       every unknown sample: entropy to flag packing, brute-force XOR to recover strings without ever
       touching a disassembler.
-      <a href="/console/range" class="done-link">← Back to Range</a>
+      <a href="{base}/console/range" class="done-link">← Back to Range</a>
     </div>
   {/if}
 </main>

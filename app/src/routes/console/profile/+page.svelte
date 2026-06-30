@@ -1,6 +1,7 @@
 <script>
   import { mastery, phases, badges, ctf, caseFlags, playbookFlags, flagsCaptured, TOTAL_FLAGS, operatorName, certifiedAt } from '$lib/stores';
   import { PHASES, LABS, BADGES } from '$lib/data';
+  import { base } from '$app/paths';
 
   $: pct = $mastery;
 
@@ -128,7 +129,7 @@
         </div>
       {/each}
     </div>
-    <a href="/console/badges" class="card-more">View all achievements →</a>
+    <a href="{base}/console/badges" class="card-more">View all achievements →</a>
   </div>
 
   {#if certified}

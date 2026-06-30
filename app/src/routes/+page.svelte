@@ -1,5 +1,6 @@
 <script>
   import { PHASES, LABS } from '$lib/data';
+  import { base } from '$app/paths';
 
   const STATS = [
     { n: '136', label: 'Flags to Capture' },
@@ -67,14 +68,14 @@
 
   <!-- ── Topbar ── -->
   <header class="topbar">
-    <a href="/" class="tb-logo">BLACK<em>VAULT</em></a>
+    <a href="{base}/" class="tb-logo">BLACK<em>VAULT</em></a>
     <nav class="tb-nav">
       <a href="#tracks">Tracks</a>
       <a href="#curriculum">Curriculum</a>
       <a href="#labs">Labs</a>
-      <a href="/intel">Intel</a>
+      <a href="{base}/intel">Intel</a>
     </nav>
-    <a href="/console" class="tb-cta">Open Console →</a>
+    <a href="{base}/console" class="tb-cta">Open Console →</a>
   </header>
 
   <!-- ── Hero ── -->
@@ -96,7 +97,7 @@
           Backed by authentic artifacts. No VMs. No accounts. Open and start.
         </p>
         <div class="hero-ctas">
-          <a href="/console" class="btn-primary">Enter the Range →</a>
+          <a href="{base}/console" class="btn-primary">Enter the Range →</a>
           <a href="#curriculum" class="btn-ghost">View Curriculum</a>
         </div>
         <div class="hero-meta">
@@ -189,7 +190,7 @@
         <span>Phase</span><span>Module</span><span>Tools</span><span>Track</span>
       </div>
       {#each PHASES as p}
-        <a href="/console/study?phase={p.id}" class="ct-row">
+        <a href="{base}/console/study?phase={p.id}" class="ct-row">
           <span class="ct-num">{String(p.n).padStart(2,'0')}</span>
           <span class="ct-name">{p.name}</span>
           <span class="ct-tools">{p.tools}</span>
@@ -205,7 +206,7 @@
     <h2 class="section-h">Browser-based lab simulations</h2>
     <div class="labs-grid">
       {#each LABS as lab}
-        <a href="/console/range/{lab.id}" class="lab-card">
+        <a href="{base}/console/range/{lab.id}" class="lab-card">
           <div class="lc-header">
             <span class="chip chip-{lab.track==='DF'?'df':lab.track==='RE'?'re':'ma'}">{lab.track}</span>
             <span class="lc-phase">Ph.{lab.phase}</span>
@@ -218,7 +219,7 @@
       {/each}
     </div>
     <div class="section-cta">
-      <a href="/console/range" class="btn-primary">Open Range Hub →</a>
+      <a href="{base}/console/range" class="btn-primary">Open Range Hub →</a>
     </div>
   </section>
 
@@ -236,7 +237,7 @@
       {/each}
     </div>
     <div class="section-cta">
-      <a href="/playbook" class="btn-ghost">Open Playbooks →</a>
+      <a href="{base}/playbook" class="btn-ghost">Open Playbooks →</a>
     </div>
   </section>
 
@@ -248,11 +249,11 @@
         <div class="footer-tagline">Security Training Range</div>
       </div>
       <nav class="footer-nav">
-        <a href="/console">Console</a>
-        <a href="/console/range">Labs</a>
-        <a href="/playbook">Playbooks</a>
-        <a href="/tools">Arsenal</a>
-        <a href="/intel">Intel</a>
+        <a href="{base}/console">Console</a>
+        <a href="{base}/console/range">Labs</a>
+        <a href="{base}/playbook">Playbooks</a>
+        <a href="{base}/tools">Arsenal</a>
+        <a href="{base}/intel">Intel</a>
       </nav>
       <div class="footer-note">
         Synthetic artifacts only. All samples fabricated for training.

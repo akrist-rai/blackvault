@@ -1,7 +1,8 @@
 <script>
   import { ctf, showToast } from '$lib/stores';
+  import { base } from '$app/paths';
 
-  const FILE_PATH = '/files/nightglass_triage.log';
+  const FILE_PATH = `${base}/files/nightglass_triage.log`;
   const FILE_SHA256 = '1a8aeca42811c5f2374d9a93c375223872d579bef72a848b3dbd7b4cb8537781';
 
   const STAGES = [
@@ -58,7 +59,7 @@
 <svelte:head><title>Field Exercise: NIGHTGLASS — BLACKVAULT</title></svelte:head>
 
 <div class="topstrip">
-  <span><a href="/console/range">Range</a> / Field Exercise — NIGHTGLASS</span>
+  <span><a href="{base}/console/range">Range</a> / Field Exercise — NIGHTGLASS</span>
   <span class="ts-right">{solvedCount}/{STAGES.length} stages</span>
 </div>
 
@@ -156,7 +157,7 @@
       Case NIGHTGLASS closed. You decoded a real Base64/UTF-16LE PowerShell stager and recovered a
       single-byte-XOR-obfuscated payload from a memory carve — the same two techniques you'll see in the
       overwhelming majority of real commodity-malware triage work.
-      <a href="/console/range" class="done-link">← Back to Range</a>
+      <a href="{base}/console/range" class="done-link">← Back to Range</a>
     </div>
   {/if}
 </main>
