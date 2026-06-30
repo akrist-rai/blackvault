@@ -1,8 +1,8 @@
 <script>
   import { page } from '$app/stores';
   import { LABS } from '$lib/data';
-  import { labs, showToast } from '$lib/stores';
-  import { SIM } from '$lib/lab-sim.js';
+  import { labs, ctf, showToast } from '$lib/stores';
+  import { SIM, LAB_FLAGS } from '$lib/lab-sim.js';
   import TermSim from '$lib/components/TermSim.svelte';
 
   $: labId = $page.params.labId;
@@ -108,6 +108,29 @@
 
   $: progress = lab ? Math.round((objectives.filter(o => isDone(o.k)).length / objectives.length) * 100) : 0;
   $: allDone = progress === 100;
+
+  let flagInput = '';
+  let flagWrong = false;
+
+  $: flagAnswer = LAB_FLAGS[labId];
+  $: flagSolved = !!$ctf[labId];
+
+  $: if (labId) { flagInput = ''; flagWrong = false; }
+
+  function normalizeFlag(s) {
+    return (s ?? '').trim().toLowerCase().replace(/^bv\{/, '').replace(/\}$/, '');
+  }
+
+  function submitFlag() {
+    if (!flagAnswer) return;
+    if (normalizeFlag(flagInput) === normalizeFlag(flagAnswer)) {
+      ctf.update(c => ({ ...c, [labId]: true }));
+      flagWrong = false;
+      showToast('Flag captured!', 'badge', 4000);
+    } else {
+      flagWrong = true;
+    }
+  }
 </script>
 
 <svelte:head><title>{lab?.name ?? 'Lab'} — BLACKVAULT</title></svelte:head>
@@ -139,6 +162,37 @@
   {/if}
 
   <main class="lab-main">
+    {#if allDone && flagAnswer}
+      <div class="flag-box" class:flag-box-solved={flagSolved}>
+        {#if flagSolved}
+          <div class="fb-captured">
+            <span class="fb-icon">⚑</span>
+            <div class="fb-captured-text">
+              <div class="fb-captured-lbl">FLAG CAPTURED</div>
+              <code class="fb-flag-value">{flagAnswer}</code>
+            </div>
+          </div>
+        {:else}
+          <div class="fb-hd">⚑ Submit Flag</div>
+          <p class="fb-copy">All objectives are clear — the flag was revealed in one of the terminal outputs above. Submit it to mark this lab solved.</p>
+          <form class="fb-form" on:submit|preventDefault={submitFlag}>
+            <input
+              class="fb-input"
+              type="text"
+              bind:value={flagInput}
+              placeholder={'BV{...}'}
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button type="submit" class="fb-submit">Submit</button>
+          </form>
+          {#if flagWrong}
+            <div class="fb-wrong">✕ Incorrect — check the terminal output again.</div>
+          {/if}
+        {/if}
+      </div>
+    {/if}
+
     <div class="lab-header">
       <div class="lh-top">
         <span class="chip chip-{lab.track==='DF'?'df':lab.track==='RE'?'re':'ma'}">{lab.track}</span>
@@ -242,7 +296,7 @@
             <span class="meta-val" style="color:var(--volt)">{progress}%</span>
           </div>
           <a href="/console/study?phase=p{String(lab.phase).padStart(2,'0')}" class="study-link">
-            Open Study Guide for Phase {lab.phase} →
+            Open Flag Challenges for Phase {lab.phase} →
           </a>
           <a href="/console/range" class="back-link">← Back to Range Hub</a>
         </div>
@@ -288,6 +342,38 @@
   .cel-link:hover { color: var(--volt); text-decoration: none; }
 
   .lab-main { padding: 20px; flex: 1; }
+
+  .flag-box {
+    background: color-mix(in srgb, var(--amber) 6%, var(--panel));
+    border: 1px solid color-mix(in srgb, var(--amber) 30%, var(--line));
+    border-radius: var(--rad); padding: 18px 22px; margin-bottom: 18px;
+  }
+  .flag-box.flag-box-solved {
+    background: color-mix(in srgb, var(--volt) 8%, var(--panel));
+    border-color: color-mix(in srgb, var(--volt) 35%, var(--line));
+  }
+  .fb-hd { font-size: 14px; font-weight: 700; color: var(--amber); margin-bottom: 8px; }
+  .fb-copy { font-size: 12px; color: var(--ash); line-height: 1.5; margin-bottom: 12px; }
+  .fb-form { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fb-input {
+    flex: 1; min-width: 180px; font-family: var(--mono); font-size: 13px;
+    padding: 9px 12px; border-radius: 6px; border: 1px solid var(--line2);
+    background: var(--void); color: var(--bone);
+  }
+  .fb-input:focus { outline: none; border-color: var(--volt); }
+  .fb-submit {
+    font-size: 12px; font-weight: 700; padding: 9px 18px; border-radius: 6px;
+    border: 1px solid color-mix(in srgb, var(--volt) 40%, transparent);
+    background: color-mix(in srgb, var(--volt) 14%, transparent); color: var(--volt);
+    cursor: pointer;
+  }
+  .fb-submit:hover { background: color-mix(in srgb, var(--volt) 24%, transparent); }
+  .fb-wrong { font-size: 12px; color: var(--blood); margin-top: 8px; font-weight: 600; }
+
+  .fb-captured { display: flex; align-items: center; gap: 14px; }
+  .fb-icon { font-size: 24px; color: var(--volt); flex-shrink: 0; }
+  .fb-captured-lbl { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--volt); margin-bottom: 4px; }
+  .fb-flag-value { font-family: var(--mono); font-size: 14px; color: var(--bone); }
 
   .lab-header {
     background: var(--panel); border: 1px solid var(--line);

@@ -1,12 +1,41 @@
 <script>
   import { CASES } from '$lib/data';
-  import { cases } from '$lib/stores';
+  import { cases, caseFlags, showToast } from '$lib/stores';
 
   $: solved = $cases;
+  $: flagState = $caseFlags;
   let expanded = null;
+  let inputs = {};
+  let wrong = {};
 
   function toggle(id) {
     expanded = expanded === id ? null : id;
+  }
+
+  function normalizeFlag(s) {
+    return (s ?? '').trim().toLowerCase().replace(/^bv\{/, '').replace(/\}$/, '');
+  }
+
+  function submitChal(caseId, idx, flag) {
+    const key = `${caseId}_${idx}`;
+    const val = normalizeFlag(inputs[key]);
+    if (val === flag.toLowerCase()) {
+      wrong = { ...wrong, [key]: false };
+      caseFlags.update(s => {
+        const next = { ...s, [caseId]: { ...(s[caseId] || {}), [idx]: true } };
+        const c = CASES.find(x => x.id === caseId);
+        const allDone = c.chals.every((_, i) => next[caseId]?.[i]);
+        if (allDone) {
+          cases.update(cs => ({ ...cs, [caseId]: true }));
+          showToast(`Case ${c.codename} closed — all flags captured`, 'success');
+        } else {
+          showToast('Flag captured', 'success');
+        }
+        return next;
+      });
+    } else {
+      wrong = { ...wrong, [key]: true };
+    }
   }
 </script>
 
@@ -20,7 +49,9 @@
 <main class="page">
   <div class="page-intro">
     <h1>Investigation Cases</h1>
-    <p>Full end-to-end investigation scenarios based on real-world intrusion patterns. Each case includes artifacts, IOCs, actor profile, and ATT&CK technique mapping. Work through the evidence to answer the investigative questions and close the case.</p>
+    <p>Full end-to-end investigation scenarios based on real-world intrusion patterns. Read the actor profile, IOCs, and evidence artifacts, then submit BV{'{'}...{'}'} flags derived from the case facts. A case auto-closes once every flag is captured — no self-reporting.</p>
+    <div class="intro-pbar"><div class="intro-pfill" style="width:{Math.round(Object.values(solved).filter(Boolean).length / CASES.length * 100)}%"></div></div>
+    <div class="intro-plabel">{Object.values(solved).filter(Boolean).length}/{CASES.length} cases closed</div>
   </div>
 
   <div class="case-list">
@@ -80,24 +111,34 @@
             </div>
           </div>
 
-          <div class="cc-questions">
-            <div class="cd-hd">Investigative Questions</div>
-            <ol class="q-list">
-              <li>What was the initial access vector and timestamp? Map to a specific ATT&CK technique.</li>
-              <li>Identify all persistence mechanisms installed. List registry keys, scheduled tasks, or services.</li>
-              <li>Reconstruct the lateral movement path. Which hosts were compromised and in what order?</li>
-              <li>What data was exfiltrated? Estimate volume and identify the exfiltration channel.</li>
-              <li>What was the dwell time (initial compromise → first detection)?</li>
-            </ol>
-          </div>
-
-          <div class="cc-actions">
-            <button
-              class="cc-btn-solve"
-              on:click={() => cases.update(s => ({ ...s, [c.id]: !done }))}
-            >
-              {done ? 'Reopen Case' : 'Mark as Closed'}
-            </button>
+          <div class="cc-challenges">
+            <div class="cd-hd">Flag Challenges — close the case</div>
+            {#each c.chals as chal, i}
+              {@const key = `${c.id}_${i}`}
+              {@const got = !!(flagState[c.id]?.[i])}
+              <div class="chal" class:chal-solved={got}>
+                <div class="chal-q"><span class="chal-num">{i + 1}.</span> {chal.q}</div>
+                {#if got}
+                  <div class="chal-solved-row">
+                    <span class="chal-icon">✓</span>
+                    <code class="chal-flag">BV{'{'}{chal.flag}{'}'}</code>
+                  </div>
+                {:else}
+                  <form class="chal-form" on:submit|preventDefault={() => submitChal(c.id, i, chal.flag)}>
+                    <input
+                      class="chal-input"
+                      type="text"
+                      placeholder={'BV{...}'}
+                      autocomplete="off"
+                      spellcheck="false"
+                      bind:value={inputs[key]}
+                    />
+                    <button class="chal-submit" type="submit">Submit</button>
+                  </form>
+                  {#if wrong[key]}<div class="chal-wrong">Incorrect — re-read the brief above and try again.</div>{/if}
+                {/if}
+              </div>
+            {/each}
           </div>
         </div>
       </div>
@@ -123,7 +164,10 @@
     padding: 28px 32px; margin-bottom: 24px;
   }
   .page-intro h1 { font-size: 20px; font-weight: 700; color: var(--bone); margin-bottom: 10px; }
-  .page-intro p { font-size: 14px; color: var(--ash); line-height: 1.6; }
+  .page-intro p { font-size: 14px; color: var(--ash); line-height: 1.6; margin-bottom: 16px; }
+  .intro-pbar { height: 4px; background: var(--line2); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+  .intro-pfill { height: 100%; background: var(--blood); border-radius: 2px; transition: width .5s ease; box-shadow: 0 0 14px color-mix(in srgb, var(--blood) 30%, transparent); }
+  .intro-plabel { font-size: 11px; color: var(--ash); letter-spacing: .04em; }
 
   .case-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -187,25 +231,50 @@
     padding: 3px 8px; border-radius: 3px;
   }
 
-  .cc-questions {
+  .cc-challenges {
     background: color-mix(in srgb, var(--amber) 5%, transparent);
     border: 1px solid color-mix(in srgb, var(--amber) 20%, transparent);
-    border-radius: var(--rad); padding: 14px 16px; margin-bottom: 16px;
+    border-radius: var(--rad); padding: 16px 18px; margin-bottom: 4px;
+    display: flex; flex-direction: column; gap: 14px;
   }
-  .q-list { padding-left: 18px; display: flex; flex-direction: column; gap: 8px; margin: 0; }
-  .q-list li { font-size: 13px; color: var(--ash); line-height: 1.6; }
-  .q-list li::marker { color: var(--amber); }
+  .cc-challenges .cd-hd { margin-bottom: 2px; }
 
-  .cc-actions { display: flex; gap: 10px; }
-  .cc-btn-solve {
-    padding: 8px 20px;
+  .chal {
+    border-top: 1px solid color-mix(in srgb, var(--amber) 14%, transparent);
+    padding-top: 12px;
+  }
+  .chal:first-of-type { border-top: none; padding-top: 0; }
+  .chal-q { font-size: 13px; color: var(--ash); line-height: 1.6; margin-bottom: 8px; }
+  .chal-num { color: var(--amber); font-weight: 700; margin-right: 2px; }
+
+  .chal-form { display: flex; gap: 8px; }
+  .chal-input {
+    flex: 1; min-width: 0;
+    background: var(--void); border: 1px solid var(--line);
+    color: var(--bone); font-family: var(--mono); font-size: 12px;
+    padding: 8px 10px; border-radius: var(--rad);
+    transition: border-color .15s;
+  }
+  .chal-input:focus { outline: none; border-color: var(--volt); }
+  .chal-submit {
+    padding: 8px 18px;
     background: color-mix(in srgb, var(--volt) 10%, transparent);
     border: 1px solid color-mix(in srgb, var(--volt) 30%, transparent);
     color: var(--volt); border-radius: var(--rad);
     font-size: 13px; font-weight: 600; cursor: pointer;
-    transition: background .15s;
+    transition: background .15s; flex-shrink: 0;
   }
-  .cc-btn-solve:hover { background: color-mix(in srgb, var(--volt) 18%, transparent); }
+  .chal-submit:hover { background: color-mix(in srgb, var(--volt) 18%, transparent); }
+  .chal-wrong { font-size: 12px; color: var(--blood); margin-top: 6px; }
+
+  .chal-solved-row { display: flex; align-items: center; gap: 8px; }
+  .chal-icon { color: var(--volt); font-weight: 700; }
+  .chal-flag {
+    font-family: var(--mono); font-size: 12px; color: var(--volt);
+    background: color-mix(in srgb, var(--volt) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--volt) 20%, transparent);
+    padding: 4px 10px; border-radius: 3px;
+  }
 
   @media (max-width: 700px) { .cc-detail-grid { grid-template-columns: 1fr; } }
 </style>

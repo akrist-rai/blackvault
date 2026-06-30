@@ -1,21 +1,23 @@
 <script>
   import { PHASES } from '$lib/data';
-  import { phases, drillProgress } from '$lib/stores';
+  import { phases, ctf } from '$lib/stores';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
 
   $: selectedId = $page.url.searchParams.get('phase') ?? 'p01';
   $: selected   = PHASES.find(p => p.id === selectedId) ?? PHASES[0];
 
-  // Drill mode
-  let mode = 'read'; // 'read' | 'drill'
-  let cardIdx = 0;
-  let flipped = false;
-  let gotIt = new Set();
-  let reviewAgain = new Set();
+  let mode = 'read'; // 'read' | 'challenges'
 
-  // Command challenge
-  let chalMode = false; // false = flashcards, true = command challenge
+  // Flag challenges
+  let challengeIdx = 0;
+  let flagInput = '';
+  let solved = new Set();
+  let feedback = null; // 'correct' | 'wrong' | null
+  let showHint = false;
+
+  // Command challenge (post-clear quiz)
+  let chalMode = false;
   let chalIdx = 0;
   let chalSelected = null;
   let chalAnswered = false;
@@ -23,49 +25,48 @@
   let chalTotal = 0;
   let challengeQs = [];
 
-  $: drillCards = content?.concepts ?? [];
-  $: drillTotal = drillCards.length;
-  $: drillCard  = drillCards[cardIdx] ?? null;
-  $: allGotIt   = drillTotal > 0 && gotIt.size === drillTotal;
+  $: challenges = content?.challenges ?? [];
+  $: challengeTotal = challenges.length;
+  $: challenge = challenges[challengeIdx] ?? null;
+  $: allSolved = challengeTotal > 0 && solved.size === challengeTotal;
 
-  function nextCard() {
-    flipped = false;
-    setTimeout(() => { cardIdx = (cardIdx + 1) % drillTotal; }, 80);
+  function ctfKey(i) { return `${selectedId}_${i}`; }
+
+  function normalizeFlag(s) {
+    return (s ?? '').trim().toLowerCase().replace(/^bv\{/, '').replace(/\}$/, '');
   }
-  function prevCard() {
-    flipped = false;
-    setTimeout(() => { cardIdx = (cardIdx - 1 + drillTotal) % drillTotal; }, 80);
-  }
-  function markGot() {
-    gotIt.add(cardIdx);
-    reviewAgain.delete(cardIdx);
-    gotIt = gotIt; reviewAgain = reviewAgain;
-    saveDrill();
-    nextCard();
-  }
-  function markReview() {
-    reviewAgain.add(cardIdx);
-    gotIt.delete(cardIdx);
-    reviewAgain = reviewAgain; gotIt = gotIt;
-    saveDrill();
-    nextCard();
-  }
-  function resetDrill() {
-    const saved = $drillProgress[selectedId];
-    if (saved) {
-      gotIt = new Set(saved.got ?? []);
-      reviewAgain = new Set(saved.review ?? []);
-    } else {
-      gotIt = new Set(); reviewAgain = new Set();
-    }
-    cardIdx = 0; flipped = false;
+
+  function loadSolved() {
+    solved = new Set();
+    challenges.forEach((c, i) => { if ($ctf[ctfKey(i)]) solved.add(i); });
+    challengeIdx = 0; flagInput = ''; feedback = null; showHint = false;
     chalMode = false; chalIdx = 0; chalSelected = null; chalAnswered = false; chalScore = 0;
   }
-  function saveDrill() {
-    drillProgress.update(d => ({ ...d, [selectedId]: { got: [...gotIt], review: [...reviewAgain] } }));
+
+  function saveProgress() {
+    phases.update(p => ({ ...p, [selectedId]: { score: solved.size, total: challengeTotal, pass: solved.size === challengeTotal } }));
   }
 
-  $: if (selectedId) { resetDrill(); }
+  $: if (selectedId) { loadSolved(); }
+
+  function submitFlag() {
+    if (!challenge) return;
+    if (normalizeFlag(flagInput) === normalizeFlag(challenge.flag)) {
+      feedback = 'correct';
+      solved.add(challengeIdx);
+      solved = solved;
+      ctf.update(c => ({ ...c, [ctfKey(challengeIdx)]: true }));
+      saveProgress();
+    } else {
+      feedback = 'wrong';
+    }
+  }
+
+  function gotoChallenge(i) {
+    challengeIdx = i; flagInput = ''; feedback = null; showHint = false;
+  }
+  function nextChallenge_() { gotoChallenge((challengeIdx + 1) % challengeTotal); }
+  function prevChallenge_() { gotoChallenge((challengeIdx - 1 + challengeTotal) % challengeTotal); }
 
   // Build command challenges: show note, pick correct command from 4 options
   function buildChallenges(cmds) {
@@ -100,27 +101,15 @@
     }
   }
 
-  // Keyboard shortcuts for drill mode
-  function handleKey(e) {
-    if (mode !== 'drill') return;
-    if (chalMode) return;
-    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipped = !flipped; }
-    if (e.key === 'ArrowRight' || e.key === 'n') nextCard();
-    if (e.key === 'ArrowLeft'  || e.key === 'p') prevCard();
-    if (e.key === 'g' && flipped) markGot();
-    if (e.key === 'r' && flipped) markReview();
-  }
-
   const CONTENT = {
     p01: {
       overview: `The Sleuth Kit (TSK) is the foundation of open-source disk forensics. Every disk analysis starts with understanding the partition layout, then navigating to the filesystem, then extracting specific files — even deleted ones.`,
-      concepts: [
-        { term:'MBR / GPT', def:'Master Boot Record (first 512 bytes, sector 0) or GUID Partition Table. mmls reads both. Partition start offsets (in sectors) are the key output — multiply by sector size (512 or 4096) to get byte offset for dd or icat.' },
-        { term:'Inode', def:'Data structure in ext2/3/4 containing file metadata (timestamps, permissions, size, block pointers) but NOT the filename. Names are in directory entries. A deleted file has its inode flagged as unallocated but block content may persist.' },
-        { term:'MFT (NTFS)', def:'Master File Table — a structured database where every file/dir is a record. $STANDARD_INFORMATION holds user-visible timestamps; $FILE_NAME holds filesystem-level timestamps. Both sets needed for timestomping detection.' },
-        { term:'Slack Space', def:'Unused space between the end of file data and the end of its last allocated cluster. Can contain fragments of previously deleted files. dcfldd/dd with block-level extraction needed to recover.' },
-        { term:'Unallocated Space', cmd:'blkls -A -o 2048 disk.img > unalloc.raw', def:'All unallocated blocks concatenated — the graveyard for deleted file content. Carve with photorec or bulk_extractor.' },
-        { term:'$MFT Record Flags', def:'0x0001 = file in use; 0x0000 = deleted. fls marks deleted files with * prefix. Recovering deleted data requires the inode number still be readable and blocks not yet rewritten.' },
+      challenges: [
+        { scenario: 'mmls on disk.img reports the only Linux partition starts at sector 2048 in an image using 512-byte sectors. Before running icat, what byte offset must you pass to -o?', hint: 'byte offset = sector × sector size', flag: 'BV{1048576}' },
+        { scenario: "fls -r -o 2048 disk.img lists secret_document.txt at inode 13 with a * prefix. In TSK output, what single word describes that inode's allocation status?", hint: 'fls marks deleted-but-readable inodes this way', flag: 'BV{unallocated}' },
+        { scenario: "A forensic exam finds $STANDARD_INFORMATION shows file creation 2023-01-15, while $FILE_NAME (kernel-only, far harder to fake) shows creation 2024-03-15. Name the anti-forensic technique that produced this 14-month gap.", hint: '$SI is user-mode writable; $FN is not', flag: 'BV{timestomping}' },
+        { scenario: 'icat -o 2048 disk.img 13 recovers 412 bytes from a deleted inode whose data blocks were never overwritten. What general term describes this recoverable region outside the live filesystem allocation table?', hint: 'blkls -A dumps all of it at once', flag: 'BV{unallocated_space}' },
+        { scenario: 'ifind -n "secret.txt" disk.img resolves a filename straight to inode 13. What filesystem structure maps a human-readable name to an inode number?', hint: 'lives inside a directory, not the inode itself', flag: 'BV{directory_entry}' },
       ],
       commands: [
         { cmd:'mmls disk.img', note:'List partitions and start offsets (in sectors)' },
@@ -143,13 +132,12 @@
     },
     p02: {
       overview: `x86-64 assembly is the language that malware actually runs in. You don't need to write it — you need to read it well enough to understand what a function does, even when the decompiler output is misleading.`,
-      concepts: [
-        { term:'Calling Convention (System V AMD64)', def:'Arguments in RDI, RSI, RDX, RCX, R8, R9; return value in RAX. Caller saves RAX/RCX/RDX/RSI/RDI/R8/R9/R10/R11; callee saves RBX/RBP/R12–R15. Stack aligned to 16 bytes before CALL.' },
-        { term:'Calling Convention (Windows x64)', def:'Arguments in RCX, RDX, R8, R9; rest on stack with 32-byte shadow space. Return in RAX. Different from Linux — critical when reversing Windows malware on Linux tools.' },
-        { term:'Stack Frame', def:'RBP points to saved caller RBP; RSP points to current stack top. Local vars at RBP-N; function args beyond 6 at RBP+16 (above saved RIP). Prologue: push rbp; mov rbp,rsp; sub rsp,0x30.' },
-        { term:'RFLAGS', def:'Zero Flag (ZF), Carry Flag (CF), Sign Flag (SF), Overflow Flag (OF). Set by arithmetic/comparison; tested by Jcc (conditional jumps). Malware checks ZF after CMP/TEST to branch on success/failure.' },
-        { term:'LEA vs MOV', def:'MOV rax,[rbp-0x8] dereferences the pointer (loads value at that address). LEA rax,[rbp-0x8] computes the address itself without dereferencing. A common confusion in decompiler output.' },
-        { term:'CALL vs JMP', def:'CALL pushes return address (RIP+5) to stack then jumps. JMP just jumps. Malware sometimes uses CALL+POP to get own address (PIC shellcode pattern). Also: indirect call via register (CALL RAX) for polymorphic dispatch.' },
+      challenges: [
+        { scenario: "GDB breaks at compute() and info registers rdi rsi shows the function's first integer argument. Per the System V AMD64 ABI, which register holds it?", hint: 'RDI, RSI, RDX, RCX, R8, R9 — in that order', flag: 'BV{rdi}' },
+        { scenario: 'x64dbg shows 32 bytes reserved on the stack below the return address before any stack-passed arguments, on a Windows x64 binary. What is this reserved region called?', hint: 'Windows x64 calling convention only', flag: 'BV{shadow_space}' },
+        { scenario: 'Decompiler output shows lea rax,[rbp-0x8] in one line and mov rax,[rbp-0x8] later. Which of the two instructions computes an address without dereferencing memory?', hint: 'one loads a value, one loads a pointer', flag: 'BV{lea}' },
+        { scenario: 'A CALL instruction at 0x401130 transfers control AND pushes one 8-byte value onto the stack before jumping. What value does it push?', hint: 'where execution resumes after the callee returns', flag: 'BV{return_address}' },
+        { scenario: 'Malware repeatedly uses xor eax,eax instead of mov eax,0 to zero a register — both reach the same result. What property of the XOR idiom do malware authors exploit here?', hint: 'count the bytes each instruction takes', flag: 'BV{smaller_encoding}' },
       ],
       commands: [
         { cmd:'gdb -q ./sample', note:'Start GDB (quiet mode, no banner)' },
@@ -174,13 +162,12 @@
     },
     p03: {
       overview: `PE (Windows) and ELF (Linux) are the binary container formats. Understanding their structure lets you parse any executable without a tool, and catch anomalies that indicate packing, injection, or tampering.`,
-      concepts: [
-        { term:'PE Magic', def:'DOS header starts with MZ (4D 5A). e_lfanew DWORD at offset 0x3C points to PE signature (50 45 00 00 = "PE\\0\\0"). After that: COFF FileHeader + OptionalHeader. Any tool that identifies PE files does exactly this check.' },
-        { term:'Section Headers', def:'.text = code (execute, read). .data = initialized data (read, write). .rdata = read-only data (strings, vtables). .rsrc = resources. .reloc = base relocation table. High entropy in .text means packed/encrypted code.' },
-        { term:'Import Address Table (IAT)', def:'Array of pointers filled by the Windows loader at load time. Each entry corresponds to an imported function. Malware minimises IAT to avoid static detection; runtime API resolution via GetProcAddress is the evasion pattern.' },
-        { term:'ELF Magic', def:'7F 45 4C 46 (7F + "ELF"). e_type: ET_EXEC=2 (executable), ET_DYN=3 (shared lib/PIE). e_entry = virtual address of _start. e_phoff = program header table offset; e_shoff = section header table offset.' },
-        { term:'PLT/GOT', def:'Procedure Linkage Table (PLT) + Global Offset Table (GOT) implement lazy binding in ELF. First call to puts() hits PLT stub → resolver → fills GOT[puts] → subsequent calls go direct. GOT overwrite = classic exploitation technique.' },
-        { term:'Base Relocation', def:'.reloc section contains RVAs that the loader patches when the image loads at a non-preferred base. Missing .reloc in non-PIE EXE is an anomaly (fixed base required, ASLR disabled for that image).' },
+      challenges: [
+        { scenario: 'xxd on a binary shows the byte pair 4D 5A at offset 0. What two ASCII characters does this hex pair spell?', hint: 'the DOS header magic', flag: 'BV{mz}' },
+        { scenario: 'e_lfanew at offset 0x3C in a PE points to offset 0xF8, where the bytes 50 45 00 00 begin. What do those four bytes spell?', hint: 'follows "MZ" deeper into the file', flag: 'BV{pe}' },
+        { scenario: "pefile reports a section named .text with entropy 7.81, well above the ~6.5 ceiling for normal compiled code. What single English word describes a section this dense with disorder?", hint: 'the word forensic analysts use for "probably compressed or encrypted"', flag: 'BV{packed}' },
+        { scenario: 'readelf -h reports e_type = 2 for sample.elf. What ELF type constant name corresponds to value 2?', hint: 'ET_ prefix, then the type', flag: 'BV{et_exec}' },
+        { scenario: 'A PE file is missing its .reloc section, meaning it can only load correctly at one fixed base address. What OS exploit-mitigation feature does this absence disable for the image?', hint: 'randomizes load addresses each run', flag: 'BV{aslr}' },
       ],
       commands: [
         { cmd:'readelf -h sample.elf', note:'ELF header: magic, type, architecture, entry point' },
@@ -203,13 +190,12 @@
     },
     p04: {
       overview: `Static analysis means characterising a malware sample WITHOUT executing it. The goal is answering: what does this thing do, what network infrastructure does it use, and how do I detect it?`,
-      concepts: [
-        { term:'Entropy', def:'Shannon entropy ranges 0 (all same byte) to 8 (perfectly random). Compressed/encrypted sections score 7.5–8.0. UPX packed .text hits 7.8+. Measure per-section, not whole-file — legitimate code has entropy around 5.5–6.5.' },
-        { term:'FLOSS (FLARE Obfuscated String Solver)', def:'Extracts: (1) printable strings (like strings.exe), (2) stack-constructed strings (char-by-char assignment), (3) decoded strings (XOR loops with recognised patterns). Replaces strings + manual XOR recovery in one pass.' },
-        { term:'capa (FLARE Capability Detection)', def:'Maps binary capabilities to MITRE ATT&CK and MBC (Malware Behaviour Catalogue). Signatures cover >900 capabilities: process injection, credential access, network comms, persistence. Run on static binary; no execution needed.' },
-        { term:'Packer Detection (DIE)', def:'Detect-It-Easy uses entropy + magic signatures + heuristics. Reports: UPX 3.96, VMProtect 3.x, Themida, MPRESS, custom crypter. Combined with section entropy gives confident packing verdict.' },
-        { term:'Import Hashing (ImpHash)', def:'MD5 of the sorted import table — stable across compiler changes, useful for clustering malware families. Two samples with same ImpHash likely from same code base. VirusTotal pivots on ImpHash.' },
-        { term:'Rich Header', def:'Optional PE artefact inserted by Visual Studio linker. Contains compiler version and linker ID. Not stripped by most packers. Useful for attribution — APT28 reused Rich headers across campaigns for years.' },
+      challenges: [
+        { scenario: "MalwareBazaar returns a match for a queried SHA-256: family 'Emotet', tags 'loader, macro-dropper', first seen 2024-02-15. Submit the family name, lowercase.", hint: 'a long-running banking-trojan-turned-loader family', flag: 'BV{emotet}' },
+        { scenario: 'FLOSS decodes 7 strings from a sample, every one prefixed [XOR 0x22], including the C2 URL http://185.220.101.47/update/check. Submit the single-byte XOR key as 2 lowercase hex digits, no 0x prefix.', hint: 'literally printed next to every decoded string', flag: 'BV{22}' },
+        { scenario: 'pefile reports .text section entropy of 7.81 against a packed-vs-clean threshold of 7.2. Is this sample packed? Answer yes or no.', hint: 'compare 7.81 to 7.2', flag: 'BV{yes}' },
+        { scenario: 'capa maps a capability to ATT&CK technique T1547.001 (registry run key). What parent ATT&CK tactic does T1547.001 belong to?', hint: 'surviving reboot/logoff', flag: 'BV{persistence}' },
+        { scenario: 'ImpHash (MD5 of the sorted import table) is identical between two samples that look completely different on the surface. What does a shared ImpHash strongly suggest about their relationship?', hint: 'ImpHash is stable across recompiles of the same source', flag: 'BV{same_codebase}' },
       ],
       commands: [
         { cmd:'strings -n8 sample.exe | grep -iE "http|cmd|powershell|\\\\\\\\|pass"', note:'Printable strings filtered for IOCs' },
@@ -231,13 +217,12 @@
     },
     p05: {
       overview: `Ghidra is the NSA-developed free decompiler. It converts machine code back to pseudo-C, letting you understand algorithms, recover keys, and map the full control flow without running the binary.`,
-      concepts: [
-        { term:'Auto Analysis', def:'On first import Ghidra runs ~30 analysers: disassembly, function detection, type propagation, string identification, reference graph. For unknown malware always run analysis before exploring. Enable "Aggressive Instruction Finder" for shellcode.' },
-        { term:'Decompiler Window', def:'Shows pseudo-C for the selected function. Accuracy depends on type information — importing function signatures (Ghidra Data Type Archives) dramatically improves output. Windows API calls read as "FUN_00401234" until signatures are applied.' },
-        { term:'Cross-References (XREFs)', def:'Right-click any function/variable → References → Show References. Critical for finding all callers of a suspicious function, or all places a constant (XOR key) is used.' },
-        { term:'Data Types & Structures', def:'Define structs in the Data Type Manager to type a void* pointer as a specific structure. Ghidra will then show named fields in the decompiler — transforms gibberish pointer arithmetic into readable struct access.' },
-        { term:'Scripting (Ghidra API)', def:'Python (Jython) or Java scripts via Script Manager. SearchStrings, FindCryptoConstants (finds AES S-box etc.), DecompileAST. headless mode (-postScript) for batch analysis.' },
-        { term:'Function Signatures / BSim', def:'BSim compares function bytecode using locality-sensitive hashing. Identifies known library functions (OpenSSL, zlib, custom CRT) even when statically linked — critical for isolating malware-unique logic from boilerplate.' },
+      challenges: [
+        { scenario: "Ghidra's auto-analysis on crackme2 finds decode_license at 0x00401136. A local variable used as a single-byte XOR key is renamed from local_18 to xor_key. Checking XREFs to the constant, what hex value is that key?", hint: "renamed variable's literal value, shown in the XREF list", flag: 'BV{0x5a}' },
+        { scenario: 'The XOR loop at 0x401158-0x40117E decodes 24 bytes of a license string in .rdata using key 0x5A. After running the decode in Ghidra\'s Python console, what license string is produced? (lowercase, hyphens to underscores)', hint: 'matches an expected license format, confirmed by the crackme', flag: 'BV{bvlt_2024_gold_elite}' },
+        { scenario: 'Ghidra labels every unnamed function FUN_00401234 until a human renames it. What single habit keeps you oriented while reverse engineering a large, unfamiliar binary?', hint: 'do it as you discover each function, not at the end', flag: 'BV{rename_as_you_go}' },
+        { scenario: 'A function calls GetProcAddress with a string argument that never appears anywhere in the IAT. Where does that string still show up, letting you trace the resolve-then-call chain manually?', hint: 'it has to exist as plaintext data somewhere in the binary', flag: 'BV{strings_output}' },
+        { scenario: 'BSim compares function bytecode using locality-sensitive hashing to identify statically-linked library code (OpenSSL, zlib) versus the malware\'s unique logic. What is this Ghidra feature called?', hint: 'the name of the Ghidra plugin itself', flag: 'BV{bsim}' },
       ],
       commands: [
         { cmd:'analyzeHeadless ~/proj crackme -import sample.exe -postScript PrintAST.java', note:'Headless import + analysis' },
@@ -259,13 +244,12 @@
     },
     p06: {
       overview: `Dynamic analysis executes the sample in a controlled environment and records what it does: system calls, network connections, file operations, registry changes. Real behaviour, not static inference.`,
-      concepts: [
-        { term:'strace', def:'Linux syscall interceptor. Every file open, network connect, process fork captured. Key filter flags: -e trace=network (connect/bind/recv/send), -e trace=file (open/unlink/rename), -e trace=process (fork/execve/exit). Output goes to stderr by default.' },
-        { term:'API Monitor (Windows)', def:'Hooks Windows API calls via DLL injection. Captures parameters and return values for each API call with thread context. Covers CreateFile, RegSetValue, WinInet, WSASend. Far richer than strace for Windows malware.' },
-        { term:'Procmon (Sysinternals)', def:'Real-time file system, registry, and process/thread activity monitor for Windows. Filter: Process Name = sample.exe; Operation = RegSetValue OR WriteFile. Produces PML log files importable into timeline tools.' },
-        { term:'Fakenet-NG', def:'Simulates network services (HTTP/S, DNS, FTP, SMTP) to capture malware network traffic without real internet access. Sample connects, Fakenet responds with configurable content, and PCAP is captured.' },
-        { term:'Cuckoo / CAPE Sandbox', def:'Automated dynamic analysis sandbox. Runs sample in a Windows VM, hooks NTAPI, captures: behaviour report, network PCAP, dropped files, memory dumps, screenshots. CAPE specialises in payload extraction from packed samples.' },
-        { term:'Behaviour Signatures', def:'Post-analysis rule system matching specific API call sequences: CreateProcessHollowed (CreateProcess SUSPENDED + WriteProcessMemory + ResumeThread), PersistRunKey, LSASS_Access. Maps directly to ATT&CK techniques.' },
+      challenges: [
+        { scenario: 'strace -f -e trace=network,file,process ./sample shows an openat() call creating /tmp/.x1729 with mode 0755, followed by a connect() to 185.220.101.47:443. Submit the dropped file\'s full path as the flag, slashes replaced with underscores (e.g. tmp_x1729).', hint: 'drop the leading slash too', flag: 'BV{tmp_x1729}' },
+        { scenario: 'ltrace reveals a strcmp() call comparing user input against a literal password string in plaintext — strace alone would miss this entirely. What category of calls does ltrace trace that strace does not?', hint: 'not system calls — the other kind', flag: 'BV{library_calls}' },
+        { scenario: 'A sample does absolutely nothing when run inside a VM but behaves normally on bare metal. What general capability caused this?', hint: 'checks for VM artifacts before acting', flag: 'BV{sandbox_evasion}' },
+        { scenario: 'Fakenet-NG simulates HTTP, DNS, FTP, and SMTP services so a sample believes it has internet access. What does this let an analyst capture without any real C2 infrastructure involved?', hint: "it's literally in the tool's purpose", flag: 'BV{network_traffic}' },
+        { scenario: 'A CreateProcess call uses CREATE_SUSPENDED, followed by WriteProcessMemory and ResumeThread. Name this classic process-injection technique.', hint: 'the target process is "hollowed" out first', flag: 'BV{process_hollowing}' },
       ],
       commands: [
         { cmd:'strace -f -e trace=network ./sample', note:'Trace all network syscalls (connect, bind, recv, send)' },
@@ -286,13 +270,12 @@
     },
     p07: {
       overview: `Most distributed malware is packed or encrypted to evade static detection. Unpacking reveals the true payload, restoring strings, imports, and disassemblable code.`,
-      concepts: [
-        { term:'Packer vs Crypter', def:'Packer compresses code (UPX, MPRESS) — reduces size, incidentally defeats signatures. Crypter encrypts code with per-build key — specifically designed to defeat AV. A crypter stub decrypts in memory then jumps to OEP.' },
-        { term:'OEP (Original Entry Point)', def:'The entry point of the unpacked payload, contrasted with the packer stub\'s entry point. OEP is where the original binary starts executing. Dumping the process at OEP + fixing the IAT yields a usable unpacked copy.' },
-        { term:'UPX Header', def:'UPX leaves "UPX!" magic at several offsets in the packed binary. Detectable by strings alone. upx -d decompresses in place. If UPX header is stripped: OEP-hunting in debugger (hardware BP on write to unpacked region, then single-step to JMP EAX).' },
-        { term:'IAT Reconstruction', def:'After dumping a process at OEP, the IAT contains resolved addresses (not thunks). Scylla (x64dbg plugin) or LordPE walk the IAT, resolve addresses back to function names, and rebuild the import directory.' },
-        { term:'POEP Pattern', def:'Most packers end with PUSHAD/PUSHA at stub start (save registers), then POPAD/POPA at stub end (restore), then JMP EAX/RCX to OEP. Hardware breakpoint on ESP after PUSHAD → run → stops at POPAD → step into JMP.' },
-        { term:'PE-sieve / Hollows Hunter', def:'Scans all running processes for PE anomalies: modified entry points, injected modules, replaced headers. Dumps suspicious processes automatically. Essential for extracting injected payloads that never touch disk.' },
+      challenges: [
+        { scenario: "strings packed.exe reveals the literal text 'UPX 3.96' and the marker UPX!. Submit the packer name and version as the flag, lowercase, spaces/dots as underscores.", hint: 'name_major_minor', flag: 'BV{upx_3_96}' },
+        { scenario: 'Whole-file entropy on packed.exe measures 7.82, above the 7.2 packed/clean threshold. After upx -d, what specific PE field does "unpacking" restore execution control to?', hint: 'three-letter acronym, the unpacked entry point', flag: 'BV{oep}' },
+        { scenario: "After dumping a hollowed process at OEP, every import-table entry is a resolved address rather than the original thunk — the dump won't run as-is. What process, automated by Scylla, fixes this?", hint: 'rebuilds the import directory', flag: 'BV{iat_reconstruction}' },
+        { scenario: 'After "unpacking" a sample, .text entropy is still 7.7 — far above clean-code levels. What does a second high-entropy layer after the first unpack usually indicate?', hint: 'one packer wrapped inside another, encrypting layer', flag: 'BV{second_stage_crypter}' },
+        { scenario: 'pe-sieve scans live processes for PE anomalies and dumps suspicious ones automatically, named <pid>_<base>_<type>.exe. What category of technique is pe-sieve specifically built to catch — payloads that never touch disk?', hint: 'code placed into another process\'s memory', flag: 'BV{process_injection}' },
       ],
       commands: [
         { cmd:'strings packed.exe | grep UPX', note:'Confirm UPX packing by stub strings' },
@@ -313,13 +296,12 @@
     },
     p08: {
       overview: `Memory forensics analyses a raw RAM dump to find running processes, network connections, injected code, and encryption keys that never touch disk. Volatility 3 is the primary framework.`,
-      concepts: [
-        { term:'Memory Image Formats', def:'Raw (.raw, .mem, .bin): flat byte-for-byte dump. LiME (.lime): Linux memory acquisition format with segment headers. Crash dump (.dmp): Windows BSOD or Task Manager dump — requires Volatility --mode crash. Hibernation (hiberfil.sys): compressed, Volatility decompresses.' },
-        { term:'EPROCESS / _PROC', def:'Kernel structure per process. Contains: PID, PPID, ImageFileName, CreateTime, ExitTime, ActiveProcessLinks (doubly-linked list). pslist walks this linked list. psscan scans raw memory for EPROCESS signatures — finds hiding/unlinking rootkits.' },
-        { term:'VAD (Virtual Address Descriptor)', def:'Red-black tree per process mapping virtual address ranges to their backing (file, pagefile, anonymous). malfind uses VADs to find MZ-signed anonymous private regions with Execute permission — the hollowing/injection fingerprint.' },
-        { term:'malfind Output', def:'Reports: PID, process name, virtual address, VAD flags (PAGE_EXECUTE_READWRITE). Then hex dump showing MZ header or shellcode. Must manually triage — not every hit is malicious (some JIT-compiled code, game anti-cheat also triggers).' },
-        { term:'Network Artefacts', def:'netscan recovers TCP/UDP connection objects (TCPEndpoint, UDPEndpoint) even after the connection closes (structure remains in pool until overwritten). State: ESTABLISHED = live; CLOSE_WAIT/TIME_WAIT = recently closed.' },
-        { term:'Cobalt Strike in Memory', def:'Specific patterns: reflective DLL beacon, named pipe \\\\\\\\.\\\\ pipe\\\\MSSE-*-server, sleep_mask XOR pattern in beacon config, HTTPS JA3 fingerprint. Detect via malfind (RWX MZ region) + strings on dump (*.cobaltstrike config bytes).' },
+      challenges: [
+        { scenario: 'windows.pslist shows PID 2448 svchost.exe with PPID 1832, also svchost.exe — anomalous for that process name. windows.malfind on PID 2448 finds a PAGE_EXECUTE_READWRITE region containing an MZ header. Submit the PID hosting the injected PE.', hint: 'the duplicate-looking svchost from pslist', flag: 'BV{2448}' },
+        { scenario: 'windows.netscan on the same image shows PID 2448 with an ESTABLISHED connection to 185.220.101.47:443. What plugin recovered this, even though the connection object normally only persists transiently in memory?', hint: 'name of the Volatility 3 plugin itself', flag: 'BV{netscan}' },
+        { scenario: 'pslist walks the EPROCESS doubly-linked list and misses a process that unlinked itself. What plugin scans raw memory pool tags instead of following pointers, defeating this kind of hiding?', hint: 'sibling plugin to pslist, scan-based', flag: 'BV{psscan}' },
+        { scenario: 'malfind flags a VAD region as Type: Private, Tag: VadS — anonymous memory, not backed by any file on disk. What does an MZ header inside such a region strongly indicate?', hint: 'a full executable living somewhere it shouldn\'t', flag: 'BV{injected_pe}' },
+        { scenario: 'A Cobalt Strike beacon in memory shows a named-pipe pattern \\\\.\\pipe\\MSSE-*-server combined with a sleep_mask XOR pattern. What\'s this overall detection approach called — matching known byte/structure patterns of a specific toolkit?', hint: 'fingerprinting the beacon\'s own configuration bytes', flag: 'BV{beacon_config_signature}' },
       ],
       commands: [
         { cmd:'vol3 -f mem.raw windows.info', note:'OS version, build, architecture — confirm profile' },
@@ -344,13 +326,12 @@
     },
     p09: {
       overview: `Network forensics analyses packet captures (PCAP) to reconstruct communication, identify C2 channels, extract transferred files, and decode exfiltration. Wireshark, tshark, and Zeek are the primary tools.`,
-      concepts: [
-        { term:'PCAP vs PCAPng', def:'PCAP: legacy libpcap format. PCAPng: modern format supporting multiple interfaces, per-packet comments, nanosecond timestamps. Wireshark reads both. tshark with -F pcap converts PCAPng to old format.' },
-        { term:'JA3 / JA3S', def:'MD5 of TLS ClientHello fields (version, ciphers, extensions, elliptic curves, EC formats). Fingerprints TLS clients regardless of IP/domain. JA3S fingerprints the ServerHello. Cobalt Strike default JA3: 72a7c4d879f23a2c3d643ee09e1dce61.' },
-        { term:'Beacon Periodicity', def:'C2 beacons check in at regular intervals (Cobalt Strike default: 60s ±10% jitter). Plot inter-arrival times of connections to a single IP — periodic clustering at 54–66s (for 60s beacon with 10% jitter) is a strong indicator.' },
-        { term:'DNS Anomalies', def:'DGA: high-entropy short domains (kdsjfhksdf.com). DNS tunnelling: long subdomain labels (>40 chars), high NXDOMAIN rate, repeated TXT queries. Baseline domain stats over 24h then alert on 3σ deviations.' },
-        { term:'File Carving from PCAP', def:'NetworkMiner or tshark exports reassembled TCP streams. HTTP GET responses containing MZ header → executable. SMTP attachments, FTP data channels, SMB file transfers all recoverable. Use Wireshark → File → Export Objects → HTTP.' },
-        { term:'Encrypted Traffic Analysis', def:'Even with TLS, certificate metadata (CN, SAN, issuer), ALPN negotiation, byte length patterns, and timing are analysable. Self-signed certs or Let\'s Encrypt certs for C2 infrastructure are common red flags.' },
+      challenges: [
+        { scenario: 'tshark extracts JA3 hash 72a7c4d879f23a2c3d643ee09e1dce61 from every TLS ClientHello to 185.220.101.47. This exact hash is a known default fingerprint for which C2 toolkit (two words, underscore)?', hint: 'a very common red-team/post-exploitation framework', flag: 'BV{cobalt_strike}' },
+        { scenario: 'Inter-arrival times between connections to 185.220.101.47 cluster tightly around 60.09 seconds with only 0.19s standard deviation. What attacker behavior produces this kind of regular, low-jitter timing?', hint: 'C2 check-ins on a fixed sleep timer', flag: 'BV{beaconing}' },
+        { scenario: 'DNS queries show 24-character hex subdomain labels under exfil-tunnel.xyz, a different label every query. What technique uses DNS queries themselves as a covert exfiltration channel?', hint: 'data smuggled inside the queries, not the responses', flag: 'BV{dns_tunneling}' },
+        { scenario: 'Wireshark\'s File > Export Objects > HTTP recovers a PE32+ DLL carved directly out of an HTTP response stream — no disk write ever occurred on the wire. What artifact type was carved?', hint: 'a runnable Windows binary', flag: 'BV{executable}' },
+        { scenario: "Even though a session is fully TLS-encrypted, JA3, JA3S, certificate metadata, and byte-length timing patterns remain analyzable. What's this general analysis approach called when you can't decrypt the payload itself?", hint: 'analyzing traffic you cannot decrypt', flag: 'BV{encrypted_traffic_analysis}' },
       ],
       commands: [
         { cmd:"tshark -r cap.pcap -Y 'dns' -T fields -e dns.qry.name -e dns.qry.type | sort | uniq -c | sort -rn | head -30", note:'Top 30 DNS queries' },
@@ -372,13 +353,12 @@
     },
     p10: {
       overview: `Protocol reverse engineering decodes proprietary or undocumented C2 communication protocols from raw packet captures — identifying framing, encryption keys, and command opcodes.`,
-      concepts: [
-        { term:'Frame Magic Bytes', def:'Most custom protocols start with a magic sequence that identifies the protocol version or frame type. Look for a constant 2–4 byte prefix in all messages (e.g., BE EF, DE AD BE EF). xxd column alignment helps spot repeating patterns.' },
-        { term:'Length-Value Encoding', def:'After magic: a length field (1, 2, or 4 bytes, big- or little-endian) indicating payload length. Validate by checking if length value + header size = total packet size across all samples.' },
-        { term:'Opcode Table', def:'After length: a 1-byte opcode indicating command type (0x01=BEACON, 0x02=EXEC, 0x03=EXFIL). Reconstruct by correlating opcode values with payload content patterns. BEACON payloads often contain hostname/PID; EXEC contains a command string.' },
-        { term:'XOR Key Recovery', def:'If payload is XOR-encrypted with known plaintext available (e.g., BEACON responses always start with hostname), XOR known plaintext against ciphertext to recover key bytes. Test key on subsequent packets to confirm.' },
-        { term:'Scapy for Protocol Parsing', def:'Python library for packet crafting and parsing. Define custom protocol layers as Python classes with field definitions. Scapy handles endianness, bit fields, and checksums. Ideal for scripting automated protocol decode.' },
-        { term:'Impacket', def:'Python library implementing many Windows protocols (SMB, MSRPC, Kerberos, LDAP, NTLM). Used for DCSync, PtH, PsExec reimplementation. Also useful for analysing captured SMB/DCE-RPC traffic — match captured opcodes to impacket\'s definitions.' },
+      challenges: [
+        { scenario: 'Every captured C2 frame begins with the same two-byte sequence BE EF before any length or opcode field. What\'s the general term for this kind of fixed identifying prefix?', hint: 'two words, "magic ___"', flag: 'BV{magic_bytes}' },
+        { scenario: 'Frame structure analysis determines: 2 bytes magic, 2 bytes big-endian length, 1 byte opcode, then payload. Opcode 0x01 carries hostname/PID data on check-in. What\'s this opcode 0x01 traffic category called?', hint: 'same term used for periodic C2 check-ins', flag: 'BV{beacon}' },
+        { scenario: 'XORing a known plaintext command string "whoami" against its corresponding ciphertext bytes recovers a key. What\'s the general cryptanalysis technique called when you XOR known plaintext against ciphertext to recover a key or keystream?', hint: 'you already know part of the plaintext going in', flag: 'BV{known_plaintext_attack}' },
+        { scenario: 'Testing shows the recovered key applies only to opcode 0x03 frames (EXFIL), while BEACON and EXEC frames are sent in plaintext. Submit the single-byte key as 2 lowercase hex digits, no 0x prefix.', hint: 'same byte that decoded the credential dump frame', flag: 'BV{5a}' },
+        { scenario: 'Scapy lets you define a custom protocol as a Python class with explicit field definitions, handling endianness and checksums automatically. What\'s the general term for parsing raw bytes into a structured representation using a schema like this?', hint: 'breaking a byte stream into named fields', flag: 'BV{protocol_parsing}' },
       ],
       commands: [
         { cmd:"tshark -r c2.pcap -Y 'tcp.len > 0' -T fields -e data.data | xxd", note:'Raw payload bytes of all non-empty TCP segments' },
@@ -399,13 +379,12 @@
     },
     p11: {
       overview: `Rootkits and persistence artefacts hide attacker presence. This phase covers Windows-specific persistence mechanisms, the artefacts they leave, and how to find them even after the attacker attempts cleanup.`,
-      concepts: [
-        { term:'Registry Run Keys', def:'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run executes per-user on logon. HKLM equivalent is system-wide. Both persist across reboots. Value name chosen to blend in (WindowsDefender32, AdobeUpdate). Autoruns.exe enumerates all 200+ persistence locations.' },
-        { term:'Scheduled Tasks', def:'C:\\Windows\\System32\\Tasks\\ XML files. Event 4698 (task created), 4702 (modified), 4699 (deleted), 4700/4701 (enabled/disabled). schtasks /query /fo LIST /v shows full details. Task XML contains full command line and trigger.' },
-        { term:'Event ID Cheatsheet', def:'4624=logon, 4625=failed logon, 4648=explicit cred logon, 4688=process create, 4697=service install, 4698=scheduled task, 4720=user created, 5140=share access, 7045=service install (System log), 1102=security log cleared.' },
-        { term:'SSDT Hooks', def:'System Service Descriptor Table maps syscall numbers to kernel function addresses. A rootkit replaces entries with pointers to its own code to intercept NtOpenProcess, NtQuerySystemInformation etc. Detectable by comparing expected vs actual addresses (Volatility ssdt plugin).' },
-        { term:'WMI Persistence', def:'__EventFilter + __EventConsumer + __FilterToConsumerBinding defines a WMI subscription. Survives reboots; invisible to tasklist/services. Repository stored in C:\\Windows\\System32\\wbem\\Repository. Forensically parsed by WMI-Forensics tool.' },
-        { term:'Timestomping ($SI vs $FN)', def:'$STANDARD_INFORMATION timestamps in MFT are user-mode accessible and easily modified by malware (SetFileTime). $FILE_NAME timestamps require direct MFT manipulation (kernel mode). A file where $SI timestamps predate $FN timestamps indicates timestomping.' },
+      challenges: [
+        { scenario: 'reg query finds a value named "WindowsSecurityHealth" under HKCU\\...\\CurrentVersion\\Run pointing to C:\\ProgramData\\MicrosoftUpdate\\svchost32.exe — a path matching no legitimate Windows directory. What Windows Event ID logs the creation of this kind of service via Service Control Manager?', hint: 'logged to the System log, four digits', flag: 'BV{7045}' },
+        { scenario: 'MFT analysis on svchost32.exe shows $STANDARD_INFORMATION creation dated 14 months before $FILE_NAME creation. Submit the name of this anti-forensic technique.', hint: 'manipulating file timestamps to mislead investigators', flag: 'BV{timestomping}' },
+        { scenario: 'vol3 windows.ssdt finds NtQuerySystemInformation and NtOpenKey pointing to addresses outside ntoskrnl.exe/win32k.sys — both expected to live in the kernel image. What\'s this kernel-level interception technique called?', hint: 'two words, table-based kernel hooking', flag: 'BV{ssdt_hook}' },
+        { scenario: 'A WMI subscription combining __EventFilter, __EventConsumer, and __FilterToConsumerBinding survives reboots and is invisible to tasklist or services.msc. Where is this subscription\'s data physically stored on disk?', hint: 'under C:\\Windows\\System32\\wbem\\', flag: 'BV{wbem_repository}' },
+        { scenario: 'Event ID 1102 appears in the Security log right before all other suspicious entries disappear. What did the attacker do?', hint: 'wiping the evidence trail itself', flag: 'BV{cleared_security_log}' },
       ],
       commands: [
         { cmd:'reg query HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run', note:'User-mode Run key persistence check' },
@@ -429,13 +408,12 @@
     },
     p12: {
       overview: `The capstone integrates all prior skills. Given a set of artefacts spanning email, disk, memory, and network, reconstruct the complete attack timeline, attribute TTPs to ATT&CK, and produce an IR report.`,
-      concepts: [
-        { term:'Attack Timeline Reconstruction', def:'Anchor events: initial email timestamp, first process creation on endpoint, first C2 connection, lateral movement auth events, final impact (encryption start). Build a unified timeline combining EVTX, disk timestamps, PCAP, and memory artefacts.' },
-        { term:'Kill Chain Mapping', def:'Every evidence item maps to one or more kill chain phases and ATT&CK techniques. A phishing email = Initial Access (T1566.001). PowerShell execution = Execution (T1059.001). Registry Run key = Persistence (T1547.001). Map systematically.' },
-        { term:'Evidence Correlation', def:'The same attacker action produces multiple evidence items across different sources. A file dropped by malware appears in: EVTX (4663 file create), Prefetch, MFT (timestamp), and possibly memory (mapped file). Corroboration across sources increases confidence.' },
-        { term:'IOC Extraction', def:'From the full investigation: extract IP addresses, domain names, file hashes (SHA-256 preferred), file paths, registry keys, scheduled task names, service names, email sender addresses, user-agents. Package as STIX 2.1 for sharing.' },
-        { term:'IR Report Structure', def:'Executive Summary (1 page, business impact), Technical Narrative (chronological TTPs), IOC Table, ATT&CK Matrix heat map, Evidence Index (artefact→finding map), Recommendations (immediate + strategic). Audience is both CISO and SOC.' },
-        { term:'Lessons Learned', def:'Post-incident: detection gap analysis (what SIEM rules would have fired vs what actually fired), dwell time measurement (initial compromise to detection), containment time (detection to full remediation), recommended control improvements.' },
+      challenges: [
+        { scenario: 'Correlating evidence: phishing delivered 02:58, macro execution 03:01, first C2 beacon 03:02, lateral movement begins 03:11, ransomware encryption completes 03:22. Submit the total dwell time in minutes from delivery to encryption complete, as a plain number.', hint: '03:22 minus 02:58', flag: 'BV{24}' },
+        { scenario: 'A phishing sender domain is miicrosof-t.com, mimicking a trusted brand by inserting one extra letter. What\'s the name for this domain-spoofing technique?', hint: 'visually-similar fake domains', flag: 'BV{typosquatting}' },
+        { scenario: 'vssadmin.exe delete shadows /all /quiet runs immediately before ransomware deployment via PsExec. What is the attacker trying to prevent by destroying volume shadow copies?', hint: 'the built-in Windows recovery mechanism', flag: 'BV{system_restore}' },
+        { scenario: 'The full kill chain maps to ATT&CK: T1566.001 (initial access), T1059.001 (execution), T1547.001 (persistence), T1490 (data destruction/recovery inhibition). What MITRE ATT&CK tactic name covers T1490 specifically?', hint: 'the final stage of the kill chain', flag: 'BV{impact}' },
+        { scenario: 'An IR report packages every IP, domain, hash, and registry key from this investigation into a standard sharing format for other defenders. Name that standard (initialism, version 2.1).', hint: 'Structured Threat Information eXpression', flag: 'BV{stix}' },
       ],
       commands: [
         { cmd:'log2timeline.py /output/dump.plaso /mnt/evidence/', note:'Build full plaso super-timeline from evidence dir' },
@@ -459,18 +437,17 @@
   $: content = CONTENT[selectedId] ?? CONTENT['p01'];
 </script>
 
-<svelte:head><title>Study — BLACKVAULT</title></svelte:head>
-<svelte:window on:keydown={handleKey} />
+<svelte:head><title>Challenges — BLACKVAULT</title></svelte:head>
 
 <div class="topstrip">
-  <span>STUDY</span>
+  <span>CHALLENGES</span>
   <div class="ts-right">
-    <button class="mode-btn" class:active={mode==='read'} on:click={() => mode='read'}>READ</button>
-    <button class="mode-btn" class:active={mode==='drill'} on:click={() => { mode='drill'; resetDrill(); }}>DRILL</button>
+    <button class="mode-btn" class:active={mode==='read'} on:click={() => mode='read'}>BRIEFING</button>
+    <button class="mode-btn" class:active={mode==='challenges'} on:click={() => { mode='challenges'; loadSolved(); }}>FLAGS</button>
   </div>
 </div>
 
-{#if mode === 'drill'}
+{#if mode === 'challenges'}
   <div class="drill-layout">
     <nav class="phase-nav">
       {#each PHASES as p}
@@ -490,77 +467,86 @@
       <div class="drill-header">
         <h2 class="drill-phase-title">{selected.name}</h2>
         <div class="drill-progress">
-          <span class="dp-card">Card {cardIdx + 1} / {drillTotal}</span>
-          <span class="dp-got">✓ {gotIt.size} got it</span>
-          <span class="dp-review">↺ {reviewAgain.size} review</span>
+          <span class="dp-card">Flag {challengeIdx + 1} / {challengeTotal}</span>
+          <span class="dp-got">✓ {solved.size} captured</span>
         </div>
         <div class="drill-bar">
-          <div class="drill-bar-fill" style="width:{drillTotal ? Math.round(((gotIt.size)/drillTotal)*100) : 0}%"></div>
+          <div class="drill-bar-fill" style="width:{challengeTotal ? Math.round((solved.size/challengeTotal)*100) : 0}%"></div>
         </div>
       </div>
 
-      {#if drillCard}
-        <div class="flashcard-wrap">
-          <button class="flashcard" class:flipped on:click={() => (flipped = !flipped)} aria-label="Flip card">
-            <div class="fc-front">
-              <div class="fc-label">TERM</div>
-              <div class="fc-term">{drillCard.term}</div>
-              <div class="fc-tap-hint">tap to reveal definition</div>
-            </div>
-            <div class="fc-back">
-              <div class="fc-label">DEFINITION</div>
-              <div class="fc-def">{drillCard.def}</div>
-              {#if drillCard.cmd}
-                <code class="fc-cmd">{drillCard.cmd}</code>
+      {#if challenge}
+        <div class="scn-wrap">
+          <div class="scn-card" class:scn-solved={solved.has(challengeIdx)}>
+            <div class="scn-label">SCENARIO</div>
+            <p class="scn-text">{challenge.scenario}</p>
+
+            {#if solved.has(challengeIdx)}
+              <div class="scn-flag-captured">
+                <span class="fc-icon">✓</span>
+                <code>{challenge.flag}</code>
+                <span class="fc-tag">CAPTURED</span>
+              </div>
+            {:else}
+              <form class="scn-form" on:submit|preventDefault={submitFlag}>
+                <input
+                  class="flag-input"
+                  type="text"
+                  placeholder={'BV{...}'}
+                  bind:value={flagInput}
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button class="flag-submit" type="submit">Submit</button>
+              </form>
+              {#if feedback === 'wrong'}
+                <div class="scn-feedback fb-wrong">✗ Incorrect — try again.</div>
               {/if}
-            </div>
-          </button>
+              <button class="hint-toggle" on:click={() => showHint = !showHint}>
+                {showHint ? '▼ Hide hint' : '▶ Show hint'}
+              </button>
+              {#if showHint}
+                <div class="scn-hint">{challenge.hint}</div>
+              {/if}
+            {/if}
+          </div>
 
           <div class="drill-actions">
-            <button class="da-btn da-prev" on:click={prevCard} title="Previous">←</button>
-            {#if flipped}
-              <button class="da-btn da-review" on:click={markReview}>↺ Review Again</button>
-              <button class="da-btn da-got" on:click={markGot}>✓ Got It</button>
-            {:else}
-              <button class="da-btn da-flip" on:click={() => (flipped = true)}>Flip Card</button>
-            {/if}
-            <button class="da-btn da-next" on:click={nextCard} title="Next">→</button>
+            <button class="da-btn da-prev" on:click={prevChallenge_} title="Previous">←</button>
+            <button class="da-btn da-next" on:click={nextChallenge_} title="Next">→</button>
           </div>
 
           <div class="drill-deck-row">
-            {#each drillCards as _, i}
+            {#each challenges as _, i}
               <button
                 class="deck-dot"
-                class:dot-current={i === cardIdx}
-                class:dot-got={gotIt.has(i)}
-                class:dot-review={reviewAgain.has(i)}
-                on:click={() => { cardIdx = i; flipped = false; }}
-                aria-label="Go to card {i+1}"
+                class:dot-current={i === challengeIdx}
+                class:dot-got={solved.has(i)}
+                on:click={() => gotoChallenge(i)}
+                aria-label="Go to flag {i+1}"
               ></button>
             {/each}
           </div>
-
-          <button class="reset-drill" on:click={resetDrill}>Reset Deck</button>
         </div>
 
-        {#if allGotIt && !chalMode}
+        {#if allSolved && !chalMode}
           <div class="all-done-banner">
             <span class="adb-icon">★</span>
-            All {drillTotal} cards mastered! Ready to test your commands?
-            <button class="adb-cta" on:click={startChallenge}>Command Challenge →</button>
+            All {challengeTotal} flags captured! Ready for the command drill?
+            <button class="adb-cta" on:click={startChallenge}>Command Drill →</button>
           </div>
-        {:else if !chalMode && drillTotal > 0 && content?.commands?.length >= 2}
+        {:else if !chalMode && challengeTotal > 0 && content?.commands?.length >= 2}
           <button class="challenge-start-btn" on:click={startChallenge}>
-            Switch to Command Challenge ({content.commands.length} questions)
+            Switch to Command Drill ({content.commands.length} questions)
           </button>
         {/if}
 
         {#if chalMode}
           <div class="challenge-wrap">
             <div class="chal-header">
-              <span class="chal-title">COMMAND CHALLENGE</span>
+              <span class="chal-title">COMMAND DRILL</span>
               <span class="chal-prog">{Math.min(chalIdx + 1, challengeQs.length)} / {challengeQs.length}</span>
-              <button class="chal-exit" on:click={() => chalMode = false}>← Back to Flashcards</button>
+              <button class="chal-exit" on:click={() => chalMode = false}>← Back to Flags</button>
             </div>
 
             {#if chalIdx < challengeQs.length}
@@ -598,8 +584,8 @@
                 <div class="cr-score">{chalScore}/{chalTotal}</div>
                 <div class="cr-label">{chalScore === chalTotal ? 'Perfect score!' : chalScore >= chalTotal * .7 ? 'Good work!' : 'Keep practicing.'}</div>
                 <div class="cr-actions">
-                  <button class="cr-btn" on:click={startChallenge}>Retry Challenge</button>
-                  <button class="cr-btn cr-back" on:click={() => chalMode = false}>Back to Flashcards</button>
+                  <button class="cr-btn" on:click={startChallenge}>Retry Drill</button>
+                  <button class="cr-btn cr-back" on:click={() => chalMode = false}>Back to Flags</button>
                 </div>
               </div>
             {/if}
@@ -607,15 +593,11 @@
         {/if}
 
       {:else}
-        <div class="drill-empty">No concepts for this phase yet.</div>
+        <div class="drill-empty">No flags for this phase yet.</div>
       {/if}
     </main>
   </div>
 {/if}
-
-<div class="drill-kb-hint" class:visible={mode === 'drill' && !chalMode}>
-  Space to flip · G = got it · R = review · ← → to navigate
-</div>
 
 {#if mode === 'read'}
 <div class="study-layout">
@@ -643,19 +625,9 @@
 
       <div class="sc-section">
         <p class="sc-overview">{content.overview}</p>
-      </div>
-
-      <div class="sc-section">
-        <h2 class="sc-h2">Key Concepts</h2>
-        <div class="concept-list">
-          {#each content.concepts as c}
-            <div class="concept-item">
-              <div class="ci-term">{c.term}</div>
-              <div class="ci-def">{c.def}</div>
-              {#if c.cmd}<code class="ci-cmd">{c.cmd}</code>{/if}
-            </div>
-          {/each}
-        </div>
+        <a href="/console/study?phase={selectedId}" class="briefing-cta" on:click={() => { mode='challenges'; loadSolved(); }}>
+          ▶ {content.challenges?.length ?? 0} flag challenges waiting — start capturing →
+        </a>
       </div>
 
       <div class="sc-section">
@@ -720,7 +692,6 @@
   .mode-btn.active { border-color: var(--volt); color: var(--volt); background: color-mix(in srgb,var(--volt) 8%,transparent); }
   .mode-btn:hover:not(.active) { border-color: var(--ash); color: var(--bone); }
 
-  /* drill layout mirrors study layout */
   .drill-layout { display: flex; flex: 1; overflow: hidden; }
   .drill-main { flex: 1; padding: 28px; overflow-y: auto; }
 
@@ -732,46 +703,52 @@
   .drill-progress { display: flex; gap: 16px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
   .dp-card   { font-family: var(--mono); font-size: 11px; color: var(--ash); }
   .dp-got    { font-size: 11px; color: var(--volt); font-weight: 700; }
-  .dp-review { font-size: 11px; color: var(--amber); font-weight: 700; }
   .drill-bar { height: 3px; background: var(--line2); border-radius: 2px; overflow: hidden; }
   .drill-bar-fill { height: 100%; background: var(--volt); border-radius: 2px; transition: width .4s ease; }
 
-  .flashcard-wrap {
+  .scn-wrap {
     display: flex; flex-direction: column; align-items: center; gap: 20px;
-    max-width: 560px; margin: 0 auto;
+    max-width: 600px; margin: 0 auto;
   }
 
-  .flashcard {
-    width: 100%; min-height: 220px;
-    background: var(--panel); border: 1px solid var(--line2);
-    border-radius: 10px; cursor: pointer;
-    perspective: 1000px;
-    position: relative;
-    transition: border-color .2s, box-shadow .2s;
-    padding: 0; /* button reset */
+  .scn-card {
+    width: 100%; background: var(--panel); border: 1px solid var(--line2);
+    border-radius: 10px; padding: 26px 30px;
+    transition: border-color .2s;
   }
-  .flashcard:hover { border-color: var(--volt); box-shadow: 0 0 20px color-mix(in srgb,var(--volt) 12%,transparent); }
+  .scn-card.scn-solved { border-color: color-mix(in srgb,var(--volt) 40%,transparent); background: color-mix(in srgb,var(--volt) 4%,var(--panel)); }
+  .scn-label { font-size: 9px; font-weight: 700; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; margin-bottom: 12px; }
+  .scn-text { font-size: 14px; color: var(--bone); line-height: 1.7; margin-bottom: 18px; }
 
-  .fc-front, .fc-back {
-    position: absolute; inset: 0;
-    padding: 28px 32px;
-    display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
-    border-radius: 10px;
-    backface-visibility: hidden;
-    transition: opacity .18s, transform .18s;
+  .scn-flag-captured {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 13px; color: var(--volt);
   }
-  .fc-front { background: var(--panel); }
-  .fc-back  { background: var(--panel2); opacity: 0; transform: rotateY(10deg); pointer-events: none; }
-  .flashcard.flipped .fc-front { opacity: 0; transform: rotateY(-10deg); pointer-events: none; }
-  .flashcard.flipped .fc-back  { opacity: 1; transform: rotateY(0); pointer-events: auto; }
-  /* keep card height consistent */
-  .fc-front, .fc-back { min-height: 220px; }
+  .fc-icon { font-weight: 700; }
+  .scn-flag-captured code { background: var(--panel3); padding: 4px 10px; border-radius: 4px; }
+  .fc-tag { font-size: 9px; letter-spacing: .1em; color: var(--dim); margin-left: auto; }
 
-  .fc-label { font-size: 9px; font-weight: 700; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; margin-bottom: 16px; }
-  .fc-term  { font-size: 22px; font-weight: 700; color: var(--volt); font-family: var(--mono); }
-  .fc-tap-hint { font-size: 11px; color: var(--dim); margin-top: 14px; }
-  .fc-def   { font-size: 14px; color: var(--ash); line-height: 1.7; }
-  .fc-cmd   { display: block; margin-top: 12px; font-size: 11px; color: var(--bone); font-family: var(--mono); background: var(--panel3); padding: 5px 10px; border-radius: 4px; text-align: left; }
+  .scn-form { display: flex; gap: 8px; }
+  .flag-input {
+    flex: 1; font-family: var(--mono); font-size: 13px; color: var(--bone);
+    background: var(--panel3); border: 1px solid var(--line2); border-radius: var(--rad);
+    padding: 10px 14px; outline: none; transition: border-color .15s;
+  }
+  .flag-input:focus { border-color: var(--volt); }
+  .flag-submit {
+    font-size: 12px; font-weight: 700; padding: 10px 18px;
+    background: var(--volt); color: var(--void); border: none; border-radius: var(--rad);
+    cursor: pointer;
+  }
+  .scn-feedback { margin-top: 10px; font-size: 12px; font-weight: 700; }
+  .scn-feedback.fb-wrong { color: var(--blood); }
+
+  .hint-toggle {
+    margin-top: 14px; font-size: 11px; color: var(--dim); background: none; border: none;
+    cursor: pointer; padding: 0;
+  }
+  .hint-toggle:hover { color: var(--ash); }
+  .scn-hint { margin-top: 8px; font-size: 12px; color: var(--amber); line-height: 1.6; }
 
   .drill-actions { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
   .da-btn {
@@ -781,13 +758,6 @@
     transition: all .15s; min-height: 40px;
   }
   .da-btn:hover { border-color: var(--ash); color: var(--bone); }
-  .da-prev, .da-next { padding: 8px 14px; }
-  .da-got    { border-color: color-mix(in srgb,var(--volt) 40%,transparent); color: var(--volt); }
-  .da-got:hover { background: color-mix(in srgb,var(--volt) 12%,transparent); border-color: var(--volt); }
-  .da-review { border-color: color-mix(in srgb,var(--amber) 40%,transparent); color: var(--amber); }
-  .da-review:hover { background: color-mix(in srgb,var(--amber) 10%,transparent); border-color: var(--amber); }
-  .da-flip   { border-color: color-mix(in srgb,var(--blue) 40%,transparent); color: var(--blue); }
-  .da-flip:hover { background: color-mix(in srgb,var(--blue) 10%,transparent); border-color: var(--blue); }
 
   .drill-deck-row { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
   .deck-dot {
@@ -797,24 +767,16 @@
   }
   .deck-dot.dot-current  { border-color: var(--bone);  background: var(--bone); }
   .deck-dot.dot-got      { border-color: var(--volt);  background: var(--volt); }
-  .deck-dot.dot-review   { border-color: var(--amber); background: var(--amber); }
-
-  .reset-drill {
-    font-size: 11px; color: var(--dim); background: none; border: none; cursor: pointer;
-    text-decoration: underline; padding: 4px;
-  }
-  .reset-drill:hover { color: var(--ash); }
 
   .drill-empty { color: var(--ash); padding: 40px; text-align: center; }
 
-  /* all-done banner */
   .all-done-banner {
     display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     background: color-mix(in srgb, var(--volt) 8%, transparent);
     border: 1px solid color-mix(in srgb, var(--volt) 25%, transparent);
     border-radius: var(--rad); padding: 14px 18px;
     font-size: 13px; color: var(--volt); font-weight: 600;
-    max-width: 560px; margin: 0 auto;
+    max-width: 600px; margin: 0 auto;
   }
   .adb-icon { font-size: 18px; }
   .adb-cta {
@@ -831,7 +793,6 @@
   }
   .challenge-start-btn:hover { border-color: var(--blue); color: var(--blue); }
 
-  /* challenge UI */
   .challenge-wrap {
     max-width: 600px; margin: 0 auto;
     background: var(--panel); border: 1px solid var(--line);
@@ -892,18 +853,6 @@
   }
   .cr-back { background: transparent; border-color: var(--line2); color: var(--ash); }
 
-  /* keyboard hint */
-  .drill-kb-hint {
-    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
-    font-size: 10px; color: var(--dim); letter-spacing: .06em;
-    background: color-mix(in srgb,var(--panel) 95%,transparent);
-    border: 1px solid var(--line); border-radius: 20px;
-    padding: 5px 14px; pointer-events: none;
-    opacity: 0; transition: opacity .3s;
-    white-space: nowrap; z-index: 50;
-  }
-  .drill-kb-hint.visible { opacity: 1; }
-
   .study-layout { display: flex; flex: 1; overflow: hidden; }
 
   .phase-nav {
@@ -944,11 +893,11 @@
   .sc-h2 { font-size: 12px; font-weight: 700; color: var(--bone); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 14px; }
   .sc-overview { font-size: 14px; color: var(--ash); line-height: 1.75; }
 
-  .concept-list { display: flex; flex-direction: column; gap: 14px; }
-  .concept-item { padding: 14px 16px; background: var(--panel2); border: 1px solid var(--line); border-radius: var(--rad); }
-  .ci-term { font-size: 12px; font-weight: 700; color: var(--volt); margin-bottom: 5px; font-family: var(--mono); }
-  .ci-def { font-size: 13px; color: var(--ash); line-height: 1.65; }
-  .ci-cmd { display: block; margin-top: 8px; font-size: 11px; color: var(--bone); font-family: var(--mono); background: var(--panel3); padding: 4px 8px; border-radius: 3px; }
+  .briefing-cta {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 16px;
+    font-size: 13px; font-weight: 700; color: var(--volt);
+  }
+  .briefing-cta:hover { text-decoration: underline; }
 
   .cmd-list { display: flex; flex-direction: column; gap: 6px; }
   .cmd-item {

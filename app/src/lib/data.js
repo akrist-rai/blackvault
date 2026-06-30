@@ -50,6 +50,11 @@ export const CASES = [
     iocs: ['185.220.101.47:443 (C2)', 'SHA256: a3f1b2c4...', 'HKCU\\Run\\WindowsDefender32', 'JA3: 72a7c4d8...'],
     artifacts: ['memory/DESKTOP-01.vmem', 'network/capture_day2.pcapng', 'disk/C_drive.E01'],
     ttps: ['T1190','T1021.002','T1003.001','T1486','T1490'],
+    chals: [
+      { q: 'Initial access exploited a critical, actively-exploited Citrix vulnerability. Submit the CVE ID (format: cve_yyyy_nnnn).', flag: 'cve_2023_4966' },
+      { q: 'How many endpoints had ransomware deployed across before the affiliate finished?', flag: '200_endpoints' },
+      { q: 'Lateral movement happened over SMB admin shares. Submit the ATT&CK technique ID (lowercase).', flag: 't1021.002' },
+    ],
   },
   {
     id: 'nitro',
@@ -63,6 +68,11 @@ export const CASES = [
     iocs: ['cdn-telemetry[.]xyz (C2)', 'SHA256: f8e3a9b1...', 'svchost32.exe (dropper)', 'PowerShell -enc JAB...'],
     artifacts: ['email/phish_original.eml', 'memory/WS-ENGR-04.raw', 'logs/powershell_scriptblock.evtx'],
     ttps: ['T1566.001','T1059.001','T1055.012','T1041','T1027.002'],
+    chals: [
+      { q: 'Exfiltration of design documents was first detected how many hours after compromise? (format: Nh)', flag: '72h' },
+      { q: 'Submit the ATT&CK technique ID for the initial access vector (macro-laced XLS attachment).', flag: 't1566.001' },
+      { q: 'The payload ran entirely in memory via a scripting engine. Submit that engine\'s ATT&CK technique ID.', flag: 't1059.001' },
+    ],
   },
   {
     id: 'solar_trace',
@@ -76,6 +86,11 @@ export const CASES = [
     iocs: ['update.orion-telemetry[.]com (C2)', 'SHA256: 9cb1c8d2...', 'SolarWinds.BusinessLayerHost.exe (trojanized)', 'CNAME: avsvmcloud[.]com'],
     artifacts: ['disk/build_server.E01', 'network/corp_traffic_week3.pcapng', 'logs/siem_export.json'],
     ttps: ['T1195.002','T1071.001','T1027','T1036.005','T1070.004'],
+    chals: [
+      { q: 'The trojanized build remained dormant for how many days before activating?', flag: '14_days' },
+      { q: 'Submit the ATT&CK technique ID for this supply-chain compromise vector.', flag: 't1195.002' },
+      { q: 'What DNS record type pointed to avsvmcloud[.]com to mimic legitimate traffic?', flag: 'cname' },
+    ],
   },
   {
     id: 'exodus9',
@@ -89,6 +104,11 @@ export const CASES = [
     iocs: ['avg DNS query length >52 chars', 'NXDOMAIN rate 340% above baseline', 'OneDrive sync to personal tenant', 'User: jsmith / workstation WS-FIN-07'],
     artifacts: ['dns/dns_logs_6mo.json', 'disk/WS-FIN-07.E01', 'email/hr_comms.pst', 'logs/dlp_alerts.csv'],
     ttps: ['T1048.003','T1567.002','T1078','T1560.001','T1070.004'],
+    chals: [
+      { q: 'NXDOMAIN rates spiked to what percentage above baseline?', flag: '340_percent' },
+      { q: 'Submit the ATT&CK technique ID for the DNS-based exfiltration channel.', flag: 't1048.003' },
+      { q: 'Over how many months did the insider exfiltrate data?', flag: '6_months' },
+    ],
   },
 ];
 

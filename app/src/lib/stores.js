@@ -1,5 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
+import { LAB_FLAGS } from '$lib/lab-sim.js';
 
 // ── persistence ─────────────────────────────────────────────────────────────
 function persist(key, init) {
@@ -18,6 +19,12 @@ export const labs = persist('bv_labs', {});
 // ── case completions  { caseId: true } ──────────────────────────────────────
 export const cases = persist('bv_cases', {});
 
+// ── case flag-challenge progress  { caseId: { chalIndex: true } } ───────────
+export const caseFlags = persist('bv_case_flags', {});
+
+// ── playbook flag-challenge progress  { pbId: { chalIndex: true } } ─────────
+export const playbookFlags = persist('bv_playbook_flags', {});
+
 // ── badge set  [ badgeId, ... ] ─────────────────────────────────────────────
 export const badges = persist('bv_badges', []);
 
@@ -25,7 +32,9 @@ export const badges = persist('bv_badges', []);
 export const ctf = persist('bv_ctf', {});
 
 // ── overall mastery 0–100 ───────────────────────────────────────────────────
-export const mastery = derived([phases, labs, cases, badges], ([$p, $l, $c, $b]) => {
+const LAB_IDS = Object.keys(LAB_FLAGS);
+
+export const mastery = derived([phases, labs, cases, badges, ctf], ([$p, $l, $c, $b, $ctf]) => {
   const phaseScore = Object.values($p).reduce((s, x) => s + (x.pass ? 100 : x.score ?? 0), 0);
   const phaseMax   = 12 * 100;
   const labScore   = Object.values($l).reduce((s, x) => s + (x.done?.length || 0), 0);
@@ -34,8 +43,10 @@ export const mastery = derived([phases, labs, cases, badges], ([$p, $l, $c, $b])
   const caseMax    = 4 * 100;
   const badgeScore = $b.length * 10;
   const badgeMax   = 22 * 10;
-  const total = phaseScore + labScore * 5 + caseScore + badgeScore;
-  const max   = phaseMax   + labMax * 5  + caseMax   + badgeMax;
+  const flagScore  = LAB_IDS.filter(id => $ctf[id]).length * 25;
+  const flagMax    = LAB_IDS.length * 25;
+  const total = phaseScore + labScore * 5 + caseScore + badgeScore + flagScore;
+  const max   = phaseMax   + labMax * 5  + caseMax   + badgeMax   + flagMax;
   return Math.min(100, Math.round((total / max) * 100));
 });
 

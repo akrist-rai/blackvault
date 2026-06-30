@@ -13,7 +13,7 @@
       { href: '/console', label: 'Dashboard',  icon: '⬡' },
     ]},
     { group: 'LEARN', items: [
-      { href: '/console/study', label: 'Study Guide',  icon: '▣' },
+      { href: '/console/study', label: 'Challenges',  icon: '▣' },
       { href: '/console/range', label: 'Range Labs',   icon: '◉' },
     ]},
     { group: 'INTEL', items: [
