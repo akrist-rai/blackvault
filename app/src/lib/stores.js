@@ -29,9 +29,11 @@ export const playbookFlags = persist('bv_playbook_flags', {});
 // ── ctf solved  { chalId: true } ────────────────────────────────────────────
 export const ctf = persist('bv_ctf', {});
 
-// ── badge set  [ badgeId, ... ] — derived live from lab/phase progress ──────
-export const badges = derived([labs, phases], ([$labs, $phases]) =>
-  BADGES.filter(b => b.cond($labs, $phases)).map(b => b.id)
+// ── badge set  [ badgeId, ... ] — derived live from progress across the platform ──
+export const badges = derived(
+  [labs, phases, ctf, caseFlags, playbookFlags],
+  ([$labs, $phases, $ctf, $caseFlags, $playbookFlags]) =>
+    BADGES.filter(b => b.cond($labs, $phases, $ctf, $caseFlags, $playbookFlags)).map(b => b.id)
 );
 
 // ── platform-wide flag total & live capture count ───────────────────────────

@@ -199,6 +199,16 @@ export const BADGES = [
   { id:'threat_hunter',name:'Threat Hunter',      icon:'🎯', desc:'Complete the Threat Hunting skill lab', cond: l => !!l['threat_hunt'] },
   { id:'cryptanalyst', name:'Cryptanalyst',       icon:'🔐', desc:'Complete the Crypto RE skill lab',    cond: l => !!l['crypt_re'] },
   { id:'elite',        name:'Elite Operator',     icon:'💀', desc:'Complete all 16 labs',               cond: l => Object.keys(l).length >= 16 },
+  { id:'case_closer',  name:'Case Closer',        icon:'🗂', desc:'Solve all 12 case-file flag challenges', cond: (_l, _p, _ctf, cf={}) => Object.values(cf).reduce((s, v) => s + Object.values(v).filter(Boolean).length, 0) >= 12 },
+  { id:'playbook_pro', name:'Playbook Pro',       icon:'📘', desc:'Solve all 8 IR playbook flag challenges', cond: (_l, _p, _ctf, _cf, pf={}) => Object.values(pf).reduce((s, v) => s + Object.values(v).filter(Boolean).length, 0) >= 8 },
+  { id:'intel_analyst',name:'Intel Analyst',      icon:'🛰', desc:'Capture all 12 Intel Feed flags',      cond: (_l, _p, ctf={}) => Object.keys(ctf).filter(k => k.startsWith('intel_') && ctf[k]).length >= 12 },
+  { id:'attack_master',name:'ATT&CK Master',      icon:'🧩', desc:'Identify all 12 ATT&CK techniques',     cond: (_l, _p, ctf={}) => Object.keys(ctf).filter(k => k.startsWith('attack_') && ctf[k]).length >= 12 },
+  { id:'arsenal_master',name:'Arsenal Master',    icon:'🧰', desc:'Recall all 10 tool/command flags',      cond: (_l, _p, ctf={}) => Object.keys(ctf).filter(k => k.startsWith('tools_') && ctf[k]).length >= 10 },
+  { id:'completionist',name:'Completionist',      icon:'🏆', desc:'Capture all 130 flags platform-wide',  cond: (_l, _p, ctf={}, cf={}, pf={}) => {
+      const flat = Object.values(ctf).filter(Boolean).length;
+      const nested = obj => Object.values(obj).reduce((s, v) => s + Object.values(v).filter(Boolean).length, 0);
+      return flat + nested(cf) + nested(pf) >= 130;
+    } },
 ];
 
 // ── ATT&CK techniques (70+) ──────────────────────────────────────────────────
