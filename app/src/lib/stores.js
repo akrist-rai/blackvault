@@ -26,11 +26,13 @@ export const caseFlags = persist('bv_case_flags', {});
 // ── playbook flag-challenge progress  { pbId: { chalIndex: true } } ─────────
 export const playbookFlags = persist('bv_playbook_flags', {});
 
-// ── badge set  [ badgeId, ... ] ─────────────────────────────────────────────
-export const badges = persist('bv_badges', []);
-
 // ── ctf solved  { chalId: true } ────────────────────────────────────────────
 export const ctf = persist('bv_ctf', {});
+
+// ── badge set  [ badgeId, ... ] — derived live from lab/phase progress ──────
+export const badges = derived([labs, phases], ([$labs, $phases]) =>
+  BADGES.filter(b => b.cond($labs, $phases)).map(b => b.id)
+);
 
 // ── platform-wide flag total & live capture count ───────────────────────────
 // 60 study + 16 range labs + 12 cases + 8 playbooks + 6 intel + 6 attack + 5 tools
