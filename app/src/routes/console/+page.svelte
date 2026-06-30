@@ -31,7 +31,7 @@
   $: nextLab = LABS.find(l => labProgress(l.id).done === 0);
 
   const QUICK = [
-    { label: 'Study Guide',  href: '/console/study', color: 'volt'  },
+    { label: 'Flag Challenges', href: '/console/study', color: 'volt'  },
     { label: 'Run a Case',   href: '/console/case',  color: 'amber' },
     { label: 'Range Labs',   href: '/console/range', color: 'blue'  },
     { label: 'IR Playbooks', href: '/playbook',      color: 'blood' },
@@ -159,9 +159,9 @@
 
       <!-- Drill shortcut -->
       <div class="card card-drill">
-        <div class="card-hd">Drill Mode</div>
-        <p class="drill-desc">Flashcard mode for the current focus phase. Flip cards, score yourself, track what needs review.</p>
-        <a href="/console/study?phase={focusPhases[0]?.id ?? 'p01'}" class="drill-btn">Open Drill →</a>
+        <div class="card-hd">Flag Challenges</div>
+        <p class="drill-desc">Scenario-based capture-the-flag challenges for the current focus phase. Submit BV{'{'}...{'}'} flags, no flashcards.</p>
+        <a href="/console/study?phase={focusPhases[0]?.id ?? 'p01'}" class="drill-btn">Open Challenges →</a>
       </div>
 
       <!-- Threat feed -->

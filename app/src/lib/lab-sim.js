@@ -1,5 +1,24 @@
 // Simulated terminal output for each lab, keyed by labId → objective key
 // Lines starting with [!] = alert (red), [✓] = success (green), [i] = info (blue)
+export const LAB_FLAGS = {
+  disk: 'BV{del3t3d_sl4ck_sp4c3_r3c0v3ry}',
+  asm: 'BV{c0mput3_r3turns_4321}',
+  peelf: 'BV{p4ck3d_pe_stub_3ntry}',
+  static: 'BV{em0t3t_x0r_0x22_l04der}',
+  ghidra: 'BV{bvlt_2024_gold_elite}',
+  dynamic: 'BV{f1l3_dr0p_x1729_c2}',
+  unpack: 'BV{upx_unpack3d_l54ss_dump}',
+  memory: 'BV{h0ll0w3d_svch0st_2448}',
+  network: 'BV{j43_f1ng3rpr1nt_c0b4lt}',
+  protocol: 'BV{exfil_fr4m3_0x5a_d3c0d3d}',
+  rootkit: 'BV{ssdt_h00k_rootk1t_c0nf1rm3d}',
+  capstone: 'BV{0p_cl34rw4t3r_20m1n_dw3ll}',
+  yara: 'BV{y4r4_rul3_z3r0_f4ls3_p0s}',
+  timeline: 'BV{t1m3l1n3_c0rr3l4t3d_45s}',
+  threat_hunt: 'BV{pr0c3ss_tr33_lsass_dump}',
+  crypt_re: 'BV{a3s_rc4_dual_c1ph3r}',
+};
+
 export const SIM = {
   disk: {
     mount: { cmd:'mmls disk.img', out:
@@ -104,7 +123,8 @@ exit: 17
 
 [i] Exit code 021 (octal) = 17 (decimal)
 [✓] rax = 4321 at function end; exit code 17 is from main()
-[✓] Objective: return value of compute() = 4321` },
+[✓] Objective: return value of compute() = 4321
+[✓] FLAG CAPTURED: BV{c0mput3_r3turns_4321}` },
   },
 
   peelf: {
@@ -144,7 +164,8 @@ KERNEL32.dll ExitProcess
 
 [!] Only 5 imports — packer resolves APIs at runtime via GetProcAddress
 [!] VirtualAlloc + VirtualProtect = classic unpacker triad
-[✓] IAT mapped: 1 DLL, 5 imports` },
+[✓] IAT mapped: 1 DLL, 5 imports
+[✓] FLAG CAPTURED: BV{p4ck3d_pe_stub_3ntry}` },
   },
 
   static: {
@@ -207,7 +228,8 @@ Testing clean corpus (1,000 files)...
 
 [✓] Rule fires on sample
 [✓] 0 false positives in clean corpus
-[✓] Rule is production-ready` },
+[✓] Rule is production-ready
+[✓] FLAG CAPTURED: BV{em0t3t_x0r_0x22_l04der}` },
   },
 
   ghidra: {
@@ -254,7 +276,8 @@ Entry points detected:
 
 [✓] Decoded: BVLT-2024-GOLD-ELITE
 [✓] Matches expected license format
-[✓] Crackme2 bypassed — key is BVLT-2024-GOLD-ELITE` },
+[✓] Crackme2 bypassed — key is BVLT-2024-GOLD-ELITE
+[✓] FLAG CAPTURED: BV{bvlt_2024_gold_elite}` },
   },
 
   dynamic: {
@@ -295,7 +318,8 @@ openat(AT_FDCWD, "/tmp/.x1729", O_RDONLY|O_CLOEXEC) = 5
 
 [!] Persistence: cron @reboot + systemd user service
 [!] Both survive reboot and user login
-[✓] Persistence mechanisms documented` },
+[✓] Persistence mechanisms documented
+[✓] FLAG CAPTURED: BV{f1l3_dr0p_x1729_c2}` },
   },
 
   unpack: {
@@ -338,7 +362,8 @@ lsass.exe
 [✓] C2: cdn-telemetry.xyz
 [✓] Persistence: Run key "WindowsSecurityHealth"
 [!] LSASS dump capability: MiniDumpWriteDump
-[✓] Hidden content now visible post-unpack` },
+[✓] Hidden content now visible post-unpack
+[✓] FLAG CAPTURED: BV{upx_unpack3d_l54ss_dump}` },
   },
 
   memory: {
@@ -382,7 +407,8 @@ Hex dump:
 
 [!] PID 2448 (injected): ESTABLISHED to 185.220.101.47:443
 [!] Cobalt Strike C2 IP — confirmed via threat intel
-[✓] Memory forensics confirms active C2 beacon from hollowed svchost` },
+[✓] Memory forensics confirms active C2 beacon from hollowed svchost
+[✓] FLAG CAPTURED: BV{h0ll0w3d_svch0st_2448}` },
   },
 
   network: {
@@ -422,7 +448,8 @@ b3c4d5e6f7a8b9c0d1e2f3a4.exfil-tunnel.xyz
 
 [i] Subdomain label: 24 chars (base32 encoded data chunks)
 [!] Decoded: user=jsmith host=WS-FIN-07 data=<credential dump>
-[!] DNS exfiltration confirmed via TXT queries` },
+[!] DNS exfiltration confirmed via TXT queries
+[✓] FLAG CAPTURED: BV{j43_f1ng3rpr1nt_c0b4lt}` },
   },
 
   protocol: {
@@ -466,7 +493,8 @@ Frame #6  BEACON  DESKTOP-01 | jsmith | 2024-03-15 03:12:31
 
 [✓] Protocol fully decoded
 [✓] Credentials exfiltrated at 03:12:01 UTC
-[✓] XOR key 0x5A applies to EXFIL opcode only` },
+[✓] XOR key 0x5A applies to EXFIL opcode only
+[✓] FLAG CAPTURED: BV{exfil_fr4m3_0x5a_d3c0d3d}` },
   },
 
   rootkit: {
@@ -513,7 +541,8 @@ $FILE_NAME (filesystem-level, kernel only):
 
 [!] 2 SSDT hooks: NtQuerySystemInformation + NtOpenKey
 [!] Rootkit hides its own process (via NtQuerySysInfo) and Run key (via NtOpenKey)
-[✓] SSDT hooks identified — kernel-level rootkit confirmed` },
+[✓] SSDT hooks identified — kernel-level rootkit confirmed
+[✓] FLAG CAPTURED: BV{ssdt_h00k_rootk1t_c0nf1rm3d}` },
   },
 
   capstone: {
@@ -558,7 +587,8 @@ for /f %i in ('net view /domain') do PsExec.exe \\\\%i -s C:\\Windows\\Temp\\loc
 [!] Encryption complete: 03:22:01 (3m 09s total)
 
 TIMELINE: phish 02:58 → exec 03:01 → C2 03:02 → lateral 03:11 → impact 03:18
-DWELL: 20 minutes from delivery to encryption` },
+DWELL: 20 minutes from delivery to encryption
+[✓] FLAG CAPTURED: BV{0p_cl34rw4t3r_20m1n_dw3ll}` },
   },
 
   yara: {
@@ -628,7 +658,8 @@ Testing 1,000 clean PE files...
 
 [✓] 2 Emotet samples matched
 [✓] 0 false positives in clean corpus
-[✓] Rule is production-ready — deploy to EDR/SIEM` },
+[✓] Rule is production-ready — deploy to EDR/SIEM
+[✓] FLAG CAPTURED: BV{y4r4_rul3_z3r0_f4ls3_p0s}` },
   },
 
   timeline: {
@@ -678,7 +709,8 @@ report_timeline.csv preview:
   2024-03-15T03:11:22  DISK    svchost.dll dropped
   2024-03-15T03:12:03  EVTX    C2 beacon established
 
-[✓] Timeline exported to CSV — ready for IR report` },
+[✓] Timeline exported to CSV — ready for IR report
+[✓] FLAG CAPTURED: BV{t1m3l1n3_c0rr3l4t3d_45s}` },
   },
 
   threat_hunt: {
@@ -726,7 +758,8 @@ Processing 48,291 connections...
 ** 2448  1832  svchost.exe     2024-03-15 03:12:03   ← C2 beacon (injected)
 
 [✓] Full tree: WINWORD→PS→cmd/rundll32/net
-[✓] Injection into svchost for persistent C2 at 03:12:03` },
+[✓] Injection into svchost for persistent C2 at 03:12:03
+[✓] FLAG CAPTURED: BV{pr0c3ss_tr33_lsass_dump}` },
   },
 
   crypt_re: {
@@ -779,6 +812,7 @@ Found at offset 0x00401200:
 [✓] RC4 KSA: 256-byte init + double-loop + swap pattern
 [✓] S-box size 256 bytes (definitive RC4 signature)
 [✓] Two ciphers confirmed: AES-128 (payload) + RC4 (stream)
-[i] AES decrypts payload; RC4 encrypts C2 traffic` },
+[i] AES decrypts payload; RC4 encrypts C2 traffic
+[✓] FLAG CAPTURED: BV{a3s_rc4_dual_c1ph3r}` },
   },
 };
