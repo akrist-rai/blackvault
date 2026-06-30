@@ -30,9 +30,9 @@
     { label: 'Range Labs',     sub: '/console/range',  got: rangeCount,  total: 16, color: 'blue'   },
     { label: 'Case Files',     sub: '/console/case',   got: caseCount,   total: 12, color: 'blood'  },
     { label: 'IR Playbooks',   sub: '/playbook',       got: pbCount,     total: 8,  color: 'blue'   },
-    { label: 'Intel Reports',  sub: '/intel',          got: intelCount,  total: 6,  color: 'purple' },
-    { label: 'ATT&CK IDs',     sub: '/console/attack', got: attackCount, total: 6,  color: 'volt'   },
-    { label: 'Arsenal Recall', sub: '/tools',          got: toolsCount,  total: 5,  color: 'amber'  },
+    { label: 'Intel Reports',  sub: '/intel',          got: intelCount,  total: 12, color: 'purple' },
+    { label: 'ATT&CK IDs',     sub: '/console/attack', got: attackCount, total: 12, color: 'volt'   },
+    { label: 'Arsenal Recall', sub: '/tools',          got: toolsCount,  total: 10, color: 'amber'  },
   ];
 
   $: if ($flagsCaptured >= TOTAL_FLAGS && !$certifiedAt) {

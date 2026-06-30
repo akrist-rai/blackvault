@@ -9,6 +9,12 @@
     { q: 'Per the Suricata DNS-tunnelling rule, queries are flagged when a label exceeds how many bytes?', flag: '40' },
     { q: 'Which threat actor pre-positions in US critical infrastructure using zero custom malware — entirely living off the land?', flag: 'volt_typhoon' },
     { q: 'Submit the ATT&CK technique ID for LSASS credential dumping via comsvcs.dll MiniDump.', flag: 't1003.001' },
+    { q: 'Which actor runs a fake cybersecurity company ("Bastion Secure") to recruit unwitting pentesters into ATM-jackpotting operations?', flag: 'fin7' },
+    { q: 'Submit the codename for Lazarus Group\'s campaign that targets crypto developers via fake LinkedIn job offers.', flag: 'tradertraitor' },
+    { q: 'Per the IOC reference table, which artifact type is stable across sandbox re-runs because a given malware family always creates the same one at runtime?', flag: 'mutex' },
+    { q: 'Which kill-chain phase covers Run-key, scheduled-task, WMI-subscription, DLL side-load, and web-shell persistence mechanisms?', flag: 'installation' },
+    { q: 'Cl0p\'s 2023 MOVEit/GoAnywhere campaigns skipped file encryption entirely and monetized through this alone.', flag: 'extortion' },
+    { q: 'Which hashing technique clusters malware variants via fuzzy/piecewise matching instead of exact byte-for-byte comparison?', flag: 'ssdeep' },
   ];
 
   const ACTORS = [

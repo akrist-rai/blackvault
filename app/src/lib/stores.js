@@ -35,8 +35,8 @@ export const badges = derived([labs, phases], ([$labs, $phases]) =>
 );
 
 // ── platform-wide flag total & live capture count ───────────────────────────
-// 60 study + 16 range labs + 12 cases + 8 playbooks + 6 intel + 6 attack + 5 tools
-export const TOTAL_FLAGS = 113;
+// 60 study + 16 range labs + 12 cases + 8 playbooks + 12 intel + 12 attack + 10 tools
+export const TOTAL_FLAGS = 130;
 function flatCount(obj)   { return Object.values(obj).filter(Boolean).length; }
 function nestedCount(obj) { return Object.values(obj).reduce((s, v) => s + Object.values(v).filter(Boolean).length, 0); }
 export const flagsCaptured = derived([ctf, caseFlags, playbookFlags], ([$ctf, $caseFlags, $playbookFlags]) =>

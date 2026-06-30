@@ -2,7 +2,7 @@
   import { PHASES, LABS } from '$lib/data';
 
   const STATS = [
-    { n: '113+', label: 'Flags to Capture' },
+    { n: '130', label: 'Flags to Capture' },
     { n: '12',  label: 'Phases' },
     { n: '16',  label: 'Labs' },
     { n: '70+', label: 'ATT&CK TTPs' },
