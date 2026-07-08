@@ -5,36 +5,30 @@ import { PHASES, LABS, LABOBJ } from '../data/curriculum.js';
 export const nav = writable({
   mode: 'map',
   phase: 0,
-  deck: 'all',
-  cardIdx: 0,
-  flip: false,
-  quizPhase: null,
-  quizIdx: 0,
   search: '',
   trackFilter: 'ALL',
   openConcepts: {},
   labId: null,
-  labTab: 'overview',
   caseNode: 'root',
   caseGood: 0,
   caseBad: 0,
   arsenalSearch: '',
 });
 
-// ── User progress (persisted to localStorage 'blackvault') ────────────────────
+// ── User progress (persisted to localStorage 'sanction') ─────────────────────
 function loadSaved() {
   try {
-    const raw = localStorage.getItem('blackvault');
+    const raw = localStorage.getItem('sanction');
     return raw ? JSON.parse(raw) : {};
   } catch { return {}; }
 }
 
-const defaults = { learned: {}, quiz: {}, cards: {}, labs: {}, quizPick: {} };
+const defaults = { learned: {}, labs: {} };
 export const progress = writable({ ...defaults, ...loadSaved() });
 
 // Auto-save on every change
 progress.subscribe(p => {
-  try { localStorage.setItem('blackvault', JSON.stringify(p)); } catch {}
+  try { localStorage.setItem('sanction', JSON.stringify(p)); } catch {}
 });
 
 // ── Lab session state (ephemeral, resets on lab change) ───────────────────────
@@ -55,14 +49,14 @@ export function toast(msg) {
   toastTimer = setTimeout(() => toastMsg.set(''), 2200);
 }
 
-// ── Derived: overall mastery % ────────────────────────────────────────────────
+// ── Derived: overall mastery % (concepts only) ───────────────────────────────
 export const mastery = derived(progress, $p => {
   let total = 0;
   PHASES.forEach(p => {
-    const cTot = p.concepts.length, qTot = p.quiz.length;
+    const cTot = p.concepts.length;
+    if (!cTot) return;
     const cDone = p.concepts.filter((_, i) => $p.learned?.[p.id + ':' + i]).length;
-    const qDone = p.quiz.filter((_, i) => $p.quiz?.[p.id + ':' + i] === 1).length;
-    total += Math.round((cDone + qDone) / (cTot + qTot) * 100);
+    total += Math.round(cDone / cTot * 100);
   });
   return Math.round(total / PHASES.length);
 });
@@ -75,18 +69,8 @@ export function esc(s) {
 }
 
 export function accentOf(tracks) {
-  const TRACK_ACCENT = { DF: 'var(--amber)', RE: 'var(--volt)', MA: 'var(--blood)' };
-  return tracks.length > 1 ? 'var(--bone)' : (TRACK_ACCENT[tracks[0]] || 'var(--bone)');
-}
-
-export function weakItems(p) {
-  const out = [];
-  PHASES.forEach(ph => {
-    ph.quiz.forEach((q, i) => {
-      if (p.quiz?.[ph.id + ':' + i] === 0) out.push({ ph, q, i });
-    });
-  });
-  return out;
+  const A = { DF: 'var(--amber)', RE: 'var(--volt)', MA: 'var(--blood)' };
+  return tracks.length > 1 ? 'var(--bone)' : (A[tracks[0]] || 'var(--bone)');
 }
 
 export function labDoneCount(id, $p) {

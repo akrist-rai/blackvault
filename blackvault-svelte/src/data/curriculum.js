@@ -1,4 +1,4 @@
-// BLACKVAULT - Curriculum & Lab Datasets
+// SANCTION - Curriculum & Lab Datasets
 export const TRACKS = {
   DF: { name: 'Digital Forensics', accent: 'var(--amber)' },
   RE: { name: 'Reverse Engineering', accent: 'var(--volt)' },

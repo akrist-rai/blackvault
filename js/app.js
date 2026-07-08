@@ -36,8 +36,7 @@ function toast(m){const t=$('#toast');t.textContent=m;t.dataset.show='1';clearTi
 function chips(tracks){return tracks.map(t=>`<span class="chip t-${t}">${t}</span>`).join('');}
 function phaseMastery(p){
   const cTot=p.concepts.length,cDone=p.concepts.filter((_,i)=>P.learned[p.id+':'+i]).length;
-  const qTot=p.quiz.length,qDone=p.quiz.filter((_,i)=>P.quiz[p.id+':'+i]===1).length;
-  const tot=cTot+qTot, done=cDone+qDone; return tot?Math.round(done/tot*100):0;
+  return cTot?Math.round(cDone/cTot*100):0;
 }
 function overall(){const a=PHASES.map(phaseMastery);return Math.round(a.reduce((x,y)=>x+y,0)/PHASES.length);}
 function renderMeter(){const v=overall();$('#meterFill').style.width=v+'%';$('#meterPct').textContent=v+'%';}
@@ -54,9 +53,8 @@ function viewMap(){
   const cTot = PHASES.reduce((sum, p) => sum + p.concepts.length, 0);
   const cLearned = PHASES.reduce((sum, p) => sum + p.concepts.filter((_, i) => P.learned[p.id+':'+i]).length, 0);
   
-  // 3. Scored Quizzes
-  const qTot = PHASES.reduce((sum, p) => sum + p.quiz.length, 0);
-  const qCorrect = PHASES.reduce((sum, p) => sum + p.quiz.filter((_, i) => P.quiz[p.id+':'+i]===1).length, 0);
+  // 3. Phases Active
+  const phasesActive = PHASES.filter(p => p.concepts.some((_, i) => P.learned[p.id+':'+i])).length;
   
   // 4. Labs Cleared
   const totalLabs = LABS.length;
@@ -69,7 +67,7 @@ function viewMap(){
     <div>
       <div class="eyebrow">Reverse Engineering · Malware Analysis · DFIR</div>
       <h1 class="h1">Twelve phases.<br>One investigation reflex.</h1>
-      <p class="lede">Each node builds the next: bytes on disk → instructions → formats → behaviour → memory → wire → the full reconstruction. Tap a phase to study its mechanism, drill it, or jump into a live case. Use <b style="color:var(--bone)">Review</b> to hit only what you've missed and <b style="color:var(--bone)">Exam</b> to test cumulatively.</p>
+      <p class="lede">Bytes on disk → instructions → formats → behaviour → memory → wire → full reconstruction. Each node is a hands-on lab. Study the mechanism, drill flashcards, run the interactive lab, then step through a live case.</p>
     </div>
     <div class="legend">
       <i><span class="dot d-DF"></span>Forensics</i><i><span class="dot d-RE"></span>Reverse Eng.</i><i><span class="dot d-MA"></span>Malware</i>
@@ -86,8 +84,8 @@ function viewMap(){
       <div class="stat-l">Concepts Learned</div>
     </div>
     <div class="stat amber">
-      <div class="stat-n amber">${qCorrect} / ${qTot}</div>
-      <div class="stat-l">Scored Quizzes</div>
+      <div class="stat-n amber">${phasesActive} / ${PHASES.length}</div>
+      <div class="stat-l">Phases Active</div>
     </div>
     <div class="stat blood">
       <div class="stat-n blood">${labsCompleted} / ${totalLabs}</div>
@@ -170,8 +168,8 @@ function viewStudy(){
         ${p.commands.map(c=>`<div class="cmd"><code data-copy>${esc(c.c)}</code><span>${esc(c.d)}</span></div>`).join('')}
       </div>
 
-      <div class="studynav" style="margin-top:24px;border-top:1.5px solid var(--line);padding-top:20px">
-        <button class="btn--ghost btn" data-quizphase="${state.phase}" style="width:100%">Quiz this phase →</button>
+      <div class="studynav" style="margin-top:24px;border-top:1px solid var(--line);padding-top:20px">
+        <button class="btn" data-phaselab="${p.id}" style="width:100%">⚡ Launch Interactive Lab →</button>
         <div style="display:flex;gap:10px;margin-top:12px;width:100%">
           ${state.phase>0?`<button class="iconbtn" data-phase="${state.phase-1}" style="flex:1">◂ Phase ${state.phase}</button>`:''}
           ${state.phase<PHASES.length-1?`<button class="iconbtn" data-phase="${state.phase+1}" style="flex:1">Phase ${state.phase+2} ▸</button>`:''}
@@ -1733,9 +1731,6 @@ function render(){
   if(m==='map')html=viewMap();
   else if(m==='study')html=viewStudy();
   else if(m==='drill')html=viewDrill();
-  else if(m==='quiz')html=viewQuiz();
-  else if(m==='review')html=viewReview();
-  else if(m==='exam')html=viewExam();
   else if(m==='arsenal')html=viewArsenal();
   else if(m==='threads')html=viewThreads();
   else if(m==='case')html=viewCase();
@@ -1758,25 +1753,14 @@ document.addEventListener('click',e=>{
   const tc=t.closest('[data-toggle-concept]');
   if(tc){const key=tc.dataset.toggleConcept;state.openConcepts[key]=!state.openConcepts[key];render();return;}
 
-  const qn=t.closest('[data-quiznav]');
-  if(qn){
-    const act=qn.dataset.quiznav;
-    const questions=quizQuestions();
-    if(act==='prev'){state.quizIdx=Math.max(0,state.quizIdx-1);}
-    else if(act==='next'){state.quizIdx=Math.min(questions.length-1,state.quizIdx+1);}
-    else if(act==='finish'){state.quizIdx=0;go('map');}
-    render();
-    return;
-  }
-
+  const href=t.closest('[data-href]');
+  if(href){location.href=href.dataset.href;return;}
   const goEl=t.closest('[data-go]');
-  if(goEl){const g=goEl.dataset.go;state.quizIdx=0;if(g==='quizall'){state.quizPhase=null;go('quiz');return;}go(g);return;}
+  if(goEl){go(goEl.dataset.go);return;}
   const node=t.closest('[data-phase]');
   if(node&&!t.closest('[data-phaselab]')){state.phase=+node.dataset.phase;go('study');return;}
   const learn=t.closest('[data-learn]');
   if(learn){const k=learn.dataset.learn;P.learned[k]=!P.learned[k];save();render();return;}
-  const qp=t.closest('[data-quizphase]');
-  if(qp){state.quizPhase=+qp.dataset.quizphase;state.quizIdx=0;go('quiz');return;}
 
   const fc=t.closest('[data-flipcard]'); if(fc){state.flip=!state.flip;render();return;}
   const cd=t.closest('[data-card]');
@@ -1787,21 +1771,6 @@ document.addEventListener('click',e=>{
     if(a==='shuffle'){PHASES.forEach(p=>p.cards.sort(()=>Math.random()-.5));state.cardIdx=0;state.flip=false;toast('shuffled');}
     render();return;}
   const dk=t.closest('[data-deck]'); if(dk){state.deck=dk.dataset.deck;state.cardIdx=0;state.flip=false;render();return;}
-
-  const opt=t.closest('[data-quiz]');
-  if(opt){const key=opt.dataset.quiz;const pick=+opt.dataset.opt;
-    if(P.quizPick[key]!=null)return;P.quizPick[key]=pick;
-    const [pid,idx]=key.split(':');const p=PHASES.find(x=>x.id===pid);
-    P.quiz[key]=p.quiz[+idx].a===pick?1:0;save();render();return;}
-
-  const retry=t.closest('[data-retry]');
-  if(retry){const k=retry.dataset.retry;delete P.quizPick[k];delete P.quiz[k];save();render();return;}
-  const rd=t.closest('[data-reviewdrill]'); if(rd){state.deck='weak';state.cardIdx=0;state.flip=false;go('drill');return;}
-
-  const exo=t.closest('[data-exopt]');
-  if(exo&&!state.examSubmitted){state.examPicks[+exo.dataset.exopt]=+exo.dataset.o;render();return;}
-  const ex=t.closest('[data-exam]');
-  if(ex){if(ex.dataset.exam==='new'){startExam();render();}else if(ex.dataset.exam==='submit'){state.examSubmitted=true;render();}return;}
 
   const pt=t.closest('[data-ptier]'); if(pt){pt.dataset.open=pt.dataset.open==='1'?'0':'1';return;}
   const kc=t.closest('[data-kc]'); if(kc){kc.dataset.open=kc.dataset.open==='1'?'0':'1';return;}

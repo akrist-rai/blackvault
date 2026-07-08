@@ -3,5 +3,5 @@
 </script>
 
 {#if $toastMsg}
-  <div class="toast show">{$toastMsg}</div>
+  <div class="toast" data-show="1">{$toastMsg}</div>
 {/if}

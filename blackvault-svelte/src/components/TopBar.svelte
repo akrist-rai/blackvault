@@ -1,10 +1,9 @@
 <script>
   import { nav, mastery } from '../stores/progress.js';
 
-  const MODES = [
-    { group: 'Learn',    items: [['map','Map'],['study','Study'],['arsenal','Arsenal'],['threads','Threads']] },
-    { group: 'Practice', items: [['drill','Drill'],['case','Case'],['range','Range']] },
-    { group: 'Test',     items: [['quiz','Quiz'],['exam','Exam'],['review','Review']] },
+  const NAV = [
+    { group: 'Learn',  items: [['map','Map'],['study','Study'],['arsenal','Arsenal'],['threads','Intel']] },
+    { group: 'Labs',   items: [['case','Case'],['range','⚡ Range']] },
   ];
 
   function go(mode) { nav.update(s => ({ ...s, mode })); }
@@ -12,9 +11,11 @@
 
 <div class="topbar">
   <div class="topbar__in">
-    <div class="brand" on:click={() => go('map')}>
-      <b>BLACK<i>VAULT</i></b>
-      <span>Study Console · 12 Phases</span>
+    <div class="brand" role="button" tabindex="0"
+      onclick={() => go('map')}
+      onkeydown={e => e.key === 'Enter' && go('map')}>
+      <b>SANC<i>TION</i></b>
+      <span>Operator Console</span>
     </div>
 
     <div class="meter" title="Overall mastery">
@@ -26,18 +27,22 @@
     </div>
 
     <nav class="nav">
-      {#each MODES as grp}
+      {#each NAV as grp}
         <div class="nav-group">
           <span class="nav-label">{grp.group}</span>
           {#each grp.items as [mode, label]}
             <button
-              data-active={$nav.mode === mode}
-              style={mode === 'range' ? 'color:var(--volt)' : ''}
-              on:click={() => go(mode)}
-            >{mode === 'range' ? '⚡ ' : ''}{label}</button>
+              aria-current={$nav.mode === mode ? 'true' : undefined}
+              class={mode === 'range' ? 'nav-range' : ''}
+              onclick={() => go(mode)}
+            >{label}</button>
           {/each}
         </div>
       {/each}
+      <div class="nav-group">
+        <span class="nav-label">Tracks</span>
+        <a class="nav-web" href="/web-security/blackvault-study-console.html">⬡ Web</a>
+      </div>
     </nav>
   </div>
 </div>

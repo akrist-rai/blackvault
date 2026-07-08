@@ -13,7 +13,7 @@
 <body>
 <div class="topbar">
   <div class="topbar__in">
-    <div class="brand" data-go="map"><b>BLACK<i>VAULT</i></b><span>Study Console · 12 Phases</span></div>
+    <div class="brand" data-go="map"><b>BLACK<i>VAULT</i></b><span>Operator Console · RE · MA · DFIR</span></div>
     <div class="meter" title="Overall mastery">
       <span>MASTERY</span><div class="meter__bar"><div class="meter__fill" id="meterFill"></div></div><span id="meterPct">0%</span>
     </div>
@@ -23,19 +23,17 @@
         <button data-go="map">Map</button>
         <button data-go="study">Study</button>
         <button data-go="arsenal">Arsenal</button>
-        <button data-go="threads">Threads</button>
+        <button data-go="threads">Intel</button>
       </div>
       <div class="nav-group">
-        <span class="nav-label">Practice</span>
+        <span class="nav-label">Labs</span>
         <button data-go="drill">Drill</button>
         <button data-go="case">Case</button>
-        <button data-go="range" style="color:var(--volt)">⚡ Range</button>
+        <button data-go="range" class="nav-range">⚡ Range</button>
       </div>
       <div class="nav-group">
-        <span class="nav-label">Test</span>
-        <button data-go="quiz">Quiz</button>
-        <button data-go="exam">Exam</button>
-        <button data-go="review">Review</button>
+        <span class="nav-label">Tracks</span>
+        <button class="nav-web" data-href="web security/blackvault-study-console.html">⬡ Web</button>
       </div>
     </nav>
   </div>
@@ -44,7 +42,7 @@
 <main id="app"></main>
 
 <footer>
-  <span><a href="index.html" style="color:var(--volt);text-decoration:none">⌂ Home</a> · BLACKVAULT // self-directed RE · MA · DFIR track · real artifacts in <a href="range/README.md" style="color:var(--volt);text-decoration:none">range/</a></span>
+  <span><a href="index.html" class="foot-link">⌂ Home</a> · BLACKVAULT // RE · MA · DFIR · <a href="web security/blackvault-study-console.html" class="foot-link">Web Security →</a> · artifacts in <a href="range/README.md" class="foot-link">range/</a></span>
   <span id="footstat">progress saved locally</span>
 </footer>
 <div class="toast" id="toast"></div>
