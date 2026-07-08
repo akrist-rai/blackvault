@@ -2,6 +2,14 @@
   import { PHASES } from '../data/curriculum.js';
   import { toast } from '../stores/progress.js';
 
+  const IMAGES = [
+    '_ - 2026-05-31T131218.140.jpeg', '_ (79).jpeg', 'Full metal alchemist.jpeg',
+    '_ - 2026-05-30T130745.408.jpeg', 'by Lazlo.jpeg', 'jjhoa.jpeg',
+    '_ (11).jpeg', '_ - 2026-05-29T232009.086.jpeg', '_ (8).jpeg',
+    '_ - 2026-05-31T130836.546.jpeg', '_ (7).jpeg', '_ - 2026-05-29T231703.415.jpeg',
+  ];
+  const STRIP = [...IMAGES, ...IMAGES];
+
   let search = '';
 
   $: filtered = search.trim()
@@ -28,6 +36,16 @@
   <div class="eyebrow">Command reference</div>
   <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">Arsenal</h1>
   <p class="lede">Every command from every phase. Tap to copy.</p>
+</div>
+
+<div class="imgstrip-wrap" aria-hidden="true">
+  <div class="imgstrip">
+    {#each STRIP as img}
+      <div class="imgstrip__tile">
+        <img src="/images/{encodeURIComponent(img)}" alt="" loading="lazy" />
+      </div>
+    {/each}
+  </div>
 </div>
 
 <div class="searchbar" style="margin-bottom:24px">

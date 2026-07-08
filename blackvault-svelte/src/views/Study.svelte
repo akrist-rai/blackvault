@@ -2,8 +2,19 @@
   import { nav, progress, toast, accentOf } from '../stores/progress.js';
   import { PHASES } from '../data/curriculum.js';
 
+  // Cover images, one per phase (indexed, wraps if phases > images)
+  const COVER_IMGS = [
+    '_ (14).jpeg', '_ (9).jpeg', '_ - 2026-05-29T231447.811.jpeg',
+    '_ - 2026-05-29T231555.908.jpeg', '_ - 2026-05-29T231656.649.jpeg',
+    '_ - 2026-05-29T231708.893.jpeg', '_ - 2026-05-29T231755.962.jpeg',
+    '_ - 2026-05-29T231922.068.jpeg', '_ - 2026-05-30T131505.407.jpeg',
+    '_ - 2026-05-30T131759.220.jpeg', '_ - 2026-05-30T131906.423.jpeg',
+    '_ - 2026-05-31T130615.354.jpeg',
+  ];
+
   $: p  = PHASES[$nav.phase] || PHASES[0];
   $: ac = accentOf(p.tracks);
+  $: cover = COVER_IMGS[$nav.phase % COVER_IMGS.length];
 
   function toggle(key) {
     nav.update(s => ({ ...s, openConcepts: { ...s.openConcepts, [key]: !s.openConcepts[key] } }));
@@ -25,6 +36,11 @@
       <button class="link-btn" onclick={goMap}>◂ Map</button>
       <span>/</span> PHASE {String(p.n).padStart(2,'0')}
       <span>/</span> {p.title}
+    </div>
+
+    <div class="covbanner">
+      <img src="/images/{encodeURIComponent(cover)}" alt="" loading="lazy" />
+      <div class="covbanner-overlay"><span>Phase {String(p.n).padStart(2,'0')} · {p.tag}</span></div>
     </div>
 
     <div class="studyhead">

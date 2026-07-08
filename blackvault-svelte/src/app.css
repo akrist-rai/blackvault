@@ -159,6 +159,13 @@ main { position: relative; z-index: 2; max-width: 1180px; margin: 0 auto; paddin
 .crumb a { cursor: pointer; color: var(--volt); }
 .studyhead { border-bottom: 2px solid var(--line); padding-bottom: 20px; margin-bottom: 28px; }
 
+/* Reusable wide cover banner — Study phase header, Case briefing */
+.covbanner { width: 100%; height: 200px; overflow: hidden; position: relative; border: 1.5px solid var(--line); margin-bottom: 24px; }
+.covbanner img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.55) brightness(0.55); transition: filter .4s ease; }
+.covbanner:hover img { filter: saturate(0.8) brightness(0.65); }
+.covbanner-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(7,13,15,0.92) 0%, rgba(7,13,15,0.35) 55%, rgba(7,13,15,0.05) 100%); display: flex; align-items: flex-end; padding: 16px 20px; }
+.covbanner-overlay span { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--volt); }
+
 .study-split { display: grid; grid-template-columns: 1fr 420px; gap: 32px; align-items: start; }
 @media (max-width: 960px) {
   .study-split { grid-template-columns: 1fr; }

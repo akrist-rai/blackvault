@@ -5,12 +5,30 @@
   let openKC = {};
 
   const T = THREADS;
+
+  const IMAGES = [
+    '_ (21).jpeg', '_ - 2026-05-30T131710.853.jpeg', '(1) Home _ X.jpeg',
+    '(4) Instagram.jpeg', 'LS (@LS182_520) on X.jpeg',
+    'm a i k ⚡ comms (@maik_check) on X.jpeg', '彡 by budkalon – twt.jpeg',
+    '_ (70).jpeg', '_ (80).jpeg',
+  ];
+  const STRIP = [...IMAGES, ...IMAGES];
 </script>
 
 <div class="modehead">
   <div class="eyebrow">Cross-cutting principles</div>
   <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">Threads</h1>
   <p class="lede">The ideas that run through every phase. Memorizing tools is fragile; these principles are what actually transfer to an unknown sample.</p>
+</div>
+
+<div class="imgstrip-wrap" aria-hidden="true">
+  <div class="imgstrip">
+    {#each STRIP as img}
+      <div class="imgstrip__tile">
+        <img src="/images/{encodeURIComponent(img)}" alt="" loading="lazy" />
+      </div>
+    {/each}
+  </div>
 </div>
 
 <div class="threadgrid">

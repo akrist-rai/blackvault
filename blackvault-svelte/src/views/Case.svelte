@@ -2,7 +2,14 @@
   import { nav } from '../stores/progress.js';
   import { CASES } from '../data/curriculum.js';
 
-  let caseId = Object.keys(CASES)[0];
+  const CASE_COVERS = {
+    ransomware: '_ (70).jpeg',
+    fileless: '彡 by budkalon – twt.jpeg',
+  };
+  const FALLBACK_COVERS = ['_ (80).jpeg', '_ (21).jpeg'];
+  const caseKeys = Object.keys(CASES);
+
+  let caseId = caseKeys[0];
   let nodeKey = 'start';
   let good = 0;
   let bad = 0;
@@ -10,6 +17,7 @@
 
   $: C = CASES[caseId];
   $: node = C?.nodes?.[nodeKey] || null;
+  $: cover = CASE_COVERS[caseId] || FALLBACK_COVERS[caseKeys.indexOf(caseId) % FALLBACK_COVERS.length];
 
   function restart() {
     nodeKey = 'start';
@@ -43,6 +51,11 @@
   {/each}
 </div>
 
+<div class="covbanner">
+  <img src="/images/{encodeURIComponent(cover)}" alt="" loading="lazy" />
+  <div class="covbanner-overlay"><span>{C?.label}</span></div>
+</div>
+
 <div class="casebar">
   <span>GOOD PIVOTS: <b>{good}</b></span>
   <span>MISSTEPS: <b style="color:var(--blood)">{bad}</b></span>
@@ -53,11 +66,11 @@
   <div class="casewrap">
     <div class="casenode">
       <div class="clock">{node.clock}</div>
-      <p>{node.text}</p>
+      <p>{@html node.text}</p>
 
       {#if fb}
         <div class="fb fb--{fb.good ? 'good' : 'bad'}">
-          <b>{fb.good ? 'Good call' : 'Misstep'}</b> {fb.msg}
+          <b>{fb.good ? 'Good call' : 'Misstep'}</b> {@html fb.msg}
         </div>
       {/if}
 

