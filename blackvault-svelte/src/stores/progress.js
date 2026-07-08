@@ -31,15 +31,6 @@ progress.subscribe(p => {
   try { localStorage.setItem('sanction', JSON.stringify(p)); } catch {}
 });
 
-// ── Lab session state (ephemeral, resets on lab change) ───────────────────────
-export const labSession = writable({
-  memOut: [], rePatched: { 0: false, 1: false, 2: false }, reVerdict: {},
-  pkts: null, pcapMeta: null, pcapSel: null, pcapFilter: '', logTab: 'auth', logFilter: '',
-  cryptoIn: '', cryptoOps: [], cryptoOut: '',
-  unpPc: 0, unpRun: false,
-  memPc: 0, memRun: false,
-});
-
 // ── Toast ─────────────────────────────────────────────────────────────────────
 export const toastMsg = writable('');
 let toastTimer = null;
@@ -62,12 +53,6 @@ export const mastery = derived(progress, $p => {
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-export function esc(s) {
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
 export function accentOf(tracks) {
   const A = { DF: 'var(--amber)', RE: 'var(--volt)', MA: 'var(--blood)' };
   return tracks.length > 1 ? 'var(--bone)' : (A[tracks[0]] || 'var(--bone)');

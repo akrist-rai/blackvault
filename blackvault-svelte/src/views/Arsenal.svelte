@@ -1,14 +1,9 @@
 <script>
   import { PHASES } from '../data/curriculum.js';
   import { toast } from '../stores/progress.js';
+  import { ARSENAL_STRIP, imageUrl } from '../data/images.js';
 
-  const IMAGES = [
-    '_ - 2026-05-31T131218.140.jpeg', '_ (79).jpeg', 'Full metal alchemist.jpeg',
-    '_ - 2026-05-30T130745.408.jpeg', 'by Lazlo.jpeg', 'jjhoa.jpeg',
-    '_ (11).jpeg', '_ - 2026-05-29T232009.086.jpeg', '_ (8).jpeg',
-    '_ - 2026-05-31T130836.546.jpeg', '_ (7).jpeg', '_ - 2026-05-29T231703.415.jpeg',
-  ];
-  const STRIP = [...IMAGES, ...IMAGES];
+  const STRIP = [...ARSENAL_STRIP, ...ARSENAL_STRIP];
 
   let search = '';
 
@@ -42,7 +37,7 @@
   <div class="imgstrip">
     {#each STRIP as img}
       <div class="imgstrip__tile">
-        <img src="/images/{encodeURIComponent(img)}" alt="" loading="lazy" />
+        <img src={imageUrl(img)} alt="" loading="lazy" />
       </div>
     {/each}
   </div>

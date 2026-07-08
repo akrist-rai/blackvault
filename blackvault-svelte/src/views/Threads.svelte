@@ -1,18 +1,12 @@
 <script>
   import { THREADS } from '../data/curriculum.js';
+  import { THREADS_STRIP, imageUrl } from '../data/images.js';
 
   let openPyramid = {};
   let openKC = {};
 
   const T = THREADS;
-
-  const IMAGES = [
-    '_ (21).jpeg', '_ - 2026-05-30T131710.853.jpeg', '(1) Home _ X.jpeg',
-    '(4) Instagram.jpeg', 'LS (@LS182_520) on X.jpeg',
-    'm a i k ⚡ comms (@maik_check) on X.jpeg', '彡 by budkalon – twt.jpeg',
-    '_ (70).jpeg', '_ (80).jpeg',
-  ];
-  const STRIP = [...IMAGES, ...IMAGES];
+  const STRIP = [...THREADS_STRIP, ...THREADS_STRIP];
 </script>
 
 <div class="modehead">
@@ -25,7 +19,7 @@
   <div class="imgstrip">
     {#each STRIP as img}
       <div class="imgstrip__tile">
-        <img src="/images/{encodeURIComponent(img)}" alt="" loading="lazy" />
+        <img src={imageUrl(img)} alt="" loading="lazy" />
       </div>
     {/each}
   </div>

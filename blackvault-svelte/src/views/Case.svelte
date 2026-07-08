@@ -1,13 +1,10 @@
 <script>
   import { nav } from '../stores/progress.js';
   import { CASES } from '../data/curriculum.js';
+  import { CASE_COVERS as COVER_POOL, imageUrl } from '../data/images.js';
 
-  const CASE_COVERS = {
-    ransomware: '_ (70).jpeg',
-    fileless: '彡 by budkalon – twt.jpeg',
-  };
-  const FALLBACK_COVERS = ['_ (80).jpeg', '_ (21).jpeg'];
   const caseKeys = Object.keys(CASES);
+  const CASE_COVERS = Object.fromEntries(caseKeys.map((k, i) => [k, COVER_POOL[i % COVER_POOL.length]]));
 
   let caseId = caseKeys[0];
   let nodeKey = 'start';
@@ -17,7 +14,7 @@
 
   $: C = CASES[caseId];
   $: node = C?.nodes?.[nodeKey] || null;
-  $: cover = CASE_COVERS[caseId] || FALLBACK_COVERS[caseKeys.indexOf(caseId) % FALLBACK_COVERS.length];
+  $: cover = CASE_COVERS[caseId];
 
   function restart() {
     nodeKey = 'start';
@@ -52,7 +49,7 @@
 </div>
 
 <div class="covbanner">
-  <img src="/images/{encodeURIComponent(cover)}" alt="" loading="lazy" />
+  <img src={imageUrl(cover)} alt="" loading="lazy" />
   <div class="covbanner-overlay"><span>{C?.label}</span></div>
 </div>
 

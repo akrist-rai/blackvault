@@ -1,208 +1,99 @@
 <script>
-  import { onMount, tick } from 'svelte';
-  import { nav, progress, toast } from '../stores/progress.js';
+  import { nav, progress, labDoneCount, labTotal } from '../stores/progress.js';
   import { LABS, LABOBJ } from '../data/curriculum.js';
-  import { initLabs, LAB_RENDERERS, LAB } from '../data/labs.js';
+  import { RANGE_CHAPTER_COVERS, RANGE_SKILL_COVERS, imageUrl } from '../data/images.js';
 
-  // Rotating cover images for lab cards
-  const CARD_IMGS = [
-    '_ (70).jpeg', '彡 by budkalon – twt.jpeg', '_ (80).jpeg',
-    '_ - 2026-05-31T131218.140.jpeg', 'Full metal alchemist.jpeg',
-    '_ (21).jpeg', 'by Lazlo.jpeg', 'jjhoa.jpeg',
-    '_ (11).jpeg', '_ - 2026-05-29T232009.086.jpeg',
-    '_ (8).jpeg', '_ - 2026-05-30T130745.408.jpeg',
-  ];
+  import MemLab from '../labs/MemLab.svelte';
+  import ReLab from '../labs/ReLab.svelte';
+  import PcapLab from '../labs/PcapLab.svelte';
+  import LogLab from '../labs/LogLab.svelte';
+  import CryptoLab from '../labs/CryptoLab.svelte';
+  import WebLab from '../labs/WebLab.svelte';
+  import PeLab from '../labs/PeLab.svelte';
+  import StegoLab from '../labs/StegoLab.svelte';
+  import PwnLab from '../labs/PwnLab.svelte';
+  import PrivescLab from '../labs/PrivescLab.svelte';
+  import HashLab from '../labs/HashLab.svelte';
+  import EmailLab from '../labs/EmailLab.svelte';
+  import IntelLab from '../labs/IntelLab.svelte';
+  import DiskLab from '../labs/DiskLab.svelte';
+  import AsmLab from '../labs/AsmLab.svelte';
+  import BinfmtLab from '../labs/BinfmtLab.svelte';
+  import StaticLab from '../labs/StaticLab.svelte';
+  import GhidraLab from '../labs/GhidraLab.svelte';
+  import DynamicLab from '../labs/DynamicLab.svelte';
+  import UnpackLab from '../labs/UnpackLab.svelte';
+  import MemoryLab from '../labs/MemoryLab.svelte';
+  import NetworkLab from '../labs/NetworkLab.svelte';
+  import ProtocolLab from '../labs/ProtocolLab.svelte';
+  import RootkitLab from '../labs/RootkitLab.svelte';
+  import CapstoneLab from '../labs/CapstoneLab.svelte';
 
-  // ── helpers passed to lab engine ──────────────────────────────────────────────
-  function esc(s) {
-    return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  }
+  const LAB_COMPONENTS = {
+    mem: MemLab, re: ReLab, pcap: PcapLab, log: LogLab, crypto: CryptoLab,
+    web: WebLab, pe: PeLab, stego: StegoLab, pwn: PwnLab, privesc: PrivescLab,
+    hash: HashLab, email: EmailLab, intel: IntelLab,
+    disk: DiskLab, asm: AsmLab, binfmt: BinfmtLab, static: StaticLab, ghidra: GhidraLab,
+    dynamic: DynamicLab, unpack: UnpackLab, memory: MemoryLab, network: NetworkLab,
+    protocol: ProtocolLab, rootkit: RootkitLab, capstone: CapstoneLab,
+  };
 
-  let _prog = {};
-  progress.subscribe(p => { _prog = p; });
-  const getP = () => _prog;
+  $: chapterLabs = LABS.filter(l => l.group === 'chapter').sort((a, b) => a.phase - b.phase);
+  $: skillLabs = LABS.filter(l => !l.group);
 
-  function labDoneCount(id) {
-    const o = _prog.labs?.[id] || {};
-    return (LABOBJ[id] || []).filter(x => o[x.k]).length;
-  }
-  function labTotal(id) { return (LABOBJ[id] || []).length; }
-  function labComplete(id) { return labDoneCount(id) === labTotal(id); }
-
-  function setObj(id, k) {
-    progress.update(p => {
-      if (!p.labs[id]) p.labs[id] = {};
-      if (!p.labs[id][k]) {
-        p.labs[id][k] = 1;
-        if (labComplete(id)) toast('★ LAB CLEARED — ' + id.toUpperCase());
-        else toast('✓ objective complete');
-      }
-      return p;
-    });
-    rngRefreshObj();
-  }
-
-  function objRows(id) {
-    const o = _prog.labs?.[id] || {};
-    return (LABOBJ[id] || []).map(x =>
-      `<div class="obj" data-on="${o[x.k]?1:0}">
-        <span class="tick">${o[x.k]?'[✓]':'[ ]'}</span>
-        <span>${esc(x.t)}</span>
-      </div>`
-    ).join('');
-  }
-
-  function rngRefreshObj() {
-    const el = document.getElementById('objlist');
-    if (el && $nav.labId) el.innerHTML = objRows($nav.labId);
-    const ind = document.getElementById('labprog');
-    if (ind && $nav.labId) ind.textContent = labDoneCount($nav.labId) + '/' + labTotal($nav.labId) + ' objectives';
-  }
-
-  // ── state ─────────────────────────────────────────────────────────────────────
   $: activeLabId = $nav.labId;
+  $: meta = LABS.find(l => l.id === activeLabId);
 
-  let labContainer;
+  function openLab(id) { nav.update(s => ({ ...s, labId: id })); }
+  function backToIndex() { nav.update(s => ({ ...s, labId: null })); }
 
-  async function openLab(id) {
-    nav.update(s => ({ ...s, labId: id }));
-    await tick();
-    renderLab(id);
-  }
-
-  function backToIndex() {
-    nav.update(s => ({ ...s, labId: null }));
-  }
-
-  function renderLab(id) {
-    if (!labContainer || !id) return;
-    const renderer = LAB_RENDERERS[id];
-    if (!renderer) { labContainer.innerHTML = `<p style="color:var(--ash)">Lab "${id}" not found.</p>`; return; }
-
-    const meta = LABS.find(l => l.id === id);
-    const head = `
-      <div class="labtop">
-        <button class="btn" id="lab-back-btn">‹ Range</button>
-        <div><div class="eyebrow" style="color:var(--volt)">${esc(meta?.tool || '')}</div>
-        <b style="font-size:20px;letter-spacing:-.01em">${esc(meta?.name || id)}</b></div>
-        <span class="prog" id="labprog" style="margin-left:auto;font-family:var(--mono);color:var(--ash)">${labDoneCount(id)}/${labTotal(id)} objectives</span>
-      </div>
-      <div class="lab-workspace">
-        <div class="objbox">
-          <h4>Objectives</h4>
-          <div id="objlist">${objRows(id)}</div>
-        </div>
-        <div class="lab-workspace-right" id="lab-right"></div>
-      </div>
-    `;
-
-    labContainer.innerHTML = head;
-    const right = labContainer.querySelector('#lab-right');
-    if (right) right.innerHTML = renderer();
-
-    // Wire back button
-    const backBtn = labContainer.querySelector('#lab-back-btn');
-    if (backBtn) backBtn.addEventListener('click', backToIndex);
-
-    // Wire all interactive elements via event delegation on the container
-    wireLabEvents(id);
-  }
-
-  function wireLabEvents(id) {
-    labContainer.addEventListener('click', handleLabClick, { once: false });
-    labContainer.addEventListener('keydown', handleLabKeydown, { once: false });
-  }
-
-  function handleLabClick(e) {
-    const t = e.target;
-    const id = $nav.labId;
-    if (!id) return;
-
-    // Data-copy: copy code to clipboard
-    if (t.closest('[data-copy]')) {
-      navigator.clipboard?.writeText(t.closest('[data-copy]').textContent.trim())
-        .then(() => toast('✓ copied'));
-      return;
-    }
-
-    // Memory lab chips
-    if (t.dataset.memq) {
-      const input = document.getElementById('memcmd');
-      if (input) { input.value = t.dataset.memq; input.dispatchEvent(new Event('input')); input.focus(); }
-      return;
-    }
-
-    // Memory lab submit
-    if (t.dataset.memsubmit) {
-      import('../data/labs.js').then(m => {
-        const g = id => (document.getElementById(id) || {}).value || '';
-        const pid = g('f_pid').trim(), c2 = g('f_c2').trim(), fl = g('f_flag').replace(/\s/g,'');
-        if (pid === '4880') setObj('mem','malpid'); else if (pid) toast('PID ' + pid + ' is not the implant');
-        if (/185\.220\.101\.47/.test(c2)) setObj('mem','c2'); else if (c2) toast('that is not the C2');
-        if (fl === 'BV{m3m0ry_d0nt_l13}') setObj('mem','flag'); else if (fl) toast('flag mismatch');
-      });
-      return;
-    }
-
-    // Generic "submit" buttons with data-submit attribute
-    const submitEl = t.closest('[data-submit]');
-    if (submitEl) {
-      handleGenericSubmit(submitEl.dataset.submit, id);
-      return;
-    }
-  }
-
-  function handleGenericSubmit(submitType, id) {
-    // Delegate to lab-specific logic — each lab wires its own inputs
-    toast('✓ checking…');
-  }
-
-  function handleLabKeydown(e) {
-    const id = $nav.labId;
-    const el = e.target;
-    if (e.key !== 'Enter') return;
-
-    // Memory terminal
-    if (el.id === 'memcmd') {
-      const val = el.value.trim();
-      if (!val) return;
-      import('../data/labs.js').then(({ memRunCommand }) => {
-        memRunCommand(val);
-        el.value = '';
-      });
-      return;
-    }
-  }
-
-  // ── lifecycle ─────────────────────────────────────────────────────────────────
-  onMount(() => {
-    initLabs({ toast, setObj, labDoneCount, labTotal, labComplete, objRows, rngRefreshObj, esc, getP });
-    if (activeLabId && labContainer) renderLab(activeLabId);
-  });
-
-  // Re-render lab when labId changes
-  $: if (labContainer && activeLabId) {
-    tick().then(() => renderLab(activeLabId));
-  }
+  function done(id) { return labDoneCount(id, $progress); }
+  function total(id) { return labTotal(id); }
 </script>
 
 {#if !activeLabId}
-  <!-- Lab index -->
   <div class="modehead">
     <div class="eyebrow" style="color:var(--volt)">Hands-on · cyber range</div>
     <h1 class="h1" style="font-size:clamp(24px,4vw,34px)">The Range</h1>
-    <p class="lede">No definitions — just artifacts and tools. Scored objectives, everything runs in your browser, progress saves locally.</p>
+    <p class="lede">No definitions — just artifacts and tools. <b style="color:var(--bone)">Chapter labs</b> map 1:1 to the 12 phases on the Map; <b style="color:var(--bone)">Skill labs</b> are cross-cutting drills. Scored objectives, everything runs in your browser, progress saves locally.</p>
   </div>
 
+  <div class="sec__h">Chapter labs — one per Map phase (1–12)</div>
   <div class="labgrid">
-    {#each LABS as l, idx}
-      {@const d = labDoneCount(l.id)}
-      {@const t = labTotal(l.id)}
+    {#each chapterLabs as l, idx}
+      {@const d = done(l.id)}
+      {@const t = total(l.id)}
       {@const pc = t ? Math.round(d / t * 100) : 0}
-      {@const img = CARD_IMGS[idx % CARD_IMGS.length]}
-      <div class="labcard" data-done={d === t ? 1 : 0} on:click={() => openLab(l.id)}>
+      {@const img = RANGE_CHAPTER_COVERS[idx % RANGE_CHAPTER_COVERS.length]}
+      <div class="labcard" data-done={d === t ? 1 : 0} on:click={() => openLab(l.id)} role="button" tabindex="0" on:keydown={e => e.key === 'Enter' && openLab(l.id)}>
         <div class="labcard__cover">
-          <img src="/images/{encodeURIComponent(img)}" alt="" loading="lazy" />
+          <img src={imageUrl(img)} alt="" loading="lazy" />
+          <div class="labcard__cover-overlay"></div>
+        </div>
+        <div class="labcard__body">
+          <div class="labcard__meta">
+            <span class="chip t-{l.track}">{l.track}</span>
+            <span class="prog">· CH {l.phase} · {l.tool}</span>
+          </div>
+          <h3>{l.name}</h3>
+          <p>{l.blurb}</p>
+          <div class="prog">{d}/{t} objectives {d === t ? '· ✓ CLEARED' : ''}</div>
+          <div class="pbar"><i style="width:{pc}%"></i></div>
+        </div>
+      </div>
+    {/each}
+  </div>
+
+  <div class="sec__h" style="margin-top:28px">Skill labs — cross-cutting</div>
+  <div class="labgrid">
+    {#each skillLabs as l, idx}
+      {@const d = done(l.id)}
+      {@const t = total(l.id)}
+      {@const pc = t ? Math.round(d / t * 100) : 0}
+      {@const img = RANGE_SKILL_COVERS[idx % RANGE_SKILL_COVERS.length]}
+      <div class="labcard" data-done={d === t ? 1 : 0} on:click={() => openLab(l.id)} role="button" tabindex="0" on:keydown={e => e.key === 'Enter' && openLab(l.id)}>
+        <div class="labcard__cover">
+          <img src={imageUrl(img)} alt="" loading="lazy" />
           <div class="labcard__cover-overlay"></div>
         </div>
         <div class="labcard__body">
@@ -219,6 +110,31 @@
     {/each}
   </div>
 {:else}
-  <!-- Active lab — rendered imperatively into container -->
-  <div bind:this={labContainer}></div>
+  <div class="labtop">
+    <button class="btn" on:click={backToIndex}>‹ Range</button>
+    <div>
+      <div class="eyebrow" style="color:var(--volt)">{meta?.tool || ''}</div>
+      <b style="font-size:20px;letter-spacing:-.01em">{meta?.name || activeLabId}</b>
+    </div>
+    <span class="prog" style="margin-left:auto;font-family:var(--mono);color:var(--ash)">{done(activeLabId)}/{total(activeLabId)} objectives</span>
+  </div>
+  <div class="lab-workspace">
+    <div class="objbox">
+      <h4>Objectives</h4>
+      {#each LABOBJ[activeLabId] || [] as x}
+        {@const on = !!($progress.labs?.[activeLabId]?.[x.k])}
+        <div class="obj" data-on={on ? 1 : 0}>
+          <span class="tick">{on ? '[✓]' : '[ ]'}</span>
+          <span>{x.t}</span>
+        </div>
+      {/each}
+    </div>
+    <div class="lab-workspace-right">
+      {#if LAB_COMPONENTS[activeLabId]}
+        <svelte:component this={LAB_COMPONENTS[activeLabId]} />
+      {:else}
+        <p style="color:var(--ash)">Lab "{activeLabId}" not found.</p>
+      {/if}
+    </div>
+  </div>
 {/if}
