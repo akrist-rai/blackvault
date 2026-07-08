@@ -540,3 +540,75 @@ footer { max-width: 1180px; margin: 0 auto; padding: 32px 24px 48px; border-top:
   * { transition: none!important; animation: none!important; }
   body::after { display: none; }
 }
+
+/* ============================================================ LANDING PAGE (INDEX.HTML) STYLES ============================================================ */
+.wrap { position: relative; z-index: 2; max-width: 1160px; margin: 0 auto; padding: 36px 24px 100px; }
+
+/* HEADER */
+.header { display: flex; align-items: center; gap: 14px; padding-bottom: 28px; border-bottom: 2px solid var(--line); }
+.logo { font-weight: 800; font-size: 22px; letter-spacing: -.04em; }
+.logo-red { color: var(--blood); }
+.header-sub { font-family: var(--mono); font-size: 10px; letter-spacing: .34em; text-transform: uppercase; color: var(--ash); }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+.progress-pill { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--ash); display: flex; align-items: center; gap: 8px; }
+.progress-bar { width: 80px; height: 6px; background: var(--surface-3); border: 1px solid var(--line); border-radius: 1px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--blood); transition: width .6s cubic-bezier(.4,0,.2,1); width: 0; }
+
+/* HERO */
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .32em; text-transform: uppercase; color: var(--volt); margin-top: 52px; }
+.hero-h { font-size: clamp(36px, 6.5vw, 68px); font-weight: 800; letter-spacing: -.04em; line-height: 1; margin-top: 12px; }
+.hero-h .acc { color: var(--blood); }
+.hero-sub { color: var(--ash); max-width: 60ch; margin-top: 18px; font-size: 17px; line-height: 1.65; }
+.hero-sub b { color: var(--bone); font-weight: 600; }
+
+/* CTA */
+.ctas { display: flex; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
+.btn-primary { display: inline-flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; text-decoration: none; background: var(--bone); color: var(--void); border: 2px solid var(--bone); padding: 13px 22px; font-weight: 700; box-shadow: 6px 6px 0 var(--blood); transition: .13s; cursor: pointer; }
+.btn-primary:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 var(--blood); }
+.btn-primary:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--blood); }
+.btn-ghost { display: inline-flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 13px; letter-spacing: .08em; text-transform: uppercase; text-decoration: none; background: transparent; color: var(--bone); border: 2px solid var(--line); padding: 13px 22px; box-shadow: 6px 6px 0 rgba(29, 227, 232, 0.3); transition: .13s; cursor: pointer; }
+.btn-ghost:hover { border-color: var(--volt); box-shadow: 9px 9px 0 rgba(29, 227, 232, 0.5); }
+
+/* GRID */
+.section-label { font-family: var(--mono); font-size: 11px; letter-spacing: .28em; text-transform: uppercase; color: var(--ash); border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-top: 56px; margin-bottom: 18px; }
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.card { border: 2px solid var(--line); background: var(--surface-1); padding: 26px 28px; text-decoration: none; display: block; transition: .13s; position: relative; overflow: hidden; }
+.card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--volt); opacity: 0; transition: opacity .13s; }
+.card:hover { border-color: var(--volt); transform: translate(-3px, -3px); box-shadow: 8px 8px 0 rgba(29, 227, 232, 0.28); }
+.card:hover::after { opacity: 1; }
+.card.red:hover { border-color: var(--blood); box-shadow: 8px 8px 0 rgba(248, 50, 72, 0.35); }
+.card.red::after { background: var(--blood); }
+.card .card-tag { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--ash); border: 1px solid var(--line); padding: 2px 7px; display: inline-block; }
+.card h2 { font-size: 26px; font-weight: 700; letter-spacing: -.02em; margin: 12px 0 10px; }
+.card p { color: var(--ash); font-size: 14.5px; line-height: 1.6; margin: 0; }
+.card .cta { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--volt); margin-top: 18px; display: inline-block; }
+.card.red .cta { color: var(--blood); }
+
+/* PHASES TABLE */
+.phase-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.phase-table th { text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ash); border-bottom: 1px solid var(--line); padding: 8px 12px; }
+.phase-table td { border-bottom: 1px solid var(--line); padding: 10px 12px; vertical-align: middle; }
+.phase-table td:first-child { font-family: var(--mono); color: var(--amber); width: 38px; font-size: 12px; }
+.phase-table td.art { color: var(--bone); font-weight: 500; }
+.phase-table td.cmd { color: var(--ash); font-family: var(--mono); font-size: 12px; }
+.chip-df { color: var(--amber); border-color: var(--amber); }
+.chip-re { color: var(--volt); border-color: var(--volt); }
+.chip-ma { color: var(--blood); border-color: var(--blood); }
+
+/* SKILL BOXES */
+.skill-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px; }
+.skill-box { background: var(--surface-1); border: 1px solid var(--line); padding: 18px 20px; }
+.skill-box h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+.skill-box pre { font-family: var(--mono); font-size: 12px; color: #aee8cc; background: var(--void); border: 1px solid var(--line); padding: 12px; overflow: auto; white-space: pre-wrap; margin: 0; }
+
+/* NOTE */
+.wrap .note { border-left: 3px solid var(--amber); background: rgba(245, 183, 48, 0.06); padding: 14px 18px; margin-top: 18px; font-size: 13.5px; color: var(--ash); line-height: 1.6; }
+.wrap .note b { color: var(--amber); }
+
+/* FOOTER */
+.foot { margin-top: 72px; border-top: 1px solid var(--line); padding-top: 18px; font-family: var(--mono); font-size: 11px; color: var(--ash); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.foot a { color: var(--volt); text-decoration: none; }
+
+@media(max-width: 780px) {
+  .cards, .skill-grid { grid-template-columns: 1fr; }
+}

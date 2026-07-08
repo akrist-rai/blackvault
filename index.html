@@ -1,9 +1,6 @@
 <!doctype html>
 <html lang="en">
 <head>
-<script>
-  window.location.replace("console.html");
-</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BLACKVAULT — Security Training Vault</title>
@@ -11,108 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-:root{
-  --void:#04080a;--bg:#070d0f;--surface1:#0d1517;--surface2:#111c1f;--surface3:#162024;
-  --bone:#e8e5da;--ash:#7a8480;--line:rgba(232,229,218,.1);
-  --blood:#f83248;--volt:#1de3e8;--amber:#f5b730;--jade:#2de89a;
-  --grot:'Inter',-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
-  --r:4px;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{min-height:100vh}
-body{background:var(--bg);color:var(--bone);font-family:var(--grot);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-/* grid bg */
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:linear-gradient(rgba(29,227,232,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(29,227,232,.018) 1px,transparent 1px);
-  background-size:48px 48px;}
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:1;
-  background:repeating-linear-gradient(0deg,rgba(0,0,0,.13) 0 1px,transparent 1px 3px);opacity:.3;}
-
-.wrap{position:relative;z-index:2;max-width:1160px;margin:0 auto;padding:36px 24px 100px}
-
-/* HEADER */
-.header{display:flex;align-items:center;gap:14px;padding-bottom:28px;border-bottom:2px solid var(--line)}
-.logo{font-weight:800;font-size:22px;letter-spacing:-.04em}
-.logo-red{color:var(--blood)}
-.header-sub{font-family:var(--mono);font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--ash)}
-.header-right{margin-left:auto;display:flex;align-items:center;gap:14px}
-.progress-pill{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ash);display:flex;align-items:center;gap:8px}
-.progress-bar{width:80px;height:6px;background:var(--surface3);border:1px solid var(--line);border-radius:1px;overflow:hidden}
-.progress-fill{height:100%;background:var(--blood);transition:width .6s cubic-bezier(.4,0,.2,1);width:0}
-
-/* HERO */
-.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--volt);margin-top:52px}
-.hero-h{font-size:clamp(36px,6.5vw,68px);font-weight:800;letter-spacing:-.04em;line-height:1;margin-top:12px}
-.hero-h .acc{color:var(--blood)}
-.hero-sub{color:var(--ash);max-width:60ch;margin-top:18px;font-size:17px;line-height:1.65}
-.hero-sub b{color:var(--bone);font-weight:600}
-
-/* CTA */
-.ctas{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap}
-.btn-primary{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;background:var(--bone);color:var(--void);border:2px solid var(--bone);padding:13px 22px;font-weight:700;box-shadow:6px 6px 0 var(--blood);transition:.13s;cursor:pointer}
-.btn-primary:hover{transform:translate(-3px,-3px);box-shadow:9px 9px 0 var(--blood)}
-.btn-primary:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--blood)}
-.btn-ghost{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;background:transparent;color:var(--bone);border:2px solid var(--line);padding:13px 22px;box-shadow:6px 6px 0 rgba(29,227,232,.3);transition:.13s;cursor:pointer}
-.btn-ghost:hover{border-color:var(--volt);box-shadow:9px 9px 0 rgba(29,227,232,.5)}
-
-/* STATS */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:54px}
-.stat{background:var(--surface1);border:1px solid var(--line);padding:20px 22px;border-left:3px solid var(--volt)}
-.stat.blood{border-left-color:var(--blood)}
-.stat.amber{border-left-color:var(--amber)}
-.stat.jade{border-left-color:var(--jade)}
-.stat-n{font-size:36px;font-weight:800;letter-spacing:-.04em;font-family:var(--mono);line-height:1}
-.stat-n.volt{color:var(--volt)}
-.stat-n.blood{color:var(--blood)}
-.stat-n.amber{color:var(--amber)}
-.stat-n.jade{color:var(--jade)}
-.stat-l{font-size:12px;color:var(--ash);margin-top:4px;font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase}
-
-/* GRID */
-.section-label{font-family:var(--mono);font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--ash);border-bottom:1px solid var(--line);padding-bottom:10px;margin-top:56px;margin-bottom:18px}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{border:2px solid var(--line);background:var(--surface1);padding:26px 28px;text-decoration:none;display:block;transition:.13s;position:relative;overflow:hidden}
-.card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--volt);opacity:0;transition:opacity .13s}
-.card:hover{border-color:var(--volt);transform:translate(-3px,-3px);box-shadow:8px 8px 0 rgba(29,227,232,.28)}
-.card:hover::after{opacity:1}
-.card.red:hover{border-color:var(--blood);box-shadow:8px 8px 0 rgba(248,50,72,.35)}
-.card.red::after{background:var(--blood)}
-.card .card-tag{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ash);border:1px solid var(--line);padding:2px 7px;display:inline-block}
-.card h2{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:12px 0 10px}
-.card p{color:var(--ash);font-size:14.5px;line-height:1.6;margin:0}
-.card .cta{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--volt);margin-top:18px;display:inline-block}
-.card.red .cta{color:var(--blood)}
-
-/* PHASES TABLE */
-.phase-table{width:100%;border-collapse:collapse;font-size:13.5px}
-.phase-table th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ash);border-bottom:1px solid var(--line);padding:8px 12px}
-.phase-table td{border-bottom:1px solid var(--line);padding:10px 12px;vertical-align:middle}
-.phase-table td:first-child{font-family:var(--mono);color:var(--amber);width:38px;font-size:12px}
-.phase-table td.art{color:var(--bone);font-weight:500}
-.phase-table td.cmd{color:var(--ash);font-family:var(--mono);font-size:12px}
-.chip{font-family:var(--mono);font-size:9px;letter-spacing:.12em;padding:2px 6px;border:1.5px solid;text-transform:uppercase;margin-left:6px;vertical-align:middle}
-.chip-df{color:var(--amber);border-color:var(--amber)}
-.chip-re{color:var(--volt);border-color:var(--volt)}
-.chip-ma{color:var(--blood);border-color:var(--blood)}
-
-/* SKILL BOXES */
-.skill-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px}
-.skill-box{background:var(--surface1);border:1px solid var(--line);padding:18px 20px}
-.skill-box h3{font-size:15px;font-weight:600;margin-bottom:10px}
-.skill-box pre{font-family:var(--mono);font-size:12px;color:#aee8cc;background:var(--void);border:1px solid var(--line);padding:12px;overflow:auto;white-space:pre-wrap;margin:0}
-
-/* NOTE */
-.note{border-left:3px solid var(--amber);background:rgba(245,183,48,.06);padding:14px 18px;margin-top:18px;font-size:13.5px;color:var(--ash);line-height:1.6}
-.note b{color:var(--amber)}
-
-/* FOOTER */
-.foot{margin-top:72px;border-top:1px solid var(--line);padding-top:18px;font-family:var(--mono);font-size:11px;color:var(--ash);display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
-.foot a{color:var(--volt);text-decoration:none}
-
-@media(max-width:780px){.cards,.skill-grid,.stats{grid-template-columns:1fr}}
-@media(max-width:520px){.stats{grid-template-columns:1fr 1fr}}
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="wrap">
@@ -215,6 +111,7 @@ icat -o 2048 range/disk/disk.img 14</pre></div>
   </div>
 </div>
 
+<script src="js/data.js"></script>
 <script>
 // Pull progress from localStorage and surface it on the landing page
 (function(){
@@ -224,40 +121,41 @@ icat -o 2048 range/disk/disk.img 14</pre></div>
     const P = JSON.parse(raw);
     if (!P) return;
 
-    // Compute mastery (mirror console logic)
-    const PHASE_IDS = ['disk','asm','binfmt','static','ghidra','dynamic','unpack','memory','network','protocol','rootkit','capstone'];
-    const PHASE_CONCEPT_COUNTS = [7,7,7,7,7,7,7,7,7,7,7,7];
-    const PHASE_QUIZ_COUNTS    = [4,5,5,4,4,5,4,5,4,4,4,4];
+    // Helper to calculate lab progress
+    function labDoneCount(id) {
+      if (!P.labs || !P.labs[id]) return 0;
+      return Object.keys(P.labs[id]).length;
+    }
+    function labTotal(id) {
+      const labObjs = {
+        mem: 4, re: 4, pcap: 4, log: 4, crypto: 4, web: 4, pe: 4, stego: 3, pwn: 3, privesc: 4, hash: 3, email: 4, intel: 2,
+        disk: 4, asm: 3, binfmt: 4, static: 4, ghidra: 3, dynamic: 4, unpack: 4, memory: 3, network: 4, protocol: 4, rootkit: 4, capstone: 4
+      };
+      return labObjs[id] || 4;
+    }
 
     let totalMastery = 0;
     let phaseDone = 0;
-    PHASE_IDS.forEach((id, idx) => {
-      const cTot = PHASE_CONCEPT_COUNTS[idx];
-      const qTot = PHASE_QUIZ_COUNTS[idx];
-      let cDone = 0, qDone = 0;
-      for (let i = 0; i < cTot; i++) if (P.learned && P.learned[id+':'+i]) cDone++;
-      for (let i = 0; i < qTot; i++) if (P.quiz && P.quiz[id+':'+i] === 1) qDone++;
+    PHASES.forEach((p) => {
+      const cTot = p.concepts.length;
+      const qTot = p.quiz.length;
+      const cDone = p.concepts.filter((_, i) => P.learned && P.learned[p.id + ':' + i]).length;
+      const qDone = p.quiz.filter((_, i) => P.quiz && P.quiz[p.id + ':' + i] === 1).length;
       const m = Math.round((cDone + qDone) / (cTot + qTot) * 100);
       totalMastery += m;
       if (m === 100) phaseDone++;
     });
-    const overall = Math.round(totalMastery / PHASE_IDS.length);
+    const overall = Math.round(totalMastery / PHASES.length);
 
     // Cards known
     const cardsKnown = P.cards ? Object.values(P.cards).filter(Boolean).length : 0;
-    const totalCards = 84; // 7 per phase * 12
+    const totalCards = PHASES.reduce((sum, p) => sum + p.cards.length, 0);
 
     // Labs cleared
-    const labIds = ['mem','re','pcap','log','crypto','web','pe','stego','pwn','privesc','hash','email','intel',
-                    'disk','asm','binfmt','static','ghidra','dynamic','unpack','memory','network','protocol','rootkit','capstone'];
-    const labObjs = {mem:4,re:4,pcap:4,log:4,crypto:4,web:4,pe:4,stego:3,pwn:3,privesc:4,hash:3,email:4,intel:2,
-                     disk:4,asm:3,binfmt:4,static:4,ghidra:3,dynamic:4,unpack:4,memory:3,network:4,protocol:4,rootkit:4,capstone:4};
     let labsCleared = 0;
+    const labIds = LABS.map(l => l.id);
     labIds.forEach(id => {
-      if (!P.labs || !P.labs[id]) return;
-      const n = labObjs[id] || 0;
-      const done = Object.values(P.labs[id]).filter(Boolean).length;
-      if (done >= n) labsCleared++;
+      if (labDoneCount(id) >= labTotal(id)) labsCleared++;
     });
 
     if (overall > 0) {
