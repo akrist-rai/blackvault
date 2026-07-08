@@ -503,16 +503,48 @@ footer { max-width: 1180px; margin: 0 auto; padding: 32px 24px 48px; border-top:
 /* Responsive tweaks */
 @media(max-width: 820px) {
   .spine { grid-template-columns: 1fr 1fr; }
-  .topbar__in { padding: 12px 16px; gap: 16px; }
-  .nav { width: 100%; order: 3; overflow-x: auto; padding-bottom: 4px; flex-wrap: nowrap; margin-left: 0; justify-content: flex-start; }
+  .topbar__in { padding: 12px 16px; gap: 12px; }
+  .nav {
+    width: 100%; order: 3; overflow-x: auto; padding-bottom: 4px; flex-wrap: nowrap; margin-left: 0; justify-content: flex-start;
+    scrollbar-width: none !important; -ms-overflow-style: none !important;
+  }
+  .nav::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
   .nav-group { flex-shrink: 0; }
   .meter { order: 2; margin-left: auto; }
 }
+@media (max-width: 600px) {
+  .brand span { display: none !important; }
+  .topbar__in { padding: 10px 12px; gap: 8px; }
+  .brand b { font-size: 19px; }
+  .meter { font-size: 9px; gap: 6px; }
+  .meter__bar { width: 70px; height: 6px; }
+}
 @media(max-width: 540px) {
+  main { padding: 16px 12px 80px; }
   .spine { grid-template-columns: 1fr; }
-  .flashcard { height: 280px; }
-  .card-stack-bg, .card-stack-bg-2 { height: 280px; }
-  .stats { grid-template-columns: 1fr 1fr; }
+  
+  /* Flashcard responsiveness */
+  .flashcard { height: 260px; }
+  .card-stack-bg, .card-stack-bg-2 { height: 260px; }
+  .face { padding: 16px; }
+  .face .q { font-size: 16px; }
+  .face .a { font-size: 13px; line-height: 1.4; }
+  
+  /* Stats dashboard */
+  .stats { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+  .stat { padding: 14px 16px; }
+  .stat-n { font-size: 26px; }
+  .stat-l { font-size: 10px; margin-top: 4px; }
+  
+  /* Quiz & Exam compact details */
+  .qcard { padding: 16px 20px; margin-bottom: 12px; }
+  .qcard__q { font-size: 16px; margin-bottom: 14px; }
+  .opt { padding: 10px 12px; margin-bottom: 8px; font-size: 14px; }
+  .explain { margin-top: 10px; padding: 8px 0 8px 14px; font-size: 13.5px; }
+  
+  /* Deck picker */
+  .deckpick, .casepick { margin: 8px 0 16px; gap: 6px; }
+  .deckpick button, .casepick button { padding: 6px 10px; font-size: 10px; }
 }
 @media(prefers-reduced-motion: reduce) {
   * { transition: none!important; animation: none!important; }
@@ -1345,7 +1377,7 @@ function viewMap(){
 function viewStudy(){
   const p=PHASES[state.phase];const ac=accentOf(p.tracks);
   return `
-  <div class="study-layout">
+  <div class="study-split">
     <div class="study-left">
       <div class="crumb"><a data-go="map">◂ Map</a> <span>/</span> PHASE ${String(p.n).padStart(2,'0')} <span>/</span> ${esc(p.title)}</div>
       <div class="studyhead">
@@ -1385,7 +1417,7 @@ function viewStudy(){
       <div class="sec"><div class="feeds"><b>↳ Connects forward:</b> ${esc(p.feeds)}</div></div>
     </div>
 
-    <div class="study-right">
+    <div class="study-sticky">
       <div class="sec" style="margin-top:0">
         <div class="sec__h">Command arsenal</div>
         <p class="lede" style="margin-bottom:12px;font-size:12px;color:var(--ash)">Tap any command below to copy it.</p>
