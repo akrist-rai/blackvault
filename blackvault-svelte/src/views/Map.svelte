@@ -4,6 +4,29 @@
 
   let trackFilter = 'ALL';
 
+  // Images from /images folder — used in the art strip
+  const IMAGES = [
+    '_ (70).jpeg',
+    '_ (80).jpeg',
+    '_ (21).jpeg',
+    '彡 by budkalon – twt.jpeg',
+    '_ - 2026-05-31T131218.140.jpeg',
+    '_ (79).jpeg',
+    'Full metal alchemist.jpeg',
+    '_ - 2026-05-30T130745.408.jpeg',
+    'by Lazlo.jpeg',
+    'jjhoa.jpeg',
+    '_ (11).jpeg',
+    '_ - 2026-05-29T232009.086.jpeg',
+    '_ (8).jpeg',
+    '_ - 2026-05-31T130836.546.jpeg',
+    '_ (7).jpeg',
+    '_ - 2026-05-29T231703.415.jpeg',
+    '_ - 2026-05-30T131710.853.jpeg',
+  ];
+  // Duplicate for seamless loop
+  const STRIP = [...IMAGES, ...IMAGES];
+
   $: totalConcepts  = PHASES.reduce((s, p) => s + p.concepts.length, 0);
   $: learnedConcepts = PHASES.reduce((s, p) =>
     s + p.concepts.filter((_, i) => $progress.learned?.[p.id + ':' + i]).length, 0);
@@ -31,6 +54,17 @@
     <i><span class="dot d-DF"></span>Forensics</i>
     <i><span class="dot d-RE"></span>Reverse Eng.</i>
     <i><span class="dot d-MA"></span>Malware</i>
+  </div>
+</div>
+
+<!-- ── Image Art Strip ───────────────────────────────────────── -->
+<div class="imgstrip-wrap" aria-hidden="true">
+  <div class="imgstrip">
+    {#each STRIP as img}
+      <div class="imgstrip__tile">
+        <img src="/images/{encodeURIComponent(img)}" alt="" loading="lazy" />
+      </div>
+    {/each}
   </div>
 </div>
 

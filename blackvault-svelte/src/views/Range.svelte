@@ -4,6 +4,15 @@
   import { LABS, LABOBJ } from '../data/curriculum.js';
   import { initLabs, LAB_RENDERERS, LAB } from '../data/labs.js';
 
+  // Rotating cover images for lab cards
+  const CARD_IMGS = [
+    '_ (70).jpeg', '彡 by budkalon – twt.jpeg', '_ (80).jpeg',
+    '_ - 2026-05-31T131218.140.jpeg', 'Full metal alchemist.jpeg',
+    '_ (21).jpeg', 'by Lazlo.jpeg', 'jjhoa.jpeg',
+    '_ (11).jpeg', '_ - 2026-05-29T232009.086.jpeg',
+    '_ (8).jpeg', '_ - 2026-05-30T130745.408.jpeg',
+  ];
+
   // ── helpers passed to lab engine ──────────────────────────────────────────────
   function esc(s) {
     return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -186,17 +195,26 @@
   </div>
 
   <div class="labgrid">
-    {#each LABS as l}
+    {#each LABS as l, idx}
       {@const d = labDoneCount(l.id)}
       {@const t = labTotal(l.id)}
       {@const pc = t ? Math.round(d / t * 100) : 0}
+      {@const img = CARD_IMGS[idx % CARD_IMGS.length]}
       <div class="labcard" data-done={d === t ? 1 : 0} on:click={() => openLab(l.id)}>
-        <span class="chip t-{l.track}">{l.track}</span>
-        <span class="prog"> · {l.tool}</span>
-        <h3>{l.name}</h3>
-        <p>{l.blurb}</p>
-        <div class="prog">{d}/{t} objectives {d === t ? '· ✓ CLEARED' : ''}</div>
-        <div class="pbar"><i style="width:{pc}%"></i></div>
+        <div class="labcard__cover">
+          <img src="/images/{encodeURIComponent(img)}" alt="" loading="lazy" />
+          <div class="labcard__cover-overlay"></div>
+        </div>
+        <div class="labcard__body">
+          <div class="labcard__meta">
+            <span class="chip t-{l.track}">{l.track}</span>
+            <span class="prog"> · {l.tool}</span>
+          </div>
+          <h3>{l.name}</h3>
+          <p>{l.blurb}</p>
+          <div class="prog">{d}/{t} objectives {d === t ? '· ✓ CLEARED' : ''}</div>
+          <div class="pbar"><i style="width:{pc}%"></i></div>
+        </div>
       </div>
     {/each}
   </div>
