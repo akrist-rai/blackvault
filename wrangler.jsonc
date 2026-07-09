@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "blackvault",
+  "compatibility_date": "2026-07-09",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "blackvault-svelte"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
