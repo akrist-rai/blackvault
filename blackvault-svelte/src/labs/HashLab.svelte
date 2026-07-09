@@ -7,35 +7,38 @@
     target: '5f4dcc3b5aa765d61d8327deb882cf99',
     wl: [['e10adc3949ba59abbe56e057f20f883e', '123456'], ['5f4dcc3b5aa765d61d8327deb882cf99', 'password'], ['21232f297a57a5a743894a0e4a801fc3', 'admin'], ['0d107d09f5bbe40cade3de5c71e9e9b7', 'letmein']],
   };
+  const SALTED = [
+    { salt: 'x7Gk', hash: 'b9c1a4d2e0f3a1c5b7d9e2f4a6c8b0d2' },
+    { salt: 'qZ2p', hash: '0f7e22a9c4b6d8e0f2a4c6b8d0e2f4a6' },
+  ];
 
   let idSel = {};
-  let crackLines = null;
-  let saltLines = null;
+  let crackLog = [];
+  let cracked = false;
 
   function checkIds() {
     let ok = true;
     HASHL.rows.forEach((r, i) => { if (idSel[i] !== r[1]) ok = false; });
     if (ok) setObj('hash', 'idtype', progress); else toast('not all correct — length (32/40/64 hex) and the $2b$ prefix are the tells');
   }
-  function crack() {
-    let found = '';
-    crackLines = [{ kind: '', text: 'running md5 over the wordlist against ' + HASHL.target.slice(0, 12) + '…' }];
-    HASHL.wl.forEach(p => {
-      const hit = p[0] === HASHL.target;
-      crackLines.push({ kind: hit ? 'hl' : '', text: '  ' + p[1].padEnd(10) + '→ ' + p[0].slice(0, 8) + '  ' + (hit ? '✓ MATCH' : '✗') });
-      if (hit) found = p[1];
-    });
-    crackLines.push({ kind: 'hl', text: '[+] cracked: ' + found });
-    setObj('hash', 'crack', progress);
+
+  function tryWord(word, hashVal) {
+    const hit = hashVal === HASHL.target;
+    crackLog = [...crackLog, { kind: hit ? 'hl' : '', text: word.padEnd(10) + '→ ' + hashVal.slice(0, 8) + '…  ' + (hit ? '✓ MATCH' : '✗') }];
+    if (hit && !cracked) { cracked = true; setObj('hash', 'crack', progress); }
   }
-  function showSalt() {
-    saltLines = [
-      { kind: '', text: 'md5("password")            = 5f4dcc3b…cf99' },
-      { kind: '', text: 'md5("x7Gk" + "password")    = b9c1a4…    (different)' },
-      { kind: '', text: 'md5("qZ2p" + "password")    = 0f7e22…    (different)' },
-      { kind: 'hl', text: '[+] same password, unique per-user salts → unique hashes. The precomputed wordlist/rainbow table no longer lines up: you must brute each salt separately.' },
-    ];
-    setObj('hash', 'salt', progress);
+
+  let saltTried = { 0: new Set(), 1: new Set() };
+  let saltLog = { 0: [], 1: [] };
+  let saltDone = false;
+  function trySalt(ti, word) {
+    saltTried[ti].add(word);
+    saltLog[ti] = [...saltLog[ti], { text: 'md5("' + SALTED[ti].salt + '" + "' + word + '") → no match' }];
+    if (saltTried[0].size >= 4 && saltTried[1].size >= 4 && !saltDone) {
+      saltDone = true;
+      setObj('hash', 'salt', progress);
+      toast('✓ same wordlist, zero hits — that\'s what unique salts buy you');
+    }
   }
 </script>
 
@@ -54,9 +57,21 @@
 <div style="margin-top:10px"><button class="btn" on:click={checkIds}>Check types</button></div>
 
 <h4 style="font-family:var(--mono);color:var(--volt);font-size:11px;letter-spacing:.2em;margin-top:22px">2 · CRACK</h4>
-<p style="color:var(--ash);font-size:13.5px;margin:0">Target: <code>{HASHL.target}</code> · wordlist of 4. <button class="btn" style="margin-left:8px" on:click={crack}>Run dictionary attack</button></p>
-<div class="pktdetail" style="margin-top:10px">{#if crackLines}{#each crackLines as l}<div class={l.kind}>{l.text}</div>{/each}{:else}—{/if}</div>
+<p style="color:var(--ash);font-size:13.5px;margin:0 0 8px">Target: <code>{HASHL.target}</code> — click each wordlist candidate to test it.</p>
+<div class="qchips">
+  {#each HASHL.wl as p}<button on:click={() => tryWord(p[1], p[0])}>{p[1]}</button>{/each}
+</div>
+<div class="pktdetail" style="margin-top:10px">{#if crackLog.length}{#each crackLog as l}<div class={l.kind}>{l.text}</div>{/each}{:else}click a candidate above to test it against the target…{/if}</div>
 
 <h4 style="font-family:var(--mono);color:var(--volt);font-size:11px;letter-spacing:.2em;margin-top:22px">3 · WHY SALT</h4>
-<p style="margin:0"><button class="btn" on:click={showSalt}>Show salted vs unsalted</button></p>
-<div class="pktdetail" style="margin-top:10px">{#if saltLines}{#each saltLines as l}<div class={l.kind}>{l.text}</div>{/each}{:else}—{/if}</div>
+<p style="color:var(--ash);font-size:13.5px;margin:0 0 8px">Same password, two different per-user salts. Try the same wordlist against each — watch it fail both times.</p>
+{#each SALTED as s, ti}
+  <div class="repane" style="margin-bottom:10px">
+    <h5>salt "{s.salt}" · target {s.hash.slice(0, 12)}…</h5>
+    <div class="qchips" style="padding:10px 12px 0">
+      {#each HASHL.wl as p}<button on:click={() => trySalt(ti, p[1])}>{p[1]}</button>{/each}
+    </div>
+    <div class="pktdetail" style="margin:10px 12px">{#if saltLog[ti].length}{#each saltLog[ti] as l}<div>{l.text}</div>{/each}{:else}try a candidate…{/if}</div>
+  </div>
+{/each}
+{#if saltDone}<div class="hintbox"><b>Why:</b> same password, unique per-user salts → unique hashes. The precomputed wordlist no longer lines up — you must brute each salt separately.</div>{/if}

@@ -22,9 +22,17 @@
   function reset() { regs = freshRegs(); pc = 0; }
   function check() { if (ret.trim() === '60') setObj('asm', 'ret', progress); else if (ret) toast('run to the end and read rax (5+3=8, ²=64, −4)'); }
 
-  function answer(key, correct) {
-    mcq[key] = correct ? 'correct' : 'wrong';
-    if (correct) setObj('asm', key, progress); else toast('not quite — re-read it');
+  let pendingQ = 'argreg';
+  function clickReg(k) {
+    if (!pendingQ) return;
+    const correct = (pendingQ === 'argreg' && k === 'rdi') || (pendingQ === 'retreg' && k === 'rax');
+    if (correct) {
+      mcq[pendingQ] = 'correct';
+      setObj('asm', pendingQ, progress);
+      pendingQ = pendingQ === 'argreg' ? 'retreg' : null;
+    } else {
+      toast('not that one — re-read the calling convention');
+    }
   }
 </script>
 
@@ -39,10 +47,10 @@
     </div>
   </div>
   <div class="repane">
-    <h5>registers</h5>
+    <h5>registers{pendingQ ? ' — click to answer below' : ''}</h5>
     <div class="stack">
       {#each Object.entries(regs) as [k, v]}
-        <div class="srow"><span>{k}</span><b>{v} <span style="color:var(--ash)">0x{(v >>> 0).toString(16)}</span></b></div>
+        <div class="srow" style="cursor:pointer" data-hit={mcq.argreg === 'correct' && k === 'rdi' ? 1 : (mcq.retreg === 'correct' && k === 'rax' ? 1 : 0)} on:click={() => clickReg(k)}><span>{k}</span><b>{v} <span style="color:var(--ash)">0x{(v >>> 0).toString(16)}</span></b></div>
       {/each}
     </div>
   </div>
@@ -56,18 +64,17 @@
 </div>
 <div class="objbox" style="margin-top:18px">
   <h4>Calling convention (System V x64)</h4>
-  <p style="color:var(--ash);font-size:14px;margin:0 0 8px">1st integer argument is passed in…</p>
-  <button class="opt" data-state={mcq.argreg} on:click={() => answer('argreg', false)}><b>A</b>rax</button>
-  <button class="opt" data-state={mcq.argreg} on:click={() => answer('argreg', true)}><b>B</b>rdi</button>
-  <button class="opt" data-state={mcq.argreg} on:click={() => answer('argreg', false)}><b>C</b>rsp</button>
-  <p style="color:var(--ash);font-size:14px;margin:12px 0 8px">The return value comes back in…</p>
-  <button class="opt" data-state={mcq.retreg} on:click={() => answer('retreg', true)}><b>A</b>rax</button>
-  <button class="opt" data-state={mcq.retreg} on:click={() => answer('retreg', false)}><b>B</b>rbx</button>
-  <button class="opt" data-state={mcq.retreg} on:click={() => answer('retreg', false)}><b>C</b>rdi</button>
+  {#if pendingQ === 'argreg'}
+    <p style="color:var(--bone);font-size:14px;margin:0">Click the register above that holds the <b>1st integer argument</b>.</p>
+  {:else if pendingQ === 'retreg'}
+    <p style="color:var(--bone);font-size:14px;margin:0">✓ arg1 is rdi. Now click the register above that holds the <b>return value</b>.</p>
+  {:else}
+    <p style="color:var(--jade);font-size:14px;margin:0">✓ Both answered directly from the live register panel — rdi for arg1, rax for the return value.</p>
+  {/if}
 </div>
 <div class="hintbox"><b>Convention:</b> System V (Linux) passes integer args in rdi, rsi, rdx, rcx, r8, r9 and returns in rax. Windows x64 uses rcx, rdx, r8, r9.</div>
 
 <style>
-  .opt[data-state="correct"] { border-color: var(--jade); color: var(--jade); }
-  .opt[data-state="wrong"] { border-color: var(--blood); color: var(--blood); }
+  .stack .srow:hover { border-color: var(--volt); }
+  .stack .srow[data-hit="1"] { background: rgba(45, 232, 154, 0.12); border-color: var(--jade); }
 </style>

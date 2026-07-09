@@ -28,6 +28,12 @@
     mcq[key] = correct ? 'correct' : 'wrong';
     if (correct) setObj('unpack', key, progress); else toast('not quite — re-read it');
   }
+
+  let licensePatched = false;
+  function patchLicense() {
+    licensePatched = true;
+    setObj('unpack', 'patch', progress);
+  }
 </script>
 
 <p class="lede" style="margin-top:0">The packer stub decompresses the real code then jumps to it. Catch that jump.</p>
@@ -55,10 +61,12 @@
   <button class="opt" data-state={mcq.iat} on:click={() => answer('iat', true)}><b>A</b>The dump has the loader's runtime-resolved addresses, not a static import table — it won't re-load without one</button>
   <button class="opt" data-state={mcq.iat} on:click={() => answer('iat', false)}><b>B</b>To make the file smaller</button>
   <button class="opt" data-state={mcq.iat} on:click={() => answer('iat', false)}><b>C</b>To strip debug symbols</button>
-  <p style="color:var(--ash);font-size:14px;margin:14px 0 8px">A license check <code>jne fail</code> guards the unpacked code. To bypass it you…</p>
-  <button class="opt" data-state={mcq.patch} on:click={() => answer('patch', true)}><b>A</b>NOP the conditional jump (or flip jne→je) so it falls through</button>
-  <button class="opt" data-state={mcq.patch} on:click={() => answer('patch', false)}><b>B</b>Delete the .text section</button>
-  <button class="opt" data-state={mcq.patch} on:click={() => answer('patch', false)}><b>C</b>Increase the entropy</button>
+  <p style="color:var(--ash);font-size:14px;margin:14px 0 8px">A license check guards the unpacked code. Click the conditional jump to patch it so the check always passes.</p>
+  <div class="asm" style="max-width:340px">
+    <div class="row"><span class="a">0x401300</span><span class="mn">cmp byte [license_ok], 0</span></div>
+    <div class="row" data-jmp="1" data-patched={licensePatched ? 1 : 0} on:click={patchLicense} style="cursor:pointer"><span class="a">0x401304</span><span class="mn">{licensePatched ? 'nop ; nop' : 'jne fail'}</span></div>
+    <div class="row"><span class="a">0x401306</span><span class="mn">mov eax, 1  ; licensed</span></div>
+  </div>
 </div>
 <div class="hintbox"><b>Pipeline:</b> break at OEP (hardware bp on execute of the freshly-written region) → dump → fix entry point → rebuild imports (IAT) → fix section sizes → validate it loads.</div>
 

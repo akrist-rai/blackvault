@@ -11,13 +11,14 @@
 
   let tab = 'sqli';
   let user = '', pass = '', path = '', host = '', xss = '';
-  let result = null; // { kind: 'plain'|'lines', text/lines }
+  let logs = { sqli: [], lfi: [], cmdi: [], xss: [] };
 
   function resolvePath(p) {
     const st = [];
     p.split('/').forEach(x => { if (x === '' || x === '.') return; if (x === '..') st.pop(); else st.push(x); });
     return '/' + st.join('/');
   }
+  function push(t, ok, lines) { logs[t] = [...logs[t], { ok, lines }]; }
 
   function runSql() {
     const blob = user + ' ' + pass;
@@ -26,24 +27,13 @@
     const taut = /\bor\b\s+('?\w+'?\s*=\s*'?\w+'?)/i.test(blob);
     const comment = /(--|#|\/\*)/.test(blob);
     const ok = hasQuote && (taut || comment);
-    result = { lines: [
-      { kind: 'dim', text: 'query sent to DB:' },
-      { kind: '', text: '  ' + q },
-      { kind: '', text: '' },
-      ok ? { kind: 'hl', text: '[+] row returned → logged in as admin. Authentication bypassed.' } : { kind: 'err', text: '[-] 0 rows. Invalid credentials.' },
-    ] };
+    push('sqli', ok, [q, ok ? '[+] row returned → logged in as admin. Authentication bypassed.' : '[-] 0 rows. Invalid credentials.']);
     if (ok) setObj('web', 'sqli', progress);
   }
   function runLfi() {
     const full = resolvePath('/var/www/html/' + path);
     const win = full === '/etc/passwd';
-    result = { lines: [
-      { kind: 'dim', text: 'GET /view?file=' + path },
-      { kind: '', text: '' },
-      ...(win
-        ? [{ kind: '', text: 'root:x:0:0:root:/root:/bin/bash' }, { kind: '', text: 'www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin' }, { kind: '', text: 'admin:x:1000:1000::/home/admin:/bin/bash' }, { kind: 'hl', text: '[+] traversal escaped the web root → /etc/passwd read.' }]
-        : [{ kind: 'err', text: '[-] resolves to ' + full + ' — still inside the web root or missing.' }]),
-    ] };
+    push('lfi', win, ['GET /view?file=' + path, win ? '[+] traversal escaped the web root → /etc/passwd read.' : '[-] resolves to ' + full + ' — still inside the web root or missing.']);
     if (win) setObj('web', 'lfi', progress);
   }
   function runCmdi() {
@@ -53,29 +43,18 @@
     else if (/whoami/.test(host)) res = 'www-data';
     else if (/cat\s+\/etc\/passwd/.test(host)) res = 'root:x:0:0:root:/root:/bin/bash ...';
     else if (injected) res = '(command executed, no stdout)';
-    result = { lines: [
-      { kind: 'dim', text: '$ ping -c1 ' + host },
-      { kind: '', text: 'PING: 1 packet transmitted' },
-      injected ? { kind: 'hl', text: '[+] shell metacharacter broke out → second command ran:\n' + res } : { kind: 'err', text: '[-] ' + host + ' treated as a hostname (no injection).' },
-    ] };
+    push('cmdi', injected, ['$ ping -c1 ' + host, injected ? '[+] shell metacharacter broke out → ' + res : '[-] ' + host + ' treated as a hostname (no injection).']);
     if (injected) setObj('web', 'cmdi', progress);
   }
   function runXss() {
     const fire = /<script|onerror\s*=|onload\s*=|javascript:|<svg[^>]*on|<img[^>]*onerror/i.test(xss);
-    result = { lines: [
-      { kind: 'dim', text: 'Server reflects your input into the page (shown safely escaped here):' },
-      { kind: '', text: '  ' + xss },
-      { kind: '', text: '' },
-      fire ? { kind: 'hl', text: '[+] in a real unescaped sink this executes → alert(1) fires in the victim browser.' } : { kind: 'err', text: '[-] inert — no script/handler context.' },
-    ] };
+    push('xss', fire, ['reflected: ' + xss, fire ? '[+] in a real unescaped sink this executes → alert(1) fires.' : '[-] inert — no script/handler context.']);
     if (fire) setObj('web', 'xss', progress);
   }
-
-  function switchTab(t) { tab = t; result = null; }
 </script>
 
 <div class="logtabs">
-  {#each TABS as [id, label]}<button aria-current={tab === id} on:click={() => switchTab(id)}>{label}</button>{/each}
+  {#each TABS as [id, label]}<button aria-current={tab === id} on:click={() => tab = id}>{label}</button>{/each}
 </div>
 
 {#if tab === 'sqli'}
@@ -99,11 +78,13 @@
   <div style="margin-top:10px"><button class="btn" on:click={runXss}>Search ▸</button></div>
 {/if}
 
-<div class="pktdetail" style="margin-top:12px">
-  {#if result}
-    {#each result.lines as l}<div class={l.kind}>{l.text}</div>{/each}
+<div class="attemptlog" style="margin-top:12px">
+  {#if logs[tab].length === 0}
+    <div class="pktdetail">craft a payload and submit — every attempt is logged below so you can iterate…</div>
   {:else}
-    craft a payload and submit…
+    {#each logs[tab] as a, i}
+      <div class="attempt" data-ok={a.ok ? 1 : 0}>#{i + 1}: {#each a.lines as l}<div>{l}</div>{/each}</div>
+    {/each}
   {/if}
 </div>
 <div class="hintbox"><b>Hint:</b> {HINTS[tab]} <span class="dim">— all endpoints are simulated; nothing is actually executed.</span></div>

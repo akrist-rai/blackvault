@@ -1,6 +1,6 @@
 <script>
   import { tick } from 'svelte';
-  import { progress, setObj, toast } from '../stores/progress.js';
+  import { progress, setObj } from '../stores/progress.js';
 
   const banner = () => [
     { kind: 'dim', text: 'vol3 on a Win10 image. A process is hidden by DKOM (unlinked from the active list).' },
@@ -23,6 +23,7 @@
     else if (c === 'psscan') {
       ['  PID   Name', '  4     System', '  812   explorer.exe', '  1188  svchost.exe', '  2440  chrome.exe'].forEach(t => push('', t));
       push('hl', '  3133  svchost.exe   ← in pool scan but NOT in pslist (unlinked / DKOM)');
+      setObj('memory', 'hidden', progress);
     } else if (/^vadinfo\s+3133$/.test(c)) {
       push('', 'VAD for pid 3133:');
       push('hl', '  0x009a0000 - 0x009a3fff  PAGE_EXECUTE_READWRITE  Private');
@@ -50,9 +51,6 @@
 
   function onKeydown(e) { if (e.key === 'Enter') run(cmdVal); }
   const chips = ['pslist', 'psscan', 'vadinfo 3133', 'disasm 0x9a0000'];
-
-  let mf_pid = '';
-  function checkFindings() { if (mf_pid.trim() === '3133') setObj('memory', 'hidden', progress); else if (mf_pid) toast('the PID present in psscan but missing from pslist'); }
 </script>
 
 <div class="term">
@@ -73,9 +71,4 @@
   </div>
 </div>
 <div class="qchips">{#each chips as c}<button on:click={() => cmdVal = c}>{c}</button>{/each}</div>
-<div class="objbox" style="margin-top:16px">
-  <h4>Submit findings</h4>
-  <div class="findform"><div class="full"><label>Hidden process PID</label><input placeholder="the unlinked one" bind:value={mf_pid}></div></div>
-  <div style="margin-top:10px"><button class="btn" on:click={checkFindings}>Check</button></div>
-</div>
 <div class="hintbox"><b>DKOM detection:</b> rootkits unlink the malicious EPROCESS from the doubly-linked active list, so <code>pslist</code> can't see it — but <code>psscan</code> finds the block by scanning pool tags. The diff is the giveaway; then RWX VADs reveal where the code lives.</div>

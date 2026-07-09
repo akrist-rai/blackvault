@@ -28,9 +28,7 @@
     lines.push({ kind: '', text: '→ framing = [BE EF][len:2 LE][opcode:1][payload:len]' });
     out = lines;
   }
-  function decode() {
-    const k = parseInt(key.replace(/0x/i, ''), 16);
-    if (isNaN(k)) { out = [{ kind: '', text: 'enter a hex XOR key first (try 5a).' }]; return; }
+  function computeDecode(k) {
     const b = bytes; let i = 0;
     const names = { 1: 'BEACON', 2: 'EXEC', 3: 'EXFIL' };
     const lines = [{ kind: '', text: 'decoded with key 0x' + k.toString(16) + ':' }];
@@ -42,10 +40,18 @@
         i += 5 + len;
       } else i++;
     }
-    out = lines;
-    if (k === KEY) {
-      setObj('protocol', 'key', progress);
-      if (lines.some(l => /whoami|BV\{/.test(l.text))) setObj('protocol', 'cmd', progress);
+    return lines;
+  }
+  // Live-decode as the key changes — no submit button, immediate feedback like a real brute-force loop.
+  $: {
+    const k = key ? parseInt(key.replace(/0x/i, ''), 16) : NaN;
+    if (!isNaN(k)) {
+      const lines = computeDecode(k);
+      out = lines;
+      if (k === KEY) {
+        setObj('protocol', 'key', progress);
+        if (lines.some(l => /whoami|BV\{/.test(l.text))) setObj('protocol', 'cmd', progress);
+      }
     }
   }
 
@@ -60,8 +66,8 @@
 <div class="pktdetail" style="margin-top:0">{hexStr}</div>
 <div class="qchips" style="margin-top:12px">
   <button on:click={parse}>auto-frame</button>
-  <button on:click={decode}>decode payloads (XOR)</button>
-  <input class="lab-sel" style="width:80px" placeholder="key hex 5a" bind:value={key}>
+  <span class="dim">decode key (live):</span>
+  <input class="lab-sel" style="width:80px" placeholder="try 5a" bind:value={key}>
 </div>
 <div class="pktdetail" style="margin-top:12px">{#if out}{#each out as l}<div class={l.kind}>{l.text}</div>{/each}{:else}find the magic, the framing, then the key…{/if}</div>
 <div class="objbox" style="margin-top:16px">
