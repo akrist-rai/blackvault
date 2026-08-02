@@ -412,10 +412,12 @@ export const LABOBJ = {
     { k: 'cmd', t: 'Find a command run through the web shell' }
   ],
   crypto: [
-    { k: 'rot', t: 'Solve the Caesar / ROT challenge' },
-    { k: 'b64', t: 'Solve the Base64 challenge' },
-    { k: 'xor', t: 'Solve the single-byte XOR challenge' },
-    { k: 'rev', t: 'Solve the reverse challenge' }
+    { k: 'rot',  t: 'Solve the Caesar / ROT challenge' },
+    { k: 'b64',  t: 'Solve the Base64 (×2) challenge' },
+    { k: 'xor',  t: 'Solve the single-byte XOR challenge' },
+    { k: 'rev',  t: 'Solve the reverse challenge' },
+    { k: 'rail', t: 'Solve the Rail Fence cipher (r=3)' },
+    { k: 'vig',  t: 'Solve the Vigenère cipher' },
   ],
   web: [
     { k: 'sqli', t: 'Bypass the login with SQL injection' },
